@@ -66,6 +66,7 @@ class BatchAskRequest(BaseModel):
 
 class CrawlRequest(BaseModel):
     urls: List[str] = Field(..., min_items=1, max_items=50, description="URLs to crawl")
+    force: bool = Field(False, description="Force re-index even if content hasn't changed")
     
     @validator('urls')
     def validate_urls(cls, v):
@@ -82,6 +83,7 @@ class CrawlDepthRequest(BaseModel):
     depth: int = Field(1, ge=1, le=3, description="Crawl depth")
     max_pages: int = Field(30, ge=1, le=100, description="Maximum pages to crawl")
     same_domain: bool = Field(True, description="Restrict to same domain")
+    force: bool = Field(False, description="Force re-index even if content hasn't changed")
     
     @validator('seeds')
     def validate_seeds(cls, v):
@@ -175,7 +177,7 @@ def batch_ask_endpoint(req: BatchAskRequest):
 @app.post("/crawl")
 def crawl(req: CrawlRequest):
     try:
-        return {"result": index_urls(req.urls)}
+        return {"result": index_urls(req.urls, force=req.force)}
     except ConnectionError:
         raise HTTPException(status_code=503, detail="Database connection failed")
     except Exception as e:
@@ -189,6 +191,7 @@ def crawl_depth(req: CrawlDepthRequest):
             depth=req.depth,
             max_pages=req.max_pages,
             same_domain=req.same_domain,
+            force=req.force,
         )
         return {"result": result}
     except ConnectionError:

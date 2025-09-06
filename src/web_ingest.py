@@ -216,6 +216,7 @@ def crawl_urls(
     depth: int = 1,
     max_pages: int = 40,
     same_domain: bool = True,
+    force: bool = False,
 ) -> Dict[str, Dict[str, int]]:
     """
     BFS crawl limited by depth and max_pages. Respects ALLOW_HOSTS and robots.txt.
@@ -248,8 +249,13 @@ def crawl_urls(
         stats = {"fetched": 0, "chunks": 0, "replaced": 0, "errors": 0, "skipped_304": 0, "skipped_samehash": 0}
         try:
             entry = cache.get(url, {})
-            resp = fetch_html(url, etag=entry.get("etag"), last_modified=entry.get("last_modified"))
-            if resp.status_code == 304:
+            # ↓ conditional fetch only if NOT force
+            resp = fetch_html(
+                url,
+                etag=None if force else entry.get("etag"),
+                last_modified=None if force else entry.get("last_modified"),
+            )
+            if not force and resp.status_code == 304:
                 stats["skipped_304"] = 1
                 out[url] = stats
                 continue
@@ -259,7 +265,8 @@ def crawl_urls(
             title, text = html_to_text(html)
             content_hash = _sha256(text)
 
-            if entry.get("content_hash") == content_hash:
+            # ↓ skip same-hash only if NOT force
+            if not force and entry.get("content_hash") == content_hash:
                 stats["skipped_samehash"] = 1
                 out[url] = stats
                 # Still can extract links to continue crawl

@@ -15,10 +15,12 @@ LOOSE_DIST  = 1.40
 MIN_CONF = MIN_CONF
 
 SYSTEM_PROMPT = (
-    "You are a support deflection assistant for product documentation. "
-    "Your job: answer clearly and concisely (2–4 sentences max) using ONLY the provided Context. "
-    "Prefer step-by-step commands/flags/environment variables if relevant. "
-    "If the Context does not contain enough information, reply exactly:\n"
+    "You are a support deflection assistant for product documentation.\n"
+    "Use ONLY the provided Context to answer. If the Context contains any relevant\n"
+    "instructions or details for the user’s question, you MUST answer concisely\n"
+    "(2–4 sentences) and include concrete commands/flags/paths when applicable.\n"
+    "Refuse ONLY if the Context has no relevant information.\n"
+    "Refusal text must be exactly:\n"
     "'I don’t have enough information in the docs to answer that.'"
 )
 
@@ -31,9 +33,24 @@ _STOP = {
 def _trim(text: str, limit: int) -> str:
     return text if len(text) <= limit else text[:limit].rstrip() + " …"
 
+def _stem_simple(word: str) -> str:
+    """Basic stemming for common suffixes"""
+    if len(word) <= 3:
+        return word
+    # Handle common plural and verb endings
+    if word.endswith('s') and not word.endswith(('ss', 'us', 'is')):
+        return word[:-1]
+    if word.endswith('ing') and len(word) > 6:
+        return word[:-3]
+    if word.endswith('ed') and len(word) > 5:
+        return word[:-2]
+    return word
+
 def _tokens(s: str):
     toks = re.findall(r"[a-z0-9]+", s.lower())
-    return [t for t in toks if len(t) > 2 and t not in _STOP]
+    # Apply basic stemming and filter
+    stemmed = [_stem_simple(t) for t in toks if len(t) > 2 and t not in _STOP]
+    return stemmed
 
 def _keyword_overlap(question: str, text: str) -> int:
     q = set(_tokens(question))
@@ -124,21 +141,34 @@ def answer_question(question: str, k: int = MAX_CHUNKS, domains: Optional[List[s
     ctx = _format_context(hits)
     user_prompt = (
         f"Question: {question}\n\n"
-        f"Context:\n{ctx}\n\n"
+        f"Context (numbered citations):\n{ctx}\n\n"
         "Instructions:\n"
-        "1) Use ONLY the Context above; do not rely on outside knowledge.\n"
-        "2) If the answer isn't clearly supported by the Context, reply with the exact refusal sentence.\n"
-        "3) Keep answers short (2–4 sentences). Prefer concrete commands/flags/paths if applicable."
+        "1) If any part of the Context is relevant, ANSWER. Keep it to 2–4 sentences.\n"
+        "2) Prefer concrete steps and fenced code blocks for commands.\n"
+        "3) Do not invent facts not in the Context.\n"
+        "4) Refuse ONLY if no relevant information exists in the Context.\n"
     )
+
 
     ans = llm_chat(system_prompt=SYSTEM_PROMPT, user_prompt=user_prompt)
 
-    if not ans or "I don’t have enough information" in ans:
+    if not ans or not ans.strip():
+        # No text came back; fall back to refusal only if confidence is low
+        if conf < MIN_CONF:
+            return {
+                "answer": "I don’t have enough information in the docs to answer that.",
+                "citations": _to_citations(hits, take=3),
+                "confidence": conf
+            }
+        # Otherwise synthesize a tiny extractive answer from the top chunk
+        top = hits[0]["text"].strip()
+        snippet = top[:240].split("\n\n")[0].strip()
         return {
-            "answer": "I don’t have enough information in the docs to answer that.",
+            "answer": snippet,
             "citations": _to_citations(hits, take=3),
             "confidence": conf
         }
+
 
     return {
         "answer": ans.strip(),

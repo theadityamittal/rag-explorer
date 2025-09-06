@@ -19,7 +19,7 @@ CHROMA_DB_PATH = os.getenv("CHROMA_DB_PATH", "./chroma_db")
 CHROMA_COLLECTION = os.getenv("CHROMA_COLLECTION", "knowledge_base")
 
 # RAG behavior
-ANSWER_MIN_CONF = float(os.getenv("ANSWER_MIN_CONF", "0.25"))
+ANSWER_MIN_CONF = float(os.getenv("ANSWER_MIN_CONF", "0.20"))
 MAX_CHUNKS = int(os.getenv("MAX_CHUNKS", "5"))
 MAX_CHARS_PER_CHUNK = int(os.getenv("MAX_CHARS_PER_CHUNK", "800"))
 
