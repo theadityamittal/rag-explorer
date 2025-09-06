@@ -118,5 +118,11 @@
     "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
     "content_hash": "f187f7fab65d392433445f50ba736ff2f78151a6aebe0cd5f9c2f597e67e4353",
     "updated_at": 1757181733
+  },
+  "https://packaging.python.org/en/latest/tutorials/installing-packages/": {
+    "etag": "W/\"a70ebfbe4e3dd0e890e68d54b313d7ad\"",
+    "last_modified": "Thu, 21 Aug 2025 21:33:20 GMT",
+    "content_hash": "61cb34d6d9684535c9f734a061a17cc8869c6f087eaa01197dac412648cfabe7",
+    "updated_at": 1757192558
   }
 }

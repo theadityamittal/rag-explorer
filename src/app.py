@@ -9,19 +9,20 @@ from src.rag import answer_question
 from src.metrics import Meter
 from src.batch import batch_ask
 from fastapi.middleware.cors import CORSMiddleware
-from src.settings import APP_NAME, APP_VERSION
+from src.settings import APP_NAME, APP_VERSION, DEFAULT_SEEDS, CRAWL_DEPTH, CRAWL_MAX_PAGES, CRAWL_SAME_DOMAIN
 from src.web_ingest import index_urls, crawl_urls
+from typing import List, Optional
 
 app = FastAPI(title=APP_NAME, version=APP_VERSION)
 
 # Optional CORS for a simple web UI later
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # tighten later
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["*"],  # tighten later
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 # meters
 ASK_METER = Meter()
@@ -29,6 +30,7 @@ SEARCH_METER = Meter()
 
 class AskRequest(BaseModel):
     question: str
+    domains: Optional[List[str]] = None
 
 class SearchRequest(BaseModel):
     query: str
@@ -80,7 +82,7 @@ def search(req: SearchRequest):
 def ask(req: AskRequest):
     t0 = time.perf_counter()
     try:
-        result = answer_question(req.question)
+        result = answer_question(req.question, domains=req.domains)  # pass through
         return result
     finally:
         ASK_METER.observe(time.perf_counter() - t0)
@@ -113,5 +115,15 @@ def crawl_depth(req: CrawlDepthRequest):
         depth=req.depth,
         max_pages=req.max_pages,
         same_domain=req.same_domain,
+    )
+    return {"result": result}
+
+@app.post("/crawl_default")
+def crawl_default():
+    result = crawl_urls(
+        seeds=DEFAULT_SEEDS,
+        depth=CRAWL_DEPTH,
+        max_pages=CRAWL_MAX_PAGES,
+        same_domain=CRAWL_SAME_DOMAIN,
     )
     return {"result": result}

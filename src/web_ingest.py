@@ -5,6 +5,7 @@ import time
 from collections import deque
 from typing import Dict, List, Tuple, Optional, Set
 from urllib.parse import urlparse, urljoin
+from src.settings import USER_AGENT as UA, ALLOW_HOSTS
 import urllib.robotparser as robotparser
 
 import requests
@@ -14,19 +15,9 @@ from src.chunker import chunk_text
 from src.embeddings import embed_texts
 from src.store import get_collection
 
-UA = "SupportDeflectBot/0.1 (+https://example.local; contact: you@example.com)"  # be polite
-
 # Cache file for freshness (ETag/Last-Modified + content_hash)
 CACHE_PATH = "./data/crawl_cache.json"
 os.makedirs(os.path.dirname(CACHE_PATH), exist_ok=True)
-
-# Allowlist of hostnames we intend to crawl
-ALLOW_HOSTS = {
-    "docs.python.org",
-    "packaging.python.org",
-    "pip.pypa.io",
-    "virtualenv.pypa.io",
-}
 
 # ---------------------- Utilities ----------------------
 
@@ -67,7 +58,7 @@ def _robots_ok(url: str) -> bool:
     rp.set_url(urljoin(host, "/robots.txt"))
     try:
         rp.read()
-        return rp.can_fetch(UA, url)
+        return rp.can_fetch(UA, url)   # use UA from settings
     except Exception:
         # If robots fails to load, be conservative and allow
         return True
@@ -148,28 +139,36 @@ def _index_single(url: str, html: str, title: str, text: str) -> int:
         coll.delete(where={"path": url})
     except Exception:
         pass
+
     chunks = chunk_text(text, chunk_size=900, overlap=150)
     if not chunks:
         return 0
+    
     vecs = embed_texts(chunks)
     ids = [f"{url}#{i}" for i in range(len(chunks))]
-    metas = [{"path": url, "title": title, "chunk_id": i} for i in range(len(chunks))]
+
+    host = urlparse(url).netloc
+    metas = [{"path": url, "title": title, "chunk_id": i, "host": host} for i in range(len(chunks))]
+    
     coll.add(documents=chunks, embeddings=vecs, metadatas=metas, ids=ids)
     return len(chunks)
 
-def index_urls(urls: List[str]) -> Dict[str, Dict[str, int]]:
-    """
-    Original one-shot indexer (no link follow). Kept for convenience.
-    """
+# index_urls(...)
+def index_urls(urls: List[str], force: bool = False) -> Dict[str, Dict[str, int]]:
     cache = _load_cache()
-    out: Dict[str, Dict[str, int]] = {}
+    out = {}
     for url in urls:
-        stats = {"fetched": 0, "chunks": 0, "replaced": 0, "errors": 0, "skipped_304": 0, "skipped_samehash": 0}
+        stats = {"fetched": 0, "chunks": 0, "replaced": 0, "errors": 0,
+                 "skipped_304": 0, "skipped_samehash": 0}
         try:
-            # Conditional fetch
             entry = cache.get(url, {})
-            resp = fetch_html(url, etag=entry.get("etag"), last_modified=entry.get("last_modified"))
-            if resp.status_code == 304:
+            # ↓ conditional fetch only if NOT force
+            resp = fetch_html(
+                url,
+                etag=None if force else entry.get("etag"),
+                last_modified=None if force else entry.get("last_modified"),
+            )
+            if not force and resp.status_code == 304:
                 stats["skipped_304"] = 1
                 out[url] = stats
                 continue
@@ -179,7 +178,8 @@ def index_urls(urls: List[str]) -> Dict[str, Dict[str, int]]:
             title, text = html_to_text(html)
             content_hash = _sha256(text)
 
-            if entry.get("content_hash") == content_hash:
+            # ↓ skip same-hash only if NOT force
+            if not force and entry.get("content_hash") == content_hash:
                 stats["skipped_samehash"] = 1
                 out[url] = stats
                 continue
@@ -189,7 +189,6 @@ def index_urls(urls: List[str]) -> Dict[str, Dict[str, int]]:
             stats["chunks"] = n
             stats["replaced"] = 1
 
-            # Update cache
             cache[url] = {
                 "etag": resp.headers.get("ETag") or resp.headers.get("Etag"),
                 "last_modified": resp.headers.get("Last-Modified"),

@@ -34,9 +34,14 @@ def upsert_chunks(
         ids = [str(uuid.uuid4()) for _ in chunks]
     coll.add(documents=chunks, metadatas=metadatas, ids=ids)
 
-def query_by_embedding(query_embedding: List[float], k: int = 5):
+def query_by_embedding(query_embedding: List[float], k: int = 5, where: Optional[dict] = None):
     coll = get_collection()
-    res = coll.query(query_embeddings=[query_embedding], n_results=k, include=["documents", "metadatas", "distances"])
+    res = coll.query(
+        query_embeddings=[query_embedding],
+        n_results=k,
+        include=["documents", "metadatas", "distances"],
+        where=where  # NEW
+    )
     # Standardize result shape
     out = []
     if res and res.get("documents"):

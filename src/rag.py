@@ -1,6 +1,6 @@
 import os
 import re
-from typing import Dict, List
+from typing import Dict, List, Optional
 from src.retrieve import retrieve
 from src.llm_local import llm_chat
 from src.settings import ANSWER_MIN_CONF as MIN_CONF, MAX_CHUNKS, MAX_CHARS_PER_CHUNK
@@ -107,8 +107,8 @@ def _to_citations(hits: List[Dict], take: int = 3) -> List[Dict]:
         })
     return out
 
-def answer_question(question: str, k: int = MAX_CHUNKS) -> Dict:
-    hits = retrieve(question, k=k)
+def answer_question(question: str, k: int = MAX_CHUNKS, domains: Optional[List[str]] = None) -> Dict:
+    hits = retrieve(question, k=k, domains=domains)
 
     # --- Compute final confidence from distance + keyword overlap
     conf = _confidence(hits, question)
