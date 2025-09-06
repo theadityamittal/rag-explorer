@@ -8,8 +8,19 @@ from src.retrieve import retrieve
 from src.rag import answer_question
 from src.metrics import Meter
 from src.batch import batch_ask
+from fastapi.middleware.cors import CORSMiddleware
+from src.settings import APP_NAME, APP_VERSION
 
-app = FastAPI(title="Support Deflection Bot", version="0.0.5")
+app = FastAPI(title=APP_NAME, version=APP_VERSION)
+
+# Optional CORS for a simple web UI later
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # tighten later
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # meters
 ASK_METER = Meter()

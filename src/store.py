@@ -3,9 +3,10 @@ import uuid
 import chromadb
 from typing import List, Dict, Tuple, Optional
 from chromadb.config import Settings
+from src.settings import CHROMA_DB_PATH as _DB_PATH, CHROMA_COLLECTION as _COLL_NAME
 
-_DB_PATH = os.getenv("CHROMA_DB_PATH", "./chroma_db")
-_COLL_NAME = os.getenv("CHROMA_COLLECTION", "knowledge_base")
+_DB_PATH = _DB_PATH
+_COLL_NAME = _COLL_NAME
 
 def get_client() -> chromadb.PersistentClient:
     os.makedirs(_DB_PATH, exist_ok=True)

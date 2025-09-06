@@ -3,17 +3,18 @@ import re
 from typing import Dict, List
 from src.retrieve import retrieve
 from src.llm_local import llm_chat
+from src.settings import ANSWER_MIN_CONF as MIN_CONF, MAX_CHUNKS, MAX_CHARS_PER_CHUNK
 
 # --- Tunable knobs ---
-MAX_CHUNKS = 5
-MAX_CHARS_PER_CHUNK = 800
+MAX_CHUNKS = MAX_CHUNKS
+MAX_CHARS_PER_CHUNK = MAX_CHARS_PER_CHUNK
 
 # Distance thresholds (lenient): we’ll still compute a separate confidence score below
 STRICT_DIST = 1.20
 LOOSE_DIST  = 1.40
 
 # Refuse if final confidence < this threshold (override via env)
-MIN_CONF = float(os.getenv("ANSWER_MIN_CONF", "0.25"))
+MIN_CONF = MIN_CONF
 
 SYSTEM_PROMPT = (
     "You are a support deflection assistant for product documentation. "

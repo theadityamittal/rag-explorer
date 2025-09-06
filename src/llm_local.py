@@ -1,7 +1,8 @@
 import os
 import ollama
+from src.settings import OLLAMA_MODEL  # <- add
 
-MODEL_NAME = os.getenv("OLLAMA_MODEL", "llama3.1")
+MODEL_NAME = OLLAMA_MODEL
 
 def llm_chat(system_prompt: str, user_prompt: str) -> str:
     """

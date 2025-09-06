@@ -1,8 +1,9 @@
 import os
 import ollama
 from typing import List
+from src.settings import OLLAMA_EMBED_MODEL as EMBED_MODEL
 
-EMBED_MODEL = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
+EMBED_MODEL = EMBED_MODEL
 
 def embed_texts(texts: List[str]) -> List[List[float]]:
     """
