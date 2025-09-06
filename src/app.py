@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from src.llm_local import llm_chat, llm_echo
 
-app = FastAPI(title="Support Deflection Bot", version="0.0.1")
+app = FastAPI(title="Support Deflection Bot", version="0.0.2")
 
 class AskRequest(BaseModel):
     question: str
@@ -18,3 +19,8 @@ def ask(req: AskRequest):
         "citations": [],
         "confidence": 0.0
     }
+
+@app.get("/llm_ping")
+def llm_ping():
+    text = llm_echo("PONG")
+    return {"model": "ollama", "reply": text}
