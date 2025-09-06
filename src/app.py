@@ -7,6 +7,7 @@ from src.ingest import ingest_folder
 from src.retrieve import retrieve
 from src.rag import answer_question
 from src.metrics import Meter
+from src.batch import batch_ask
 
 app = FastAPI(title="Support Deflection Bot", version="0.0.5")
 
@@ -20,6 +21,9 @@ class AskRequest(BaseModel):
 class SearchRequest(BaseModel):
     query: str
     k: int = 5
+
+class BatchAskRequest(BaseModel):
+    questions: List[str]
 
 @app.get("/healthz")
 def healthz():
@@ -72,3 +76,7 @@ def metrics():
 def llm_ping():
     text = llm_echo("PONG")
     return {"model": "ollama", "reply": text}
+
+@app.post("/batch_ask")
+def batch_ask_endpoint(req: BatchAskRequest):
+    return {"results": batch_ask(req.questions)}

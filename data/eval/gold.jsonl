@@ -1,0 +1,4 @@
+{"question":"How do I enable debug mode?","type":"answer","must_include":["tool_debug=1","--debug"]}
+{"question":"Where are logs stored?","type":"answer","must_include":["~/.tool/logs","tool_log_dir"]}
+{"question":"How do I reset my configuration?","type":"answer","must_include":["~/.tool/config.yml","tool init"]}
+{"question":"How do I reset my database password?","type":"refusal"}
