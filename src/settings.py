@@ -43,3 +43,7 @@ DEFAULT_SEEDS = _csv(
 CRAWL_DEPTH = int(os.getenv("CRAWL_DEPTH", "1"))
 CRAWL_MAX_PAGES = int(os.getenv("CRAWL_MAX_PAGES", "40"))
 CRAWL_SAME_DOMAIN = os.getenv("CRAWL_SAME_DOMAIN", "true").lower() == "true"
+
+# File paths
+CRAWL_CACHE_PATH = os.getenv("CRAWL_CACHE_PATH", "./data/crawl_cache.json")
+DOCS_FOLDER = os.getenv("DOCS_FOLDER", "./docs")

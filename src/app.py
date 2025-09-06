@@ -1,6 +1,6 @@
 import time
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException, status
+from pydantic import BaseModel, Field, validator
 from typing import List
 from src.llm_local import llm_chat, llm_echo
 from src.ingest import ingest_folder
@@ -9,7 +9,7 @@ from src.rag import answer_question
 from src.metrics import Meter
 from src.batch import batch_ask
 from fastapi.middleware.cors import CORSMiddleware
-from src.settings import APP_NAME, APP_VERSION, DEFAULT_SEEDS, CRAWL_DEPTH, CRAWL_MAX_PAGES, CRAWL_SAME_DOMAIN
+from src.settings import APP_NAME, APP_VERSION, DEFAULT_SEEDS, CRAWL_DEPTH, CRAWL_MAX_PAGES, CRAWL_SAME_DOMAIN, DOCS_FOLDER
 from src.web_ingest import index_urls, crawl_urls
 from typing import List, Optional
 
@@ -29,24 +29,69 @@ ASK_METER = Meter()
 SEARCH_METER = Meter()
 
 class AskRequest(BaseModel):
-    question: str
-    domains: Optional[List[str]] = None
+    question: str = Field(..., min_length=1, max_length=1000, description="Question to ask")
+    domains: Optional[List[str]] = Field(None, max_items=10, description="Optional domains to filter")
+    
+    @validator('question')
+    def validate_question(cls, v):
+        if not v.strip():
+            raise ValueError('Question cannot be empty')
+        return v.strip()
 
 class SearchRequest(BaseModel):
-    query: str
-    k: int = 5
+    query: str = Field(..., min_length=1, max_length=500, description="Search query")
+    k: int = Field(5, ge=1, le=20, description="Number of results to return")
+    
+    @validator('query')
+    def validate_query(cls, v):
+        if not v.strip():
+            raise ValueError('Query cannot be empty')
+        return v.strip()
 
 class BatchAskRequest(BaseModel):
-    questions: List[str]
+    questions: List[str] = Field(..., min_items=1, max_items=10, description="List of questions")
+    
+    @validator('questions')
+    def validate_questions(cls, v):
+        if not v:
+            raise ValueError('Questions list cannot be empty')
+        validated = []
+        for q in v:
+            if not q.strip():
+                raise ValueError('Questions cannot be empty')
+            if len(q) > 1000:
+                raise ValueError('Question too long (max 1000 characters)')
+            validated.append(q.strip())
+        return validated
 
 class CrawlRequest(BaseModel):
-    urls: List[str]
+    urls: List[str] = Field(..., min_items=1, max_items=50, description="URLs to crawl")
+    
+    @validator('urls')
+    def validate_urls(cls, v):
+        validated = []
+        for url in v:
+            url = url.strip()
+            if not url.startswith(('http://', 'https://')):
+                raise ValueError('URLs must start with http:// or https://')
+            validated.append(url)
+        return validated
 
 class CrawlDepthRequest(BaseModel):
-    seeds: List[str]
-    depth: int = 1
-    max_pages: int = 30
-    same_domain: bool = True
+    seeds: List[str] = Field(..., min_items=1, max_items=10, description="Seed URLs")
+    depth: int = Field(1, ge=1, le=3, description="Crawl depth")
+    max_pages: int = Field(30, ge=1, le=100, description="Maximum pages to crawl")
+    same_domain: bool = Field(True, description="Restrict to same domain")
+    
+    @validator('seeds')
+    def validate_seeds(cls, v):
+        validated = []
+        for url in v:
+            url = url.strip()
+            if not url.startswith(('http://', 'https://')):
+                raise ValueError('Seed URLs must start with http:// or https://')
+            validated.append(url)
+        return validated
 
 @app.get("/healthz")
 def healthz():
@@ -54,8 +99,15 @@ def healthz():
 
 @app.post("/reindex")
 def reindex():
-    n = ingest_folder("./docs")
-    return {"chunks_indexed": n}
+    try:
+        n = ingest_folder(DOCS_FOLDER)
+        return {"chunks_indexed": n}
+    except ConnectionError:
+        raise HTTPException(status_code=503, detail="Database connection failed")
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Documentation folder not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Indexing failed")
 
 @app.post("/search")
 def search(req: SearchRequest):
@@ -75,6 +127,10 @@ def search(req: SearchRequest):
             ],
         }
         return out
+    except ConnectionError:
+        raise HTTPException(status_code=503, detail="Database connection failed")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal server error")
     finally:
         SEARCH_METER.observe(time.perf_counter() - t0)
 
@@ -82,8 +138,12 @@ def search(req: SearchRequest):
 def ask(req: AskRequest):
     t0 = time.perf_counter()
     try:
-        result = answer_question(req.question, domains=req.domains)  # pass through
+        result = answer_question(req.question, domains=req.domains)
         return result
+    except ConnectionError:
+        raise HTTPException(status_code=503, detail="Database or LLM connection failed")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal server error")
     finally:
         ASK_METER.observe(time.perf_counter() - t0)
 
@@ -97,33 +157,56 @@ def metrics():
 
 @app.get("/llm_ping")
 def llm_ping():
-    text = llm_echo("PONG")
-    return {"model": "ollama", "reply": text}
+    try:
+        text = llm_echo("PONG")
+        return {"model": "ollama", "reply": text}
+    except Exception as e:
+        raise HTTPException(status_code=503, detail="LLM service unavailable")
 
 @app.post("/batch_ask")
 def batch_ask_endpoint(req: BatchAskRequest):
-    return {"results": batch_ask(req.questions)}
+    try:
+        return {"results": batch_ask(req.questions)}
+    except ConnectionError:
+        raise HTTPException(status_code=503, detail="Database or LLM connection failed")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Batch processing failed")
 
 @app.post("/crawl")
 def crawl(req: CrawlRequest):
-    return {"result": index_urls(req.urls)}
+    try:
+        return {"result": index_urls(req.urls)}
+    except ConnectionError:
+        raise HTTPException(status_code=503, detail="Database connection failed")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Crawl operation failed")
 
 @app.post("/crawl_depth")
 def crawl_depth(req: CrawlDepthRequest):
-    result = crawl_urls(
-        seeds=req.seeds,
-        depth=req.depth,
-        max_pages=req.max_pages,
-        same_domain=req.same_domain,
-    )
-    return {"result": result}
+    try:
+        result = crawl_urls(
+            seeds=req.seeds,
+            depth=req.depth,
+            max_pages=req.max_pages,
+            same_domain=req.same_domain,
+        )
+        return {"result": result}
+    except ConnectionError:
+        raise HTTPException(status_code=503, detail="Database connection failed")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Depth crawl operation failed")
 
 @app.post("/crawl_default")
 def crawl_default():
-    result = crawl_urls(
-        seeds=DEFAULT_SEEDS,
-        depth=CRAWL_DEPTH,
-        max_pages=CRAWL_MAX_PAGES,
-        same_domain=CRAWL_SAME_DOMAIN,
-    )
-    return {"result": result}
+    try:
+        result = crawl_urls(
+            seeds=DEFAULT_SEEDS,
+            depth=CRAWL_DEPTH,
+            max_pages=CRAWL_MAX_PAGES,
+            same_domain=CRAWL_SAME_DOMAIN,
+        )
+        return {"result": result}
+    except ConnectionError:
+        raise HTTPException(status_code=503, detail="Database connection failed")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Default crawl operation failed")

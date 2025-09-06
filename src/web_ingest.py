@@ -1,22 +1,24 @@
 import hashlib
 import json
+import logging
 import os
 import time
+import urllib.error
 from collections import deque
 from typing import Dict, List, Tuple, Optional, Set
 from urllib.parse import urlparse, urljoin
-from src.settings import USER_AGENT as UA, ALLOW_HOSTS
+from src.settings import USER_AGENT as UA, ALLOW_HOSTS, CRAWL_CACHE_PATH
 import urllib.robotparser as robotparser
 
 import requests
-from bs4 import BeautifulSoup, NavigableString, Tag
+from bs4 import BeautifulSoup, Tag
 
 from src.chunker import chunk_text
 from src.embeddings import embed_texts
 from src.store import get_collection
 
 # Cache file for freshness (ETag/Last-Modified + content_hash)
-CACHE_PATH = "./data/crawl_cache.json"
+CACHE_PATH = CRAWL_CACHE_PATH
 os.makedirs(os.path.dirname(CACHE_PATH), exist_ok=True)
 
 # ---------------------- Utilities ----------------------
@@ -59,8 +61,11 @@ def _robots_ok(url: str) -> bool:
     try:
         rp.read()
         return rp.can_fetch(UA, url)   # use UA from settings
-    except Exception:
-        # If robots fails to load, be conservative and allow
+    except (urllib.error.URLError, urllib.error.HTTPError, requests.RequestException):
+        # If robots.txt fails to load, be conservative and allow
+        return True
+    except Exception as e:
+        logging.warning(f"Unexpected error checking robots.txt for {url}: {e}")
         return True
 
 # ---------------------- HTML processing ----------------------
@@ -195,7 +200,11 @@ def index_urls(urls: List[str], force: bool = False) -> Dict[str, Dict[str, int]
                 "content_hash": content_hash,
                 "updated_at": int(time.time()),
             }
-        except Exception:
+        except (requests.RequestException, ConnectionError, TimeoutError) as e:
+            logging.error(f"Failed to fetch/index {url}: {e}")
+            stats["errors"] += 1
+        except Exception as e:
+            logging.error(f"Unexpected error processing {url}: {e}")
             stats["errors"] += 1
         out[url] = stats
         time.sleep(0.3)
@@ -276,7 +285,12 @@ def crawl_urls(
                     if link not in visited:
                         q.append((link, d + 1))
 
-        except Exception:
+        except (requests.RequestException, ConnectionError, TimeoutError) as e:
+            logging.error(f"Failed to crawl {url}: {e}")
+            stats["errors"] += 1
+            out[url] = stats
+        except Exception as e:
+            logging.error(f"Unexpected error crawling {url}: {e}")
             stats["errors"] += 1
             out[url] = stats
 

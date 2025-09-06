@@ -6,8 +6,6 @@ from src.llm_local import llm_chat
 from src.settings import ANSWER_MIN_CONF as MIN_CONF, MAX_CHUNKS, MAX_CHARS_PER_CHUNK
 
 # --- Tunable knobs ---
-MAX_CHUNKS = MAX_CHUNKS
-MAX_CHARS_PER_CHUNK = MAX_CHARS_PER_CHUNK
 
 # Distance thresholds (lenient): we’ll still compute a separate confidence score below
 STRICT_DIST = 1.20
