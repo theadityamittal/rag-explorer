@@ -5,12 +5,6 @@ from src.retrieve import retrieve
 from src.llm_local import llm_chat
 from src.settings import ANSWER_MIN_CONF as MIN_CONF, MAX_CHUNKS, MAX_CHARS_PER_CHUNK
 
-# --- Tunable knobs ---
-
-# Distance thresholds (lenient): we’ll still compute a separate confidence score below
-STRICT_DIST = 1.20
-LOOSE_DIST  = 1.40
-
 # Refuse if final confidence < this threshold (override via env)
 MIN_CONF = MIN_CONF
 
@@ -66,15 +60,6 @@ def _overlap_ratio(question: str, text: str) -> float:
     denom = min(5, len(q))
     return min(1.0, inter / max(1, denom))
 
-def _best_distance(hits: List[Dict]):
-    ds = [h.get("distance") for h in hits if isinstance(h.get("distance"), (int, float))]
-    return min(ds) if ds else None
-
-def _avg_top3_distance(hits: List[Dict]):
-    ds = [h.get("distance") for h in hits if isinstance(h.get("distance"), (int, float))]
-    ds = sorted(ds)[:3]
-    return (sum(ds)/len(ds)) if ds else None
-
 def _format_context(hits: List[Dict]) -> str:
     lines = []
     for i, h in enumerate(hits[:MAX_CHUNKS], start=1):
@@ -82,16 +67,6 @@ def _format_context(hits: List[Dict]) -> str:
         path = h["meta"].get("path", "unknown")
         lines.append(f"[{i}] ({path})\n{preview}")
     return "\n\n".join(lines)
-
-def _should_refuse_by_distance(hits: List[Dict]) -> bool:
-    if not hits:
-        return True
-    b = _best_distance(hits)
-    a3 = _avg_top3_distance(hits)
-    if b is not None and b > STRICT_DIST:
-        if a3 is None or a3 > LOOSE_DIST:
-            return True
-    return False
 
 def _similarity_from_distance(d) -> float:
     # map distance to (0,1]; smaller distance → closer to 1.0
@@ -128,8 +103,6 @@ def answer_question(question: str, k: int = MAX_CHUNKS, domains: Optional[List[s
     # --- Compute final confidence from distance + keyword overlap
     conf = _confidence(hits, question)
 
-    # --- CONFIDENCE-ONLY GATING (remove the distance hard gate)
-    # Old behavior: refuse if (_should_refuse_by_distance(hits) OR conf < MIN_CONF)
     # New behavior: refuse ONLY if conf < MIN_CONF.
     if conf < MIN_CONF:
         return {
