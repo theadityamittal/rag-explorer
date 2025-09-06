@@ -10,6 +10,7 @@ from src.metrics import Meter
 from src.batch import batch_ask
 from fastapi.middleware.cors import CORSMiddleware
 from src.settings import APP_NAME, APP_VERSION
+from src.web_ingest import index_urls, crawl_urls
 
 app = FastAPI(title=APP_NAME, version=APP_VERSION)
 
@@ -35,6 +36,15 @@ class SearchRequest(BaseModel):
 
 class BatchAskRequest(BaseModel):
     questions: List[str]
+
+class CrawlRequest(BaseModel):
+    urls: List[str]
+
+class CrawlDepthRequest(BaseModel):
+    seeds: List[str]
+    depth: int = 1
+    max_pages: int = 30
+    same_domain: bool = True
 
 @app.get("/healthz")
 def healthz():
@@ -91,3 +101,17 @@ def llm_ping():
 @app.post("/batch_ask")
 def batch_ask_endpoint(req: BatchAskRequest):
     return {"results": batch_ask(req.questions)}
+
+@app.post("/crawl")
+def crawl(req: CrawlRequest):
+    return {"result": index_urls(req.urls)}
+
+@app.post("/crawl_depth")
+def crawl_depth(req: CrawlDepthRequest):
+    result = crawl_urls(
+        seeds=req.seeds,
+        depth=req.depth,
+        max_pages=req.max_pages,
+        same_domain=req.same_domain,
+    )
+    return {"result": result}

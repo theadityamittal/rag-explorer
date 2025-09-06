@@ -1,0 +1,122 @@
+{
+  "https://docs.python.org/3/faq/index.html": {
+    "etag": "\"68bbe72d-3786\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "aad24b6baa8dbdc35097cdaf730ce972180f36a2e0a86252af4e787e980c3f17",
+    "updated_at": 1757181700
+  },
+  "https://docs.python.org/3/library/venv.html": {
+    "etag": "\"68bbe72d-18f18\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "3cf6bf1da1880eb8b58cebba394928a6c4187c1e135d8cd82523537b74f57dfc",
+    "updated_at": 1757181702
+  },
+  "https://docs.python.org/3/faq/programming.html": {
+    "etag": "\"68bbe72d-3f476\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "8f33f470ec1b5d60ac08ad434201de152bedabbf2f8b401e4022f014bad7056b",
+    "updated_at": 1757181708
+  },
+  "https://docs.python.org/3/faq/gui.html": {
+    "etag": "\"68bbe72d-4e15\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "9e7d899d6bd1d130b6a1cc601c86ad46fdfec5a15e41f3e860044e0684290c64",
+    "updated_at": 1757181709
+  },
+  "https://docs.python.org/license.html": {
+    "etag": "\"68bbe72d-1495d\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "b22b6f7cbd38e936818440ffacd8dcede76ded5272b7d8ddba3f54a3d455d6ef",
+    "updated_at": 1757181712
+  },
+  "https://docs.python.org/3/copyright.html": {
+    "etag": "\"68bbe72d-33d0\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "d35c2e833db99bdf74be6a25ad62f08ff6ac1e4e75e012572d0100daf094d0bc",
+    "updated_at": 1757181713
+  },
+  "https://docs.python.org/3/faq/library.html": {
+    "etag": "\"68bbe72d-15574\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "43f1ed57611949c795fe5f4b9976764decd9f2639bb0fbb6f60760fa78e9ea6a",
+    "updated_at": 1757181715
+  },
+  "https://docs.python.org/bugs.html": {
+    "etag": "\"68bbe72d-4f43\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "15549358b11bba02fc5bf414e2a566309ee35518da11c3d42a9f7215a6776811",
+    "updated_at": 1757181716
+  },
+  "https://docs.python.org/3/faq/extending.html": {
+    "etag": "\"68bbe72d-c777\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "1fabda837a8b23eb0d507867b67154a8f4f9fdab358100a6a17c54f6ae27c1a0",
+    "updated_at": 1757181717
+  },
+  "https://docs.python.org/3/faq/installed.html": {
+    "etag": "\"68bbe72d-4318\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "54d2598929525bb18311364cba37c475d516932ed00511632efa9e27c6df1880",
+    "updated_at": 1757181718
+  },
+  "https://docs.python.org/3/index.html": {
+    "etag": "\"68bbe72d-45d2\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "adbd6ba0ec601f17550a77c8171e8255c1d6e6598ebba60b4d360aa221da9f93",
+    "updated_at": 1757181718
+  },
+  "https://docs.python.org/3/genindex.html": {
+    "etag": "\"68bbe72d-2b27\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "0c6f133f1d79da1556df1974114529545c9e98bd68bbabf3174cd7e401663473",
+    "updated_at": 1757181719
+  },
+  "https://docs.python.org/3/faq/windows.html": {
+    "etag": "\"68bbe72d-9934\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "d0280438d37796b3c5eab6eb4338c6fe0e39b44aedf8ae536b62a00bde7d054b",
+    "updated_at": 1757181720
+  },
+  "https://docs.python.org/3/howto/free-threading-extensions.html": {
+    "etag": "\"68bbe72d-b3d0\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "04359ab9a04419d812435a329c79d9c9d7dfe39c99730d7327f7b28debab1c4b",
+    "updated_at": 1757181722
+  },
+  "https://docs.python.org/3/faq/design.html": {
+    "etag": "\"68bbe72d-17c47\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "1a8276b462d5371ded5a86711f6514a980b0f18d9042228b04bc1fe2802cefc1",
+    "updated_at": 1757181724
+  },
+  "https://docs.python.org/3/faq/general.html": {
+    "etag": "\"68bbe72d-bebe\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "ef1df51833f64797da62579db17a4c3ab168b155f44f700192cddd2704b612e4",
+    "updated_at": 1757181726
+  },
+  "https://docs.python.org/3/py-modindex.html": {
+    "etag": "\"68bbe72d-1517c\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "9548904bfcfb0bf6f62a4a230be60831a7583d1ea3ae74fe2c383070abf6e10c",
+    "updated_at": 1757181727
+  },
+  "https://docs.python.org/3/bugs.html": {
+    "etag": "\"68bbe72d-4f43\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "15549358b11bba02fc5bf414e2a566309ee35518da11c3d42a9f7215a6776811",
+    "updated_at": 1757181728
+  },
+  "https://docs.python.org/3/using/windows.html": {
+    "etag": "\"68bbe72d-1dfc5\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "9e7e933036288b4bf7b0afeca98b7916969f9679b2e23d34aa276cfea0d3f18c",
+    "updated_at": 1757181732
+  },
+  "https://docs.python.org/3/library/intro.html": {
+    "etag": "\"68bbe72d-6b8b\"",
+    "last_modified": "Sat, 06 Sep 2025 07:47:57 GMT",
+    "content_hash": "f187f7fab65d392433445f50ba736ff2f78151a6aebe0cd5f9c2f597e67e4353",
+    "updated_at": 1757181733
+  }
+}

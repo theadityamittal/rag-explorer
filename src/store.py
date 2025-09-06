@@ -14,7 +14,11 @@ def get_client() -> chromadb.PersistentClient:
 
 def get_collection(client=None):
     client = client or get_client()
-    return client.get_or_create_collection(name=_COLL_NAME)
+    # IMPORTANT: set HNSW space to cosine for text embeddings
+    return client.get_or_create_collection(
+        name=_COLL_NAME,
+        metadata={"hnsw:space": "cosine"}
+    )
 
 def upsert_chunks(
     chunks: List[str],
@@ -49,4 +53,8 @@ def reset_collection():
         client.delete_collection(_COLL_NAME)
     except Exception:
         pass
-    return client.get_or_create_collection(_COLL_NAME)
+    # Recreate with cosine space
+    return client.get_or_create_collection(
+        name=_COLL_NAME,
+        metadata={"hnsw:space": "cosine"}
+    )
