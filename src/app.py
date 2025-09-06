@@ -4,8 +4,9 @@ from typing import List
 from src.llm_local import llm_chat, llm_echo
 from src.ingest import ingest_folder
 from src.retrieve import retrieve
+from src.rag import answer_question  # <-- NEW
 
-app = FastAPI(title="Support Deflection Bot", version="0.0.3")
+app = FastAPI(title="Support Deflection Bot", version="0.0.4")
 
 class AskRequest(BaseModel):
     question: str
@@ -42,12 +43,8 @@ def search(req: SearchRequest):
 
 @app.post("/ask")
 def ask(req: AskRequest):
-    # We'll plug full RAG here in the next step
-    return {
-        "answer": "Retrieval not yet used here—coming next!",
-        "citations": [],
-        "confidence": 0.0
-    }
+    result = answer_question(req.question)
+    return result
 
 @app.get("/llm_ping")
 def llm_ping():
