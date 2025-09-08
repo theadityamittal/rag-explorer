@@ -1,5 +1,7 @@
 import os
+
 from dotenv import load_dotenv
+
 load_dotenv()
 
 # General
@@ -23,22 +25,27 @@ ANSWER_MIN_CONF = float(os.getenv("ANSWER_MIN_CONF", "0.20"))
 MAX_CHUNKS = int(os.getenv("MAX_CHUNKS", "5"))
 MAX_CHARS_PER_CHUNK = int(os.getenv("MAX_CHARS_PER_CHUNK", "800"))
 
+
 def _csv(name: str, default: str = ""):
     val = os.getenv(name, default)
     return [s.strip() for s in val.split(",") if s.strip()]
 
+
 # Crawl config
 USER_AGENT = os.getenv(
     "CRAWL_USER_AGENT",
-    "SupportDeflectBot/0.1 (+https://example.local; contact: you@example.com)"
+    "SupportDeflectBot/0.1 (+https://example.local; contact: you@example.com)",
 )
-ALLOW_HOSTS = set(_csv(
-    "ALLOW_HOSTS",
-    "docs.python.org,packaging.python.org,pip.pypa.io,virtualenv.pypa.io"
-))
+ALLOW_HOSTS = set(
+    _csv(
+        "ALLOW_HOSTS",
+        "docs.python.org,packaging.python.org,pip.pypa.io,virtualenv.pypa.io",
+    )
+)
 DEFAULT_SEEDS = _csv(
     "DEFAULT_SEEDS",
-    "https://docs.python.org/3/faq/index.html,https://docs.python.org/3/library/venv.html"
+    "https://docs.python.org/3/faq/index.html,"
+    "https://docs.python.org/3/library/venv.html",
 )
 CRAWL_DEPTH = int(os.getenv("CRAWL_DEPTH", "1"))
 CRAWL_MAX_PAGES = int(os.getenv("CRAWL_MAX_PAGES", "40"))

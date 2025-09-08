@@ -1,5 +1,5 @@
-import time
 from collections import deque
+
 
 class Meter:
     def __init__(self, maxlen: int = 200):
@@ -15,12 +15,14 @@ class Meter:
         if not arr:
             return {"count": self.count, "p50_ms": 0, "p95_ms": 0}
         arr.sort()
+
         def pct(p):
             # nearest-rank percentile
             if len(arr) == 1:
                 return arr[0]
-            k = max(0, min(len(arr)-1, round((p/100.0) * (len(arr)-1))))
+            k = max(0, min(len(arr) - 1, round((p / 100.0) * (len(arr) - 1))))
             return arr[int(k)]
+
         return {
             "count": self.count,
             "p50_ms": round(pct(50) * 1000, 2),

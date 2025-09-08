@@ -1,11 +1,13 @@
-import os
-import json
-import time
 import csv
-from typing import List, Dict
+import json
+import os
+import time
+from typing import Dict, List
+
 from src.utils.batch import batch_ask
 
 REFUSAL_SENTENCE = "I don’t have enough information in the docs to answer that."
+
 
 def load_gold(path: str) -> List[Dict]:
     items = []
@@ -17,8 +19,10 @@ def load_gold(path: str) -> List[Dict]:
             items.append(json.loads(line))
     return items
 
+
 def normalize(s: str) -> str:
     return (s or "").strip().lower()
+
 
 def score_answer(ans: str, must_include: List[str]) -> bool:
     a = normalize(ans)
@@ -26,6 +30,7 @@ def score_answer(ans: str, must_include: List[str]) -> bool:
         if normalize(needle) in a:
             return True
     return False
+
 
 def run_eval(gold_path: str, out_csv: str = None) -> Dict:
     gold = load_gold(gold_path)
@@ -70,14 +75,16 @@ def run_eval(gold_path: str, out_csv: str = None) -> Dict:
             if passed and len(cits) > 0:
                 grounded_ok += 1
 
-        rows.append({
-            "question": q,
-            "type": typ,
-            "answer": ans.replace("\n"," "),
-            "confidence": conf,
-            "citations": len(cits),
-            "status": status
-        })
+        rows.append(
+            {
+                "question": q,
+                "type": typ,
+                "answer": ans.replace("\n", " "),
+                "confidence": conf,
+                "citations": len(cits),
+                "status": status,
+            }
+        )
 
     summary = {
         "total": total,
@@ -85,7 +92,9 @@ def run_eval(gold_path: str, out_csv: str = None) -> Dict:
         "answer_cases": answer_cases,
         "answer_accuracy": round(answer_ok / answer_cases, 3) if answer_cases else 0.0,
         "refusal_cases": refusal_cases,
-        "refusal_accuracy": round(refusal_ok / refusal_cases, 3) if refusal_cases else 0.0,
+        "refusal_accuracy": (
+            round(refusal_ok / refusal_cases, 3) if refusal_cases else 0.0
+        ),
         "grounded_answer_ratio": round(grounded_ok / max(1, answer_ok), 3),
     }
 
@@ -98,6 +107,7 @@ def run_eval(gold_path: str, out_csv: str = None) -> Dict:
             w.writerows(rows)
 
     return {"summary": summary, "rows": rows}
+
 
 if __name__ == "__main__":
     ts = int(time.time())

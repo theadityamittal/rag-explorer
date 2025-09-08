@@ -1,5 +1,7 @@
-from typing import List, Dict
+from typing import Dict, List
+
 from src.core.rag import answer_question
+
 
 def batch_ask(questions: List[str]) -> List[Dict]:
     """

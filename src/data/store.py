@@ -1,10 +1,12 @@
+import logging
 import os
 import uuid
+from typing import Dict, List, Optional
+
 import chromadb
-import logging
-from typing import List, Dict, Tuple, Optional
-from chromadb.config import Settings
-from src.utils.settings import CHROMA_DB_PATH, CHROMA_COLLECTION
+
+from src.utils.settings import CHROMA_COLLECTION, CHROMA_DB_PATH
+
 
 def get_client() -> chromadb.PersistentClient:
     try:
@@ -14,17 +16,18 @@ def get_client() -> chromadb.PersistentClient:
         logging.error(f"Failed to create ChromaDB client: {e}")
         raise ConnectionError(f"Database connection failed: {e}") from e
 
+
 def get_collection(client=None):
     try:
         client = client or get_client()
         # IMPORTANT: set HNSW space to cosine for text embeddings
         return client.get_or_create_collection(
-            name=CHROMA_COLLECTION,
-            metadata={"hnsw:space": "cosine"}
+            name=CHROMA_COLLECTION, metadata={"hnsw:space": "cosine"}
         )
     except Exception as e:
         logging.error(f"Failed to get/create collection '{CHROMA_COLLECTION}': {e}")
         raise ConnectionError(f"Database collection access failed: {e}") from e
+
 
 def upsert_chunks(
     chunks: List[str],
@@ -44,27 +47,31 @@ def upsert_chunks(
         logging.error(f"Failed to upsert {len(chunks)} chunks: {e}")
         raise ConnectionError(f"Failed to store chunks in database: {e}") from e
 
-def query_by_embedding(query_embedding: List[float], k: int = 5, where: Optional[dict] = None):
+
+def query_by_embedding(
+    query_embedding: List[float], k: int = 5, where: Optional[dict] = None
+):
     try:
         coll = get_collection()
         res = coll.query(
             query_embeddings=[query_embedding],
             n_results=k,
             include=["documents", "metadatas", "distances"],
-            where=where
+            where=where,
         )
         # Standardize result shape
         out = []
         if res and res.get("documents"):
             docs = res["documents"][0]
             metas = res["metadatas"][0]
-            dists = res.get("distances", [[None]*len(docs)])[0]
+            dists = res.get("distances", [[None] * len(docs)])[0]
             for doc, meta, dist in zip(docs, metas, dists):
                 out.append({"text": doc, "meta": meta, "distance": dist})
         return out
     except Exception as e:
         logging.error(f"Failed to query embeddings: {e}")
         raise ConnectionError(f"Database query failed: {e}") from e
+
 
 def reset_collection():
     client = get_client()
@@ -75,6 +82,5 @@ def reset_collection():
         pass
     # Recreate with cosine space
     return client.get_or_create_collection(
-        name=CHROMA_COLLECTION,
-        metadata={"hnsw:space": "cosine"}
+        name=CHROMA_COLLECTION, metadata={"hnsw:space": "cosine"}
     )

@@ -1,9 +1,13 @@
-import os
 import re
 from typing import Dict, List, Optional
-from src.core.retrieve import retrieve
+
 from src.core.llm_local import llm_chat
-from src.utils.settings import ANSWER_MIN_CONF as MIN_CONF, MAX_CHUNKS, MAX_CHARS_PER_CHUNK
+from src.core.retrieve import retrieve
+from src.utils.settings import ANSWER_MIN_CONF as MIN_CONF
+from src.utils.settings import (
+    MAX_CHARS_PER_CHUNK,
+    MAX_CHUNKS,
+)
 
 # Refuse if final confidence < this threshold (override via env)
 MIN_CONF = MIN_CONF
@@ -19,26 +23,63 @@ SYSTEM_PROMPT = (
 )
 
 _STOP = {
-    "the","a","an","and","or","if","to","of","for","in","on","at","by","with",
-    "is","are","be","was","were","it","this","that","as","from","into","out",
-    "do","does","did","how","what","why","where","when","which","who","whom",
+    "the",
+    "a",
+    "an",
+    "and",
+    "or",
+    "if",
+    "to",
+    "of",
+    "for",
+    "in",
+    "on",
+    "at",
+    "by",
+    "with",
+    "is",
+    "are",
+    "be",
+    "was",
+    "were",
+    "it",
+    "this",
+    "that",
+    "as",
+    "from",
+    "into",
+    "out",
+    "do",
+    "does",
+    "did",
+    "how",
+    "what",
+    "why",
+    "where",
+    "when",
+    "which",
+    "who",
+    "whom",
 }
+
 
 def _trim(text: str, limit: int) -> str:
     return text if len(text) <= limit else text[:limit].rstrip() + " …"
+
 
 def _stem_simple(word: str) -> str:
     """Basic stemming for common suffixes"""
     if len(word) <= 3:
         return word
     # Handle common plural and verb endings
-    if word.endswith('s') and not word.endswith(('ss', 'us', 'is')):
+    if word.endswith("s") and not word.endswith(("ss", "us", "is")):
         return word[:-1]
-    if word.endswith('ing') and len(word) > 6:
+    if word.endswith("ing") and len(word) > 6:
         return word[:-3]
-    if word.endswith('ed') and len(word) > 5:
+    if word.endswith("ed") and len(word) > 5:
         return word[:-2]
     return word
+
 
 def _tokens(s: str):
     toks = re.findall(r"[a-z0-9]+", s.lower())
@@ -46,10 +87,12 @@ def _tokens(s: str):
     stemmed = [_stem_simple(t) for t in toks if len(t) > 2 and t not in _STOP]
     return stemmed
 
+
 def _keyword_overlap(question: str, text: str) -> int:
     q = set(_tokens(question))
     t = set(_tokens(text))
     return len(q.intersection(t))
+
 
 def _overlap_ratio(question: str, text: str) -> float:
     q = set(_tokens(question))
@@ -60,6 +103,7 @@ def _overlap_ratio(question: str, text: str) -> float:
     denom = min(5, len(q))
     return min(1.0, inter / max(1, denom))
 
+
 def _format_context(hits: List[Dict]) -> str:
     lines = []
     for i, h in enumerate(hits[:MAX_CHUNKS], start=1):
@@ -68,11 +112,13 @@ def _format_context(hits: List[Dict]) -> str:
         lines.append(f"[{i}] ({path})\n{preview}")
     return "\n\n".join(lines)
 
+
 def _similarity_from_distance(d) -> float:
     # map distance to (0,1]; smaller distance → closer to 1.0
     if not isinstance(d, (int, float)):
         return 0.5
     return 1.0 / (1.0 + max(0.0, d))
+
 
 def _confidence(hits: List[Dict], question: str) -> float:
     if not hits:
@@ -80,24 +126,30 @@ def _confidence(hits: List[Dict], question: str) -> float:
     # top hit signals most
     top = hits[0]
     d = top.get("distance")
-    sim = _similarity_from_distance(d)      # 0..1 (higher is better)
+    sim = _similarity_from_distance(d)  # 0..1 (higher is better)
     ovl = _overlap_ratio(question, top["text"])  # 0..1 (higher is better)
     # blend → slightly favor similarity
     conf = 0.6 * sim + 0.4 * ovl
     return round(max(0.0, min(1.0, conf)), 3)
 
+
 def _to_citations(hits: List[Dict], take: int = 3) -> List[Dict]:
     out = []
     for i, h in enumerate(hits[:take], start=1):
-        out.append({
-            "rank": i,
-            "path": h["meta"].get("path"),
-            "chunk_id": h["meta"].get("chunk_id"),
-            "preview": _trim(h["text"], 200)
-        })
+        out.append(
+            {
+                "rank": i,
+                "path": h["meta"].get("path"),
+                "chunk_id": h["meta"].get("chunk_id"),
+                "preview": _trim(h["text"], 200),
+            }
+        )
     return out
 
-def answer_question(question: str, k: int = MAX_CHUNKS, domains: Optional[List[str]] = None) -> Dict:
+
+def answer_question(
+    question: str, k: int = MAX_CHUNKS, domains: Optional[List[str]] = None
+) -> Dict:
     hits = retrieve(question, k=k, domains=domains)
 
     # --- Compute final confidence from distance + keyword overlap
@@ -108,7 +160,7 @@ def answer_question(question: str, k: int = MAX_CHUNKS, domains: Optional[List[s
         return {
             "answer": "I don’t have enough information in the docs to answer that.",
             "citations": _to_citations(hits, take=2),
-            "confidence": conf
+            "confidence": conf,
         }
 
     ctx = _format_context(hits)
@@ -130,7 +182,7 @@ def answer_question(question: str, k: int = MAX_CHUNKS, domains: Optional[List[s
             return {
                 "answer": "I don’t have enough information in the docs to answer that.",
                 "citations": _to_citations(hits, take=3),
-                "confidence": conf
+                "confidence": conf,
             }
         # Otherwise synthesize a tiny extractive answer from the top chunk
         top = hits[0]["text"].strip()
@@ -138,13 +190,11 @@ def answer_question(question: str, k: int = MAX_CHUNKS, domains: Optional[List[s
         return {
             "answer": snippet,
             "citations": _to_citations(hits, take=3),
-            "confidence": conf
+            "confidence": conf,
         }
-
 
     return {
         "answer": ans.strip(),
         "citations": _to_citations(hits, take=3),
-        "confidence": conf
+        "confidence": conf,
     }
-

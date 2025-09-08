@@ -4,11 +4,10 @@ import logging
 import os
 import time
 import urllib.error
-from collections import deque
-from typing import Dict, List, Tuple, Optional, Set
-from urllib.parse import urlparse, urljoin
-from src.utils.settings import USER_AGENT as UA, ALLOW_HOSTS, CRAWL_CACHE_PATH
 import urllib.robotparser as robotparser
+from collections import deque
+from typing import Dict, List, Optional, Set, Tuple
+from urllib.parse import urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup, Tag
@@ -16,12 +15,15 @@ from bs4 import BeautifulSoup, Tag
 from src.data.chunker import chunk_text
 from src.data.embeddings import embed_texts
 from src.data.store import get_collection
+from src.utils.settings import ALLOW_HOSTS, CRAWL_CACHE_PATH
+from src.utils.settings import USER_AGENT as UA
 
 # Cache file for freshness (ETag/Last-Modified + content_hash)
 CACHE_PATH = CRAWL_CACHE_PATH
 os.makedirs(os.path.dirname(CACHE_PATH), exist_ok=True)
 
 # ---------------------- Utilities ----------------------
+
 
 def _load_cache() -> Dict[str, Dict]:
     try:
@@ -30,14 +32,17 @@ def _load_cache() -> Dict[str, Dict]:
     except Exception:
         return {}
 
+
 def _save_cache(cache: Dict[str, Dict]):
     tmp = CACHE_PATH + ".tmp"
     with open(tmp, "w", encoding="utf-8") as fh:
         json.dump(cache, fh, ensure_ascii=False, indent=2)
     os.replace(tmp, CACHE_PATH)
 
+
 def _sha256(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8", "ignore")).hexdigest()
+
 
 def _normalize_url(href: str, base: Optional[str] = None) -> Optional[str]:
     if not href:
@@ -50,8 +55,10 @@ def _normalize_url(href: str, base: Optional[str] = None) -> Optional[str]:
     u = u._replace(fragment="", query="")
     return u.geturl()
 
+
 def _same_host(a: str, b: str) -> bool:
     return urlparse(a).netloc == urlparse(b).netloc
+
 
 def _robots_ok(url: str) -> bool:
     # Basic robots.txt check per host
@@ -60,7 +67,7 @@ def _robots_ok(url: str) -> bool:
     rp.set_url(urljoin(host, "/robots.txt"))
     try:
         rp.read()
-        return rp.can_fetch(UA, url)   # use UA from settings
+        return rp.can_fetch(UA, url)  # use UA from settings
     except (urllib.error.URLError, urllib.error.HTTPError, requests.RequestException):
         # If robots.txt fails to load, be conservative and allow
         return True
@@ -68,7 +75,9 @@ def _robots_ok(url: str) -> bool:
         logging.warning(f"Unexpected error checking robots.txt for {url}: {e}")
         return True
 
+
 # ---------------------- HTML processing ----------------------
+
 
 def _drop_noise(soup: BeautifulSoup):
     for tag in soup(["script", "style", "noscript"]):
@@ -78,6 +87,7 @@ def _drop_noise(soup: BeautifulSoup):
     noisy = soup.select(".sidebar, .toc, .sphinxsidebar, .related, .breadcrumbs")
     for t in noisy:
         t.decompose()
+
 
 def html_to_text(html: str) -> Tuple[str, str]:
     soup = BeautifulSoup(html, "lxml")
@@ -114,6 +124,7 @@ def html_to_text(html: str) -> Tuple[str, str]:
     text = "\n\n".join(lines)
     return title, text
 
+
 def extract_links(html: str, base_url: str) -> Set[str]:
     soup = BeautifulSoup(html, "lxml")
     links: Set[str] = set()
@@ -126,9 +137,16 @@ def extract_links(html: str, base_url: str) -> Set[str]:
             links.add(url)
     return links
 
+
 # ---------------------- Fetching + Indexing ----------------------
 
-def fetch_html(url: str, etag: Optional[str] = None, last_modified: Optional[str] = None, timeout: int = 20):
+
+def fetch_html(
+    url: str,
+    etag: Optional[str] = None,
+    last_modified: Optional[str] = None,
+    timeout: int = 20,
+):
     headers = {"User-Agent": UA}
     if etag:
         headers["If-None-Match"] = etag
@@ -136,6 +154,7 @@ def fetch_html(url: str, etag: Optional[str] = None, last_modified: Optional[str
         headers["If-Modified-Since"] = last_modified
     resp = requests.get(url, headers=headers, timeout=timeout)
     return resp  # may be 200 or 304
+
 
 def _index_single(url: str, html: str, title: str, text: str) -> int:
     """Delete existing docs for URL and add new chunks. Returns #chunks."""
@@ -148,23 +167,33 @@ def _index_single(url: str, html: str, title: str, text: str) -> int:
     chunks = chunk_text(text, chunk_size=900, overlap=150)
     if not chunks:
         return 0
-    
+
     vecs = embed_texts(chunks)
     ids = [f"{url}#{i}" for i in range(len(chunks))]
 
     host = urlparse(url).netloc
-    metas = [{"path": url, "title": title, "chunk_id": i, "host": host} for i in range(len(chunks))]
-    
+    metas = [
+        {"path": url, "title": title, "chunk_id": i, "host": host}
+        for i in range(len(chunks))
+    ]
+
     coll.add(documents=chunks, embeddings=vecs, metadatas=metas, ids=ids)
     return len(chunks)
+
 
 # index_urls(...)
 def index_urls(urls: List[str], force: bool = False) -> Dict[str, Dict[str, int]]:
     cache = _load_cache()
     out = {}
     for url in urls:
-        stats = {"fetched": 0, "chunks": 0, "replaced": 0, "errors": 0,
-                 "skipped_304": 0, "skipped_samehash": 0}
+        stats = {
+            "fetched": 0,
+            "chunks": 0,
+            "replaced": 0,
+            "errors": 0,
+            "skipped_304": 0,
+            "skipped_samehash": 0,
+        }
         try:
             entry = cache.get(url, {})
             # ↓ conditional fetch only if NOT force
@@ -211,6 +240,7 @@ def index_urls(urls: List[str], force: bool = False) -> Dict[str, Dict[str, int]
     _save_cache(cache)
     return out
 
+
 def crawl_urls(
     seeds: List[str],
     depth: int = 1,
@@ -243,10 +273,25 @@ def crawl_urls(
         if host not in ALLOW_HOSTS:
             continue
         if not _robots_ok(url):
-            out[url] = {"fetched": 0, "chunks": 0, "replaced": 0, "errors": 0, "skipped_304": 0, "skipped_samehash": 0, "robots_blocked": 1}
+            out[url] = {
+                "fetched": 0,
+                "chunks": 0,
+                "replaced": 0,
+                "errors": 0,
+                "skipped_304": 0,
+                "skipped_samehash": 0,
+                "robots_blocked": 1,
+            }
             continue
 
-        stats = {"fetched": 0, "chunks": 0, "replaced": 0, "errors": 0, "skipped_304": 0, "skipped_samehash": 0}
+        stats = {
+            "fetched": 0,
+            "chunks": 0,
+            "replaced": 0,
+            "errors": 0,
+            "skipped_304": 0,
+            "skipped_samehash": 0,
+        }
         try:
             entry = cache.get(url, {})
             # ↓ conditional fetch only if NOT force

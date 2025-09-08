@@ -1,8 +1,10 @@
 import os
-from typing import List, Dict
-from src.data.chunker import chunk_text, build_docs_from_files
+from typing import Dict
+
+from src.data.chunker import build_docs_from_files, chunk_text
 from src.data.embeddings import embed_texts
-from src.data.store import get_collection, reset_collection
+from src.data.store import reset_collection
+
 
 def read_docs_from_folder(folder: str = "./docs") -> Dict[str, str]:
     texts = {}
@@ -14,7 +16,10 @@ def read_docs_from_folder(folder: str = "./docs") -> Dict[str, str]:
                     texts[p] = fh.read()
     return texts
 
-def ingest_folder(folder: str = "./docs", chunk_size: int = 900, overlap: int = 150) -> int:
+
+def ingest_folder(
+    folder: str = "./docs", chunk_size: int = 900, overlap: int = 150
+) -> int:
     # Reset collection for a clean rebuild each time (simplest for the weekend)
     coll = reset_collection()
 
@@ -35,8 +40,11 @@ def ingest_folder(folder: str = "./docs", chunk_size: int = 900, overlap: int = 
 
     # Add to Chroma with explicit embeddings
     # (Note: in chroma>=0.5 you can pass embeddings=vecs to coll.add)
-    coll.add(documents=chunk_texts, metadatas=metadatas,
-             embeddings=vecs,
-             ids=[f"{m['path']}#{m['chunk_id']}" for m in metadatas])
+    coll.add(
+        documents=chunk_texts,
+        metadatas=metadatas,
+        embeddings=vecs,
+        ids=[f"{m['path']}#{m['chunk_id']}" for m in metadatas],
+    )
 
     return len(chunk_texts)

@@ -1,632 +1,724 @@
 # Support Deflection Bot
 
-Grounded answers to support questions using your local docs AND web documentation. Built with intelligent web crawling, semantic search, and strict confidence gating. If the answer isn't in the docs, it **refuses** rather than hallucinating.
+**🤖 Intelligent document Q&A with confidence-based refusal**
 
-## Why this exists
+Transform your documentation into a smart assistant that answers questions accurately or refuses gracefully. Built for reliability over chattiness.
 
-Most "docbots" answer confidently but make things up. This bot:
-
-* **crawls and indexes** web documentation (with domain whitelisting and caching),
-* retrieves the most relevant **chunks** from your docs (semantic vector search),
-* asks a local LLM to answer **only from those chunks** (RAG),
-* **refuses** with a clear sentence when evidence is weak,
-* returns **citations**, **confidence scores**, and performance **metrics**,
-* provides **domain filtering** for security and relevance.
-
----
-
-## Features
-
-* **RAG** over your Markdown/TXT docs + **web documentation**
-* **Smart web crawling** with domain whitelisting and robots.txt respect
-* **HTTP caching** with ETag/Last-Modified support and content hashing
-* **Force re-indexing** to bypass 304 Not Modified responses
-* **Domain filtering** for security and relevance (e.g., only Python docs)
-* **Citations** (file + preview of the source chunk)
-* **Refusal** when not grounded:
-  `I don't have enough information in the docs to answer that.`
-* **Confidence** score (semantic distance + keyword overlap with stemming)
-* **Metrics** endpoint (counts, p50/p95 latency)
-* **Batch eval** with a tiny gold set (accuracy for answers/refusals)
-* **All local**: uses **Ollama** for chat + embeddings (no external API calls)
-
----
-
-## Stack
-
-* **API**: FastAPI (Python 3.11)
-* **LLM**: Ollama (`llama3.1`)
-* **Embeddings**: Ollama (`nomic-embed-text`)
-* **Vector store**: Chroma (persistent)
-* **Web crawler**: BeautifulSoup + requests with intelligent caching
-* **Caching**: JSON-based crawl cache with ETag/Last-Modified/content hashing
-* **Security**: Domain whitelisting and robots.txt compliance
-* **Eval**: JSONL + batch scorer
-* **Config**: `.env` + `src/settings.py`
-* **Container**: Dockerfile provided
-
----
-
-## Project layout
-
-```
-.
-├─ src/
-│  ├─ api/
-│  │  └─ app.py        # FastAPI endpoints & request handling
-│  ├─ core/
-│  │  ├─ rag.py        # retrieval + answer + refusal logic
-│  │  ├─ retrieve.py   # vector search & domain filtering
-│  │  └─ llm_local.py  # Ollama chat wrapper
-│  ├─ data/
-│  │  ├─ ingest.py     # local docs → chunks → embeddings → index
-│  │  ├─ web_ingest.py # web crawling with caching and indexing
-│  │  ├─ chunker.py    # text chunking with overlap
-│  │  ├─ embeddings.py # Ollama embeddings processing
-│  │  └─ store.py      # ChromaDB wrapper (persistent)
-│  └─ utils/
-│     ├─ settings.py   # environment-driven configuration
-│     ├─ metrics.py    # performance meters & summaries
-│     ├─ batch.py      # batch processing for evaluation
-│     └─ run_eval.py   # evaluation framework
-├─ docs/               # your documentation lives here
-├─ data/
-│  ├─ eval/            # tiny gold set for scoring
-│  └─ crawl_cache.json # HTTP cache for web crawling (created at runtime)
-├─ chroma_db/          # persistent vector DB (created at runtime)
-├─ requirements.txt
-├─ Dockerfile
-├─ .env.example
-└─ README.md
-```
-
----
-
-## Quickstart (local)
-
-1. **Prereqs**
-
-* Python 3.11+
-* [Ollama](https://ollama.com/) installed and running:
-
-  ```bash
-  ollama pull llama3.1
-  ollama pull nomic-embed-text
-  ```
-
-2. **Install & run**
+## Quick Start (5 minutes)
 
 ```bash
+# 1. Install Ollama and models
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull llama3.1
+ollama pull nomic-embed-text
+
+# 2. Clone and setup
+git clone <repo-url>
+cd support-deflect-bot
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-# (optional) copy .env.example to .env and tweak knobs
-uvicorn src.app:app --reload
-```
+# 3. Start the API
+uvicorn src.api.app:app --reload
 
-3. **Index docs & ask**
-
-```bash
-# index files in ./docs (md/txt)
+# 4. Index your docs and ask questions
 curl -X POST http://127.0.0.1:8000/reindex
-
-# ask something covered by your docs
 curl -X POST http://127.0.0.1:8000/ask \
   -H "Content-Type: application/json" \
-  -d '{"question":"How do I enable debug mode?"}'
+  -d '{"question": "How do I configure the system?"}'
 ```
+
+## What makes this different?
+
+❌ **Most AI assistants**: Answer confidently but make things up  
+✅ **This bot**: Refuses to answer when unsure, provides citations, measures confidence
+
+### Core Behaviors
+- **Grounded answers**: Only uses your provided documentation
+- **Confident refusal**: Says "I don't have enough information" when evidence is weak
+- **Citation tracking**: Shows exactly where answers come from
+- **Confidence scoring**: Combines semantic similarity + keyword matching
+- **Domain filtering**: Restrict answers to specific documentation sources
 
 ---
 
-## Quickstart (web crawling)
+## Features Overview
 
-**Index specific URLs:**
+### 📚 **Document Processing**
+- **Local files**: Markdown/TXT files in `./docs`
+- **Web crawling**: Intelligent crawling with caching and robots.txt respect
+- **Smart chunking**: Overlapping text chunks for better retrieval
+- **Vector search**: Semantic similarity using local embeddings
+
+### 🔍 **Question Answering**
+- **RAG pipeline**: Retrieval-augmented generation with strict grounding
+- **Confidence gating**: Configurable threshold for answer quality
+- **Batch processing**: Handle multiple questions efficiently  
+- **Performance metrics**: Response times and accuracy tracking
+
+### 🌐 **Web Integration** 
+- **HTTP caching**: ETag/Last-Modified support with content hashing
+- **Domain whitelisting**: Security through allowed host lists
+- **Force refresh**: Bypass caching when needed
+- **Depth crawling**: Follow links with configurable depth limits
+
+### 🛡️ **Reliability & Security**
+- **No external APIs**: Everything runs locally with Ollama
+- **Structured refusals**: Clear, consistent "don't know" responses  
+- **Citation verification**: Track answer sources for validation
+- **Error handling**: Graceful degradation and informative errors
+
+---
+
+## Installation & Setup
+
+### Prerequisites
+- **Python 3.11+**
+- **Ollama**: [Install from ollama.com](https://ollama.com/)
+- **4GB+ RAM**: For running local LLM models
+
+### Step-by-Step Installation
+
+1. **Install Ollama and models**
+   ```bash
+   # Install Ollama
+   curl -fsSL https://ollama.com/install.sh | sh
+   
+   # Pull required models (this may take a few minutes)
+   ollama pull llama3.1        # ~4GB - for text generation
+   ollama pull nomic-embed-text # ~274MB - for embeddings
+   
+   # Verify installation
+   ollama list
+   ```
+
+2. **Setup Python environment**
+   ```bash
+   git clone <your-repo-url>
+   cd support-deflect-bot
+   
+   # Create virtual environment
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   
+   # Install dependencies  
+   pip install -r requirements.txt
+   ```
+
+3. **Configure environment (optional)**
+   ```bash
+   cp .env.example .env
+   # Edit .env to customize settings (see Configuration section)
+   ```
+
+4. **Add your documentation**
+   ```bash
+   # Add your .md and .txt files to the docs/ folder
+   cp your-docs/*.md docs/
+   ```
+
+5. **Start the application**
+   ```bash
+   uvicorn src.api.app:app --reload --port 8000
+   ```
+
+6. **Verify setup**
+   ```bash
+   # Check API health
+   curl http://127.0.0.1:8000/healthz
+   
+   # Check LLM connectivity  
+   curl http://127.0.0.1:8000/llm_ping
+   ```
+
+---
+
+## API Usage Guide
+
+### Core Endpoints
+
+#### Health Check
 ```bash
-# Crawl specific documentation pages
-curl -X POST http://127.0.0.1:8000/crawl \
-  -H "Content-Type: application/json" \
-  -d '{"urls": ["https://docs.python.org/3/library/venv.html"]}'
-
-# Force re-index to bypass HTTP 304 caching
-curl -X POST http://127.0.0.1:8000/crawl \
-  -H "Content-Type: application/json" \
-  -d '{"urls": ["https://docs.python.org/3/library/venv.html"], "force": true}'
+curl http://127.0.0.1:8000/healthz
 ```
 
-**Crawl with depth (follows links):**
+#### Index Documents
 ```bash
-# BFS crawl starting from seed URLs
+# Index local files from ./docs folder
+curl -X POST http://127.0.0.1:8000/reindex
+
+# Response: {"chunks_indexed": 42}
+```
+
+#### Ask Questions  
+```bash
+curl -X POST http://127.0.0.1:8000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question": "How do I enable debug mode?"}'
+
+# Response:
+{
+  "answer": "Set DEBUG=true in your environment variables...",
+  "citations": [
+    {
+      "rank": 1,
+      "path": "configuration.md", 
+      "chunk_id": 2,
+      "preview": "Debug mode can be enabled by setting..."
+    }
+  ],
+  "confidence": 0.85
+}
+```
+
+#### Search Documents
+```bash
+curl -X POST http://127.0.0.1:8000/search \
+  -H "Content-Type: application/json" \
+  -d '{"query": "authentication", "k": 5}'
+```
+
+### Web Crawling
+
+#### Crawl Specific URLs
+```bash
+curl -X POST http://127.0.0.1:8000/crawl \
+  -H "Content-Type: application/json" \
+  -d '{
+    "urls": ["https://docs.python.org/3/library/venv.html"],
+    "force": false
+  }'
+```
+
+#### Crawl with Depth
+```bash
 curl -X POST http://127.0.0.1:8000/crawl_depth \
   -H "Content-Type: application/json" \
-  -d '{"seeds": ["https://docs.python.org/3/"], "depth": 2, "max_pages": 50}'
+  -d '{
+    "seeds": ["https://docs.python.org/3/"],
+    "depth": 2,
+    "max_pages": 50,
+    "same_domain": true
+  }'
+```
 
-# Crawl default configured sites
+#### Crawl Default Sites
+```bash
 curl -X POST http://127.0.0.1:8000/crawl_default
 ```
 
-**Ask with domain filtering:**
+### Advanced Features
+
+#### Domain Filtering
 ```bash
-# Only search within specific domains for security/relevance
 curl -X POST http://127.0.0.1:8000/ask \
   -H "Content-Type: application/json" \
-  -d '{"question":"How do I make a virtual environment?", "domains":["docs.python.org"]}'
+  -d '{
+    "question": "How to create virtual environments?",
+    "domains": ["docs.python.org"]
+  }'
+```
+
+#### Batch Processing
+```bash
+curl -X POST http://127.0.0.1:8000/batch_ask \
+  -H "Content-Type: application/json" \
+  -d '{
+    "questions": [
+      "How do I install packages?",
+      "Where are logs stored?",
+      "How to enable debugging?"
+    ]
+  }'
+```
+
+#### Performance Metrics
+```bash
+curl http://127.0.0.1:8000/metrics
+
+# Response:
+{
+  "ask": {"count": 15, "p50_ms": 245.3, "p95_ms": 892.1},
+  "search": {"count": 8, "p50_ms": 89.2, "p95_ms": 156.7},
+  "version": "0.1.0"
+}
 ```
 
 ---
 
-## Endpoints
+## Configuration Guide
 
-**Core Operations:**
-* `GET  /healthz` → liveness check
-* `POST /reindex` → rebuilds the vector DB from `./docs`
-* `POST /search` → raw retrieval preview (query → top chunks)
-* `POST /ask` → RAG answer `{answer, citations[], confidence}` with optional domain filtering
-* `POST /batch_ask` → bulk questions for eval
-* `GET  /metrics` → `{ask: {count,p50_ms,p95_ms}, search: {...}}`
+### Environment Variables
 
-**Web Crawling:**
-* `POST /crawl` → index specific URLs `{"urls": [...], "force": false}`
-* `POST /crawl_depth` → BFS crawling `{"seeds": [...], "depth": 1, "max_pages": 30, "force": false}`
-* `POST /crawl_default` → crawl preconfigured seed URLs
-* `GET  /llm_ping` → test local LLM connectivity
+Create `.env` file or set environment variables:
 
----
-
-## Configuration
-
-Copy `.env.example` → `.env` and adjust:
-
-```
+```bash
+# Application Settings
 APP_NAME=Support Deflection Bot
 APP_VERSION=0.1.0
 
-# Ollama (local)
-OLLAMA_MODEL=llama3.1
-OLLAMA_EMBED_MODEL=nomic-embed-text
-# If app runs in Docker and Ollama stays on your host:
-# OLLAMA_HOST=http://host.docker.internal:11434
+# Ollama Configuration
+OLLAMA_MODEL=llama3.1                    # LLM model for chat
+OLLAMA_EMBED_MODEL=nomic-embed-text      # Embedding model
+OLLAMA_HOST=http://localhost:11434       # Ollama service URL
 
-# Chroma
-CHROMA_DB_PATH=./chroma_db
-CHROMA_COLLECTION=knowledge_base
+# RAG Behavior
+ANSWER_MIN_CONF=0.20                     # Confidence threshold (0.0-1.0)
+MAX_CHUNKS=5                             # Max context chunks per query
+MAX_CHARS_PER_CHUNK=800                  # Max characters per chunk
 
-# RAG knobs
-ANSWER_MIN_CONF=0.20     # raise to be stricter (updated from 0.25)
+# Web Crawling
+ALLOW_HOSTS=docs.python.org,pip.pypa.io  # Comma-separated allowed domains
+CRAWL_DEPTH=1                            # Default crawl depth
+CRAWL_MAX_PAGES=40                       # Max pages per crawl session
+CRAWL_SAME_DOMAIN=true                   # Restrict to same domain
+
+# Storage Paths
+CHROMA_DB_PATH=./chroma_db               # Vector database location
+DOCS_FOLDER=./docs                       # Local documentation folder
+CRAWL_CACHE_PATH=./data/crawl_cache.json # Web crawl cache file
+```
+
+### Customization Examples
+
+#### 1. Adjust Confidence Threshold
+```bash
+# Stricter (fewer answers, higher quality)
+ANSWER_MIN_CONF=0.35
+
+# More lenient (more answers, potentially lower quality)
+ANSWER_MIN_CONF=0.15
+```
+
+#### 2. Configure for Different Domains
+```bash
+# Python documentation only
+ALLOW_HOSTS=docs.python.org,packaging.python.org,pip.pypa.io
+
+# JavaScript ecosystem
+ALLOW_HOSTS=nodejs.org,npmjs.com,developer.mozilla.org
+
+# Your company docs
+ALLOW_HOSTS=docs.yourcompany.com,wiki.yourcompany.com
+```
+
+#### 3. Optimize for Different Use Cases
+```bash
+# Quick responses (less context)
+MAX_CHUNKS=3
+MAX_CHARS_PER_CHUNK=400
+
+# Comprehensive answers (more context)
+MAX_CHUNKS=8
+MAX_CHARS_PER_CHUNK=1200
+```
+
+#### 4. Docker Configuration
+```bash
+# For Docker deployment with external Ollama
+OLLAMA_HOST=http://host.docker.internal:11434  # macOS/Windows
+OLLAMA_HOST=http://172.17.0.1:11434           # Linux
+```
+
+---
+
+## Customization Recipes
+
+### Recipe 1: Customer Support Bot
+
+Perfect for customer support with company documentation.
+
+**Configuration:**
+```bash
+ANSWER_MIN_CONF=0.30                     # High confidence for customer-facing
 MAX_CHUNKS=5
-MAX_CHARS_PER_CHUNK=800
-
-# Web crawling
-ALLOW_HOSTS=docs.python.org,packaging.python.org,pip.pypa.io,virtualenv.pypa.io
-DEFAULT_SEEDS=https://docs.python.org/3/faq/index.html,https://docs.python.org/3/library/venv.html
-CRAWL_DEPTH=1
-CRAWL_MAX_PAGES=40
-CRAWL_SAME_DOMAIN=true
-CRAWL_CACHE_PATH=./data/crawl_cache.json
-CRAWL_USER_AGENT=SupportDeflectBot/0.1 (+https://example.local; contact: you@example.com)
-DOCS_FOLDER=./docs
+ALLOW_HOSTS=docs.yourcompany.com,help.yourcompany.com
 ```
 
-**Confidence gating:** If `confidence < ANSWER_MIN_CONF`, the bot refuses.
-**Domain security:** Only URLs matching `ALLOW_HOSTS` are crawled.
+**Usage Pattern:**
+```bash
+# Index company docs
+curl -X POST http://127.0.0.1:8000/crawl \
+  -d '{"urls": ["https://docs.yourcompany.com/sitemap.xml"]}'
+
+# Ask support questions with domain filtering
+curl -X POST http://127.0.0.1:8000/ask \
+  -d '{"question": "How do I reset my password?", "domains": ["docs.yourcompany.com"]}'
+```
+
+### Recipe 2: Development Documentation Assistant
+
+For developers working with multiple technology stacks.
+
+**Configuration:**
+```bash
+ANSWER_MIN_CONF=0.20                     # Balanced for technical questions
+MAX_CHUNKS=7                             # More context for complex topics
+ALLOW_HOSTS=docs.python.org,nodejs.org,docs.docker.com,kubernetes.io
+```
+
+**Usage Pattern:**
+```bash
+# Crawl multiple tech stacks
+curl -X POST http://127.0.0.1:8000/crawl_depth \
+  -d '{
+    "seeds": [
+      "https://docs.python.org/3/",
+      "https://nodejs.org/en/docs/",
+      "https://docs.docker.com/"
+    ],
+    "depth": 2,
+    "max_pages": 100
+  }'
+
+# Ask with specific domain focus
+curl -X POST http://127.0.0.1:8000/ask \
+  -d '{"question": "How to set up Docker containers?", "domains": ["docs.docker.com"]}'
+```
+
+### Recipe 3: Academic Research Assistant
+
+For processing academic papers and research documentation.
+
+**Configuration:**
+```bash
+ANSWER_MIN_CONF=0.35                     # Very strict for academic accuracy
+MAX_CHUNKS=10                            # Comprehensive context
+MAX_CHARS_PER_CHUNK=1000                 # Longer chunks for detailed content
+```
+
+**Usage Pattern:**
+```bash
+# Index local research papers
+mkdir docs/papers
+cp *.pdf docs/papers/                    # Requires PDF processing setup
+
+curl -X POST http://127.0.0.1:8000/reindex
+
+# Batch queries for research
+curl -X POST http://127.0.0.1:8000/batch_ask \
+  -d '{
+    "questions": [
+      "What are the main findings in machine learning research?",
+      "How do the authors define neural networks?",
+      "What datasets were used in the experiments?"
+    ]
+  }'
+```
+
+### Recipe 4: Multi-language Documentation
+
+For international documentation in multiple languages.
+
+**Configuration:**
+```bash
+# Configure for multiple language domains
+ALLOW_HOSTS=docs.python.org,docs.python.org/fr,docs.python.org/es,docs.python.org/de
+```
+
+**Custom crawling script:**
+```bash
+#!/bin/bash
+# Crawl documentation in multiple languages
+for lang in en fr es de; do
+  curl -X POST http://127.0.0.1:8000/crawl \
+    -d "{\"urls\": [\"https://docs.python.org/$lang/3/\"], \"force\": true}"
+done
+```
+
+### Recipe 5: API Documentation Assistant
+
+Specialized for API reference documentation.
+
+**Configuration:**
+```bash
+ANSWER_MIN_CONF=0.25                     # Moderate confidence for API details
+MAX_CHUNKS=6                             # Good context for examples
+ALLOW_HOSTS=api.yourservice.com,swagger.io,postman.com
+```
+
+**Enhanced with custom metadata:**
+```python
+# Custom preprocessing for API docs
+import requests
+
+def crawl_api_docs():
+    # Crawl API documentation
+    response = requests.post("http://127.0.0.1:8000/crawl", json={
+        "urls": [
+            "https://api.yourservice.com/docs",
+            "https://api.yourservice.com/reference",
+            "https://api.yourservice.com/examples"
+        ]
+    })
+    return response.json()
+
+# Query with API-specific context
+def ask_api_question(question):
+    return requests.post("http://127.0.0.1:8000/ask", json={
+        "question": f"API: {question}",
+        "domains": ["api.yourservice.com"]
+    }).json()
+```
 
 ---
 
-## Evaluation
+## Testing & Development
 
-1. Gold set lives in `data/eval/gold.jsonl` (extend it as you like):
-
-   * `"type":"answer"` + `must_include: ["needle1","needle2"]`
-   * `"type":"refusal"` (expects the exact refusal sentence)
-
-2. Run:
+### Running Tests
 
 ```bash
-python -m src.run_eval
+# Install test dependencies
+pip install pytest pytest-asyncio pytest-cov httpx
+
+# Run all tests
+pytest
+
+# Run specific test categories
+pytest tests/unit/ -v                    # Unit tests
+pytest tests/integration/ -v             # API tests  
+pytest tests/system/ -v -m requires_ollama # E2E tests (needs Ollama)
+
+# Generate coverage report
+pytest --cov=src --cov-report=html
 ```
 
-Outputs a summary and `data/eval/results_<timestamp>.csv` with per-question status.
+### Development Workflow
+
+```bash
+# Code formatting and linting
+pip install black flake8 isort
+black src/ tests/
+isort src/ tests/  
+flake8 src/ tests/
+
+# Run development server
+uvicorn src.api.app:app --reload --log-level debug
+
+# Monitor logs
+tail -f ~/.ollama/logs/server.log        # Ollama logs
+```
+
+### Evaluation Framework
+
+```bash
+# Create evaluation dataset
+echo '{"question": "How to install?", "type": "answer", "must_include": ["pip install"]}' > data/eval/test.jsonl
+
+# Run evaluation
+python -m src.utils.run_eval
+
+# View results
+cat data/eval/results_*.csv
+```
 
 ---
 
-## Monitoring
+## Deployment
+
+### Docker Deployment
 
 ```bash
-curl http://127.0.0.1:8000/metrics
-# => {"ask":{"count":..,"p50_ms":..,"p95_ms":..}, "search": {...}, "version":"..."}
-```
-
----
-
-## Docker
-
-Build:
-
-```bash
+# Build image
 docker build -t support-deflect-bot .
-```
 
-Run (macOS/Windows, Ollama on host):
-
-```bash
-docker run --rm -p 8000:8000 \
-  -e OLLAMA_HOST=http://host.docker.internal:11434 \
-  -e ANSWER_MIN_CONF=0.3 \
-  -v $(pwd)/docs:/app/docs \
-  -v $(pwd)/chroma_db:/app/chroma_db \
-  support-deflect-bot
-```
-
-Linux (host network differs):
-
-```bash
-docker run --rm -p 8000:8000 \
-  --add-host=host.docker.internal:host-gateway \
+# Run with external Ollama (recommended)
+docker run -d \
+  -p 8000:8000 \
   -e OLLAMA_HOST=http://host.docker.internal:11434 \
   -v $(pwd)/docs:/app/docs \
   -v $(pwd)/chroma_db:/app/chroma_db \
+  --name support-bot \
   support-deflect-bot
 ```
 
----
+### Production Configuration
 
-## How it works (visual)
-
-```
-┌─────────────┐    ┌──────────────┐    ┌─────────────┐
-│ Web Pages   │ →  │  Processing  │ →  │  Vector DB  │
-│ Local Docs  │    │ (chunk+embed)│    │ (ChromaDB)  │
-└─────────────┘    └──────────────┘    └─────────────┘
-                                                ↓
-┌─────────────┐    ┌──────────────┐    ┌─────────────┐
-│   Answer    │ ←  │     LLM      │ ←  │   Search    │
-│ + Citations │    │  (Generate)  │    │ (Retrieve)  │
-└─────────────┘    └──────────────┘    └─────────────┘
+```bash
+# Production environment variables
+APP_VERSION=1.0.0
+ANSWER_MIN_CONF=0.30                     # Stricter for production
+CHROMA_DB_PATH=/data/chroma_db           # Persistent storage
+CRAWL_CACHE_PATH=/data/crawl_cache.json
 ```
 
-**Step-by-step process:**
+### Health Checks
 
-1. **Ingest:** Crawl web docs OR read local `./docs/*.md|*.txt` → chunk with overlap
-2. **Embed:** `nomic-embed-text` via Ollama → 768-dimensional vectors → store in ChromaDB  
-3. **Query:** User question → embedding → vector similarity search (cosine)
-4. **Retrieve:** Top-k most similar chunks + domain filtering
-5. **Confidence:** Calculate score from semantic similarity + keyword overlap
-6. **Answer:** If confident enough, send context to LLM (`llama3.1`) with strict instructions
-7. **Refuse:** If `confidence < ANSWER_MIN_CONF` or LLM indicates insufficient context
-8. **Return:** Answer + citations + confidence score
+```bash
+# Basic health check
+curl -f http://localhost:8000/healthz || exit 1
 
----
+# LLM connectivity check  
+curl -f http://localhost:8000/llm_ping || exit 1
 
-## System Architecture
-
-### High-Level Architecture
-
-```mermaid
-graph TB
-    subgraph "Data Sources"
-        MD[Local Markdown/TXT Files]
-        WEB[Web Documentation]
-    end
-    
-    subgraph "Ingestion Layer"
-        INGEST[Document Ingester]
-        CRAWL[Web Crawler]
-        CHUNK[Text Chunker]
-    end
-    
-    subgraph "Processing Layer"
-        EMBED[Ollama Embeddings]
-        CACHE[HTTP Cache Layer]
-        ROBOTS[Robots.txt Parser]
-    end
-    
-    subgraph "Storage Layer"
-        CHROMA[(ChromaDB Vector Store)]
-        CACHE_STORE[(JSON Cache)]
-    end
-    
-    subgraph "API Layer"
-        FASTAPI[FastAPI Application]
-        ENDPOINTS[REST Endpoints]
-    end
-    
-    subgraph "Intelligence Layer"
-        RAG[RAG Engine]
-        LLM[Ollama LLM]
-        CONF[Confidence Calculator]
-    end
-    
-    subgraph "Monitoring"
-        METRICS[Metrics Collection]
-        EVAL[Evaluation System]
-    end
-    
-    MD --> INGEST
-    WEB --> CRAWL
-    INGEST --> CHUNK
-    CRAWL --> CHUNK
-    CHUNK --> EMBED
-    EMBED --> CHROMA
-    CRAWL --> CACHE
-    CACHE --> CACHE_STORE
-    
-    FASTAPI --> RAG
-    RAG --> CHROMA
-    RAG --> LLM
-    RAG --> CONF
-    
-    FASTAPI --> METRICS
-    EVAL --> RAG
-```
-
-### Core Components
-
-#### 1. **Ingestion System** (`src/data/ingest.py`, `src/data/web_ingest.py`)
-- **Local Document Processing**: Reads markdown/text files from `./docs`
-- **Web Crawling**: Intelligent web crawler with:
-  - Domain whitelisting for security
-  - Robots.txt compliance
-  - HTTP caching with ETag/Last-Modified support
-  - Content deduplication using SHA-256 hashing
-  - Breadth-first search (BFS) crawling with configurable depth
-- **Text Chunking**: Overlapping text chunks for better retrieval
-
-#### 2. **Vector Storage** (`src/data/store.py`)
-- **ChromaDB**: Persistent vector database with cosine similarity
-- **Metadata**: Stores source paths, chunk IDs, and domain information
-- **Collection Management**: Single collection for all documents
-
-#### 3. **Embedding System** (`src/data/embeddings.py`)
-- **Model**: `nomic-embed-text` via Ollama
-- **Dimensionality**: 768-dimensional vectors
-- **Local Processing**: No external API dependencies
-
-#### 4. **RAG Engine** (`src/core/rag.py`)
-- **Retrieval**: Semantic vector search with optional domain filtering
-- **Confidence Scoring**: Hybrid approach combining:
-  - Semantic similarity (60% weight)
-  - Keyword overlap with stemming (40% weight)
-- **Answer Generation**: Strict prompt engineering to prevent hallucination
-- **Refusal Mechanism**: Confidence-gated responses
-
-#### 5. **API Layer** (`src/api/app.py`)
-- **FastAPI**: RESTful API with comprehensive endpoints
-- **Request Validation**: Pydantic models with field validation
-- **Error Handling**: Structured HTTP exception handling
-- **CORS Support**: Configurable for web UI integration
-
----
-
-## Project Workflow Architecture
-
-### 1. Document Ingestion Workflow
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ Source Detection│ →  │ Content Fetch   │ →  │ Processing      │
-│ • Local files   │    │ • HTTP requests │    │ • Text cleaning │
-│ • Web URLs      │    │ • Cache check   │    │ • Chunking      │
-│ • Robots.txt    │    │ • ETag handling │    │ • Embedding     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                                       │
-┌─────────────────┐    ┌─────────────────┐           │
-│ Storage         │ ←  │ Vector Generation│ ← ─ ─ ─ ─ ┘
-│ • ChromaDB      │    │ • Ollama embed  │
-│ • Metadata      │    │ • 768-dim vectors│
-│ • Cache update  │    │ • Batch process │
-└─────────────────┘    └─────────────────┘
-```
-
-### 2. Query Processing Workflow
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ User Question   │ →  │ Query Embedding │ →  │ Vector Search   │
-│ • Validation    │    │ • nomic-embed   │    │ • Cosine sim    │
-│ • Domain filter │    │ • 768 dimensions│    │ • Top-k results │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                                       │
-┌─────────────────┐    ┌─────────────────┐           │
-│ Response        │ ←  │ Answer Generation│ ← ─ ─ ─ ─ ┘
-│ • Answer text   │    │ • Confidence calc│
-│ • Citations     │    │ • LLM processing │
-│ • Confidence    │    │ • Refusal check │
-└─────────────────┘    └─────────────────┘
-```
-
-### 3. Web Crawling Workflow
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ Seed URLs       │ →  │ Robots.txt Check│ →  │ Content Fetch   │
-│ • User input    │    │ • Compliance    │    │ • HTTP request  │
-│ • Default seeds │    │ • Domain verify │    │ • Cache check   │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                                       │
-┌─────────────────┐    ┌─────────────────┐           │
-│ Link Discovery  │ ←  │ Content Parse   │ ← ─ ─ ─ ─ ┘
-│ • BeautifulSoup │    │ • HTML cleaning │
-│ • BFS queue     │    │ • Text extract  │
-│ • Depth limit   │    │ • Deduplication │
-└─────────────────┘    └─────────────────┘
-```
-
-### 4. Caching Strategy
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ HTTP Request    │ →  │ Cache Lookup    │ →  │ Freshness Check │
-│ • URL           │    │ • JSON cache    │    │ • ETag compare  │
-│ • Headers       │    │ • Metadata      │    │ • Last-Modified │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                                       │
-                       ┌─────────────────┐           │
-                       │ Update Strategy │ ← ─ ─ ─ ─ ─
-                       │ • 304 handling  │
-                       │ • Content hash  │
-                       │ • Force refresh │
-                       └─────────────────┘
-```
-
-### 5. Confidence & Quality Control
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ Retrieved Docs  │ →  │ Similarity Score│ →  │ Keyword Overlap │
-│ • Vector hits   │    │ • Distance→Sim  │    │ • Token stem    │
-│ • Top-k chunks  │    │ • 0.0 → 1.0     │    │ • Stop words    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                                       │
-┌─────────────────┐    ┌─────────────────┐           │
-│ Answer Decision │ ←  │ Confidence Calc │ ← ─ ─ ─ ─ ─
-│ • > MIN_CONF    │    │ • 60% semantic  │
-│ • Generate      │    │ • 40% keywords  │
-│ • < MIN_CONF    │    │ • Threshold gate│
-│ • Refuse        │    └─────────────────┘
-└─────────────────┘    
-```
-
-### Technical Configuration
-
-**Environment-Driven Architecture:**
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ .env Config     │ →  │ Settings Module │ →  │ Component Init  │
-│ • Model names   │    │ • Type casting  │    │ • Ollama client │
-│ • Thresholds    │    │ • Validation    │    │ • ChromaDB      │
-│ • Paths         │    │ • Defaults      │    │ • Cache setup   │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
-
-**Security Architecture:**
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ Domain Control  │    │ Input Validation│    │ Error Isolation │
-│ • ALLOW_HOSTS   │    │ • Length limits │    │ • Try-catch     │
-│ • Whitelist     │    │ • Type checking │    │ • HTTP codes    │
-│ • Robots.txt    │    │ • Sanitization  │    │ • Safe fallback │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+# Full functionality test
+curl -X POST http://localhost:8000/ask \
+  -d '{"question": "test"}' \
+  -H "Content-Type: application/json" | grep -q "answer"
 ```
 
 ---
 
-## Tuning tips
+## Performance Tuning
 
-* Raise `ANSWER_MIN_CONF` (e.g., `0.35`) to reduce risky answers.
-* Adjust `MAX_CHUNKS` and `chunk_size/overlap` in `ingest.py` for your docs.
-* Keep docs clean: headings and bullet lists retrieve better.
-* Add an **"unanswerable"** section to test refusal behavior regularly.
+### Ollama Optimization
+
+```bash
+# Allocate more memory to Ollama
+export OLLAMA_NUM_PARALLEL=2
+export OLLAMA_MAX_LOADED_MODELS=2
+
+# Use GPU if available
+export OLLAMA_GPU=nvidia  # or amd, intel
+```
+
+### Database Optimization
+
+```bash
+# Optimize ChromaDB settings
+export CHROMA_SERVER_HTTP_PORT=8001
+export CHROMA_SERVER_CORS_ALLOW_ORIGINS="http://localhost:8000"
+```
+
+### Application Tuning
+
+```python
+# Adjust batch sizes in .env
+MAX_CHUNKS=3                    # Faster responses
+MAX_CHARS_PER_CHUNK=600        # Balanced context
+
+# For high-throughput scenarios  
+MAX_CHUNKS=8                   # More comprehensive answers
+MAX_CHARS_PER_CHUNK=1000       # Richer context
+```
 
 ---
 
 ## Troubleshooting
 
-**Domain filtering returns no results:**
-- Use `"force": true` when crawling to update host metadata in existing chunks
-- Check that `ALLOW_HOSTS` includes your target domains  
-- Verify chunks exist with `/search` endpoint before trying domain filtering
+### Common Issues
 
-**Low confidence scores preventing answers:**  
-- Lower `ANSWER_MIN_CONF` (try 0.15-0.20 instead of 0.25)
-- Ensure your docs contain actual command examples, not just conceptual descriptions
-- Use more specific questions that match your indexed content
-- Check if stemming is working: "environment" vs "environments" should now match
-
-**HTTP 304 preventing content updates:**
-- Use `"force": true` parameter in `/crawl` requests to bypass caching
-- Check crawl cache at `./data/crawl_cache.json` and delete if needed
-- Verify `ETag` and `Last-Modified` headers are being handled correctly
-
-**"Empty reply from server" or timeouts:**
-- Check that Ollama is running: `ollama list`
-- Test LLM connectivity: `curl http://127.0.0.1:8000/llm_ping`
-- Reduce batch sizes if processing large documents
-- Check logs for embedding or vector search errors
-
-**Answers seem wrong or hallucinated:**
-- Verify citations point to correct source chunks
-- Increase `ANSWER_MIN_CONF` to be more conservative  
-- Check that retrieved chunks actually contain relevant information
-- Review system prompt in `src/rag.py` for instruction clarity
-
----
-
-## Limitations & next steps
-
-* No UI (yet) — add a small web front-end that hits `/ask`.
-* No auth on endpoints — add an API key or gateway before exposing.
-* Basic confidence heuristic — consider adding a reranker or entropy signals.
-* Minimal logging — connect to Prometheus/Grafana if deploying.
-
----
-
-## Advanced Usage
-
-**Batch Operations:**
+**Ollama Connection Errors**
 ```bash
-# Process multiple questions at once
-curl -X POST http://127.0.0.1:8000/batch_ask \
-  -H "Content-Type: application/json" \
-  -d '{"questions": ["How do I enable debug mode?", "Where are logs stored?", "How do I reset configuration?"]}'
+# Check if Ollama is running
+curl http://localhost:11434/api/tags
+
+# Restart Ollama service
+systemctl restart ollama  # Linux
+brew services restart ollama  # macOS
+
+# Check model availability
+ollama list
 ```
 
-**Cache Management:**
+**Low Confidence Scores**
 ```bash
-# Clear crawl cache to force fresh downloads
-rm ./data/crawl_cache.json
+# Lower the confidence threshold
+export ANSWER_MIN_CONF=0.15
 
-# Check cache contents (with jq for pretty formatting)
+# Add more relevant documents
+cp additional-docs/*.md docs/
+curl -X POST http://127.0.0.1:8000/reindex
+
+# Check document quality
+curl -X POST http://127.0.0.1:8000/search \
+  -d '{"query": "your search terms", "k": 10}'
+```
+
+**Web Crawling Issues**
+```bash
+# Check domain restrictions
+echo $ALLOW_HOSTS
+
+# Force re-crawl
+curl -X POST http://127.0.0.1:8000/crawl \
+  -d '{"urls": ["https://example.com"], "force": true}'
+
+# Check crawl cache
 cat ./data/crawl_cache.json | jq
-
-# Or without jq (raw JSON)
-cat ./data/crawl_cache.json
 ```
 
-**Custom Confidence Thresholds:**
+**Database Issues**
 ```bash
-# Run with higher confidence for production
-ANSWER_MIN_CONF=0.35 uvicorn src.app:app --reload
+# Reset vector database
+rm -rf ./chroma_db
+curl -X POST http://127.0.0.1:8000/reindex
 
-# Or set in .env file for persistent changes
-echo "ANSWER_MIN_CONF=0.30" >> .env
+# Check database size
+du -sh ./chroma_db
+
+# Verify database contents  
+python -c "
+from src.data.store import get_collection
+print(f'Documents: {get_collection().count()}')
+"
 ```
 
-**Domain-Specific Knowledge Bases:**
+### Performance Issues
+
 ```bash
-# Python documentation only
-curl -X POST http://127.0.0.1:8000/ask \
-  -d '{"question":"How do I create a virtual environment?", "domains":["docs.python.org"]}'
+# Monitor response times
+curl -s -w '%{time_total}s\n' http://127.0.0.1:8000/ask \
+  -d '{"question": "test"}' > /dev/null
 
-# Package management docs only  
-curl -X POST http://127.0.0.1:8000/ask \
-  -d '{"question":"How do I install dependencies?", "domains":["packaging.python.org", "pip.pypa.io"]}'
+# Check memory usage
+htop | grep python
+
+# Monitor Ollama performance
+docker logs ollama -f  # if using Docker
 ```
 
-**Performance Monitoring:**
+### Debug Mode
+
 ```bash
-# Real-time metrics (requires jq: brew install jq)
-watch -n 2 'curl -s http://127.0.0.1:8000/metrics | jq'
+# Enable debug logging
+export LOG_LEVEL=debug
+uvicorn src.api.app:app --log-level debug
 
-# Check specific endpoint performance
-curl -s http://127.0.0.1:8000/metrics | jq '.ask.p95_ms'
-
-# Without jq
-curl -s http://127.0.0.1:8000/metrics
+# Inspect vector search results
+curl -X POST http://127.0.0.1:8000/search \
+  -d '{"query": "debug query", "k": 5}' | jq .
 ```
+
+---
+
+## Contributing
+
+### Development Setup
+
+```bash
+# Clone and setup
+git clone <repo>
+cd support-deflect-bot
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+
+# Run tests before committing
+pytest
+black src/ tests/
+flake8 src/ tests/
+```
+
+### Code Quality
+
+- **Type hints**: Use type annotations for all functions
+- **Documentation**: Document all public functions and classes  
+- **Testing**: Maintain >80% test coverage
+- **Error handling**: Graceful failure with informative messages
 
 ---
 
 ## License
 
-MIT
+MIT License - see LICENSE file for details.
 
 ---
 
-## Acknowledgements
+## Support & Community
 
-* Ollama team (local LLM runtime)
-* Chroma DB (vector store)
+- **Issues**: [GitHub Issues](link-to-issues)
+- **Discussions**: [GitHub Discussions](link-to-discussions)  
+- **Documentation**: [Full Documentation](link-to-docs)
 
----
-
-**Questions / improvements?**
-Open an issue or tweak the gold set, thresholds, and chunking to fit your docs.
+Built with ❤️ for reliable, grounded AI assistance.

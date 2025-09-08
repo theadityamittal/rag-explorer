@@ -1,6 +1,8 @@
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
+
 from src.data.embeddings import embed_one
 from src.data.store import query_by_embedding
+
 
 def retrieve(query: str, k: int = 5, domains: Optional[List[str]] = None) -> List[Dict]:
     qvec = embed_one(query)

@@ -1,8 +1,10 @@
-from typing import List, Dict
+from typing import Dict, List
+
 
 def chunk_text(text: str, chunk_size: int = 900, overlap: int = 150) -> List[str]:
     """
-    Naive character-based chunker with overlap. Simple and effective for a weekend build.
+    Naive character-based chunker with overlap.
+    Simple and effective for a weekend build.
     """
     text = text.strip()
     chunks = []
@@ -18,6 +20,7 @@ def chunk_text(text: str, chunk_size: int = 900, overlap: int = 150) -> List[str
         if start < 0:
             start = 0
     return [c for c in (c.strip() for c in chunks) if c]
+
 
 def build_docs_from_files(files: Dict[str, str]) -> Dict[str, str]:
     """
