@@ -52,19 +52,23 @@ Most "docbots" answer confidently but make things up. This bot:
 ```
 .
 ├─ src/
-│  ├─ app.py           # FastAPI endpoints
-│  ├─ rag.py           # retrieval + answer + refusal logic  
-│  ├─ retrieve.py      # vector search
-│  ├─ embeddings.py    # Ollama embeddings
-│  ├─ llm_local.py     # Ollama chat wrapper
-│  ├─ store.py         # Chroma wrapper (persistent)
-│  ├─ chunker.py       # naive chunker with overlap
-│  ├─ ingest.py        # crawl docs/ → chunks → embeddings → index
-│  ├─ web_ingest.py    # web crawling with caching and indexing
-│  ├─ metrics.py       # simple meters & summaries
-│  ├─ batch.py         # batch ask for eval
-│  ├─ run_eval.py      # lightweight evaluator
-│  └─ settings.py      # environment-driven config
+│  ├─ api/
+│  │  └─ app.py        # FastAPI endpoints & request handling
+│  ├─ core/
+│  │  ├─ rag.py        # retrieval + answer + refusal logic
+│  │  ├─ retrieve.py   # vector search & domain filtering
+│  │  └─ llm_local.py  # Ollama chat wrapper
+│  ├─ data/
+│  │  ├─ ingest.py     # local docs → chunks → embeddings → index
+│  │  ├─ web_ingest.py # web crawling with caching and indexing
+│  │  ├─ chunker.py    # text chunking with overlap
+│  │  ├─ embeddings.py # Ollama embeddings processing
+│  │  └─ store.py      # ChromaDB wrapper (persistent)
+│  └─ utils/
+│     ├─ settings.py   # environment-driven configuration
+│     ├─ metrics.py    # performance meters & summaries
+│     ├─ batch.py      # batch processing for evaluation
+│     └─ run_eval.py   # evaluation framework
 ├─ docs/               # your documentation lives here
 ├─ data/
 │  ├─ eval/            # tiny gold set for scoring
@@ -289,6 +293,219 @@ docker run --rm -p 8000:8000 \
 6. **Answer:** If confident enough, send context to LLM (`llama3.1`) with strict instructions
 7. **Refuse:** If `confidence < ANSWER_MIN_CONF` or LLM indicates insufficient context
 8. **Return:** Answer + citations + confidence score
+
+---
+
+## System Architecture
+
+### High-Level Architecture
+
+```mermaid
+graph TB
+    subgraph "Data Sources"
+        MD[Local Markdown/TXT Files]
+        WEB[Web Documentation]
+    end
+    
+    subgraph "Ingestion Layer"
+        INGEST[Document Ingester]
+        CRAWL[Web Crawler]
+        CHUNK[Text Chunker]
+    end
+    
+    subgraph "Processing Layer"
+        EMBED[Ollama Embeddings]
+        CACHE[HTTP Cache Layer]
+        ROBOTS[Robots.txt Parser]
+    end
+    
+    subgraph "Storage Layer"
+        CHROMA[(ChromaDB Vector Store)]
+        CACHE_STORE[(JSON Cache)]
+    end
+    
+    subgraph "API Layer"
+        FASTAPI[FastAPI Application]
+        ENDPOINTS[REST Endpoints]
+    end
+    
+    subgraph "Intelligence Layer"
+        RAG[RAG Engine]
+        LLM[Ollama LLM]
+        CONF[Confidence Calculator]
+    end
+    
+    subgraph "Monitoring"
+        METRICS[Metrics Collection]
+        EVAL[Evaluation System]
+    end
+    
+    MD --> INGEST
+    WEB --> CRAWL
+    INGEST --> CHUNK
+    CRAWL --> CHUNK
+    CHUNK --> EMBED
+    EMBED --> CHROMA
+    CRAWL --> CACHE
+    CACHE --> CACHE_STORE
+    
+    FASTAPI --> RAG
+    RAG --> CHROMA
+    RAG --> LLM
+    RAG --> CONF
+    
+    FASTAPI --> METRICS
+    EVAL --> RAG
+```
+
+### Core Components
+
+#### 1. **Ingestion System** (`src/data/ingest.py`, `src/data/web_ingest.py`)
+- **Local Document Processing**: Reads markdown/text files from `./docs`
+- **Web Crawling**: Intelligent web crawler with:
+  - Domain whitelisting for security
+  - Robots.txt compliance
+  - HTTP caching with ETag/Last-Modified support
+  - Content deduplication using SHA-256 hashing
+  - Breadth-first search (BFS) crawling with configurable depth
+- **Text Chunking**: Overlapping text chunks for better retrieval
+
+#### 2. **Vector Storage** (`src/data/store.py`)
+- **ChromaDB**: Persistent vector database with cosine similarity
+- **Metadata**: Stores source paths, chunk IDs, and domain information
+- **Collection Management**: Single collection for all documents
+
+#### 3. **Embedding System** (`src/data/embeddings.py`)
+- **Model**: `nomic-embed-text` via Ollama
+- **Dimensionality**: 768-dimensional vectors
+- **Local Processing**: No external API dependencies
+
+#### 4. **RAG Engine** (`src/core/rag.py`)
+- **Retrieval**: Semantic vector search with optional domain filtering
+- **Confidence Scoring**: Hybrid approach combining:
+  - Semantic similarity (60% weight)
+  - Keyword overlap with stemming (40% weight)
+- **Answer Generation**: Strict prompt engineering to prevent hallucination
+- **Refusal Mechanism**: Confidence-gated responses
+
+#### 5. **API Layer** (`src/api/app.py`)
+- **FastAPI**: RESTful API with comprehensive endpoints
+- **Request Validation**: Pydantic models with field validation
+- **Error Handling**: Structured HTTP exception handling
+- **CORS Support**: Configurable for web UI integration
+
+---
+
+## Project Workflow Architecture
+
+### 1. Document Ingestion Workflow
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Source Detection│ →  │ Content Fetch   │ →  │ Processing      │
+│ • Local files   │    │ • HTTP requests │    │ • Text cleaning │
+│ • Web URLs      │    │ • Cache check   │    │ • Chunking      │
+│ • Robots.txt    │    │ • ETag handling │    │ • Embedding     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                       │
+┌─────────────────┐    ┌─────────────────┐           │
+│ Storage         │ ←  │ Vector Generation│ ← ─ ─ ─ ─ ┘
+│ • ChromaDB      │    │ • Ollama embed  │
+│ • Metadata      │    │ • 768-dim vectors│
+│ • Cache update  │    │ • Batch process │
+└─────────────────┘    └─────────────────┘
+```
+
+### 2. Query Processing Workflow
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ User Question   │ →  │ Query Embedding │ →  │ Vector Search   │
+│ • Validation    │    │ • nomic-embed   │    │ • Cosine sim    │
+│ • Domain filter │    │ • 768 dimensions│    │ • Top-k results │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                       │
+┌─────────────────┐    ┌─────────────────┐           │
+│ Response        │ ←  │ Answer Generation│ ← ─ ─ ─ ─ ┘
+│ • Answer text   │    │ • Confidence calc│
+│ • Citations     │    │ • LLM processing │
+│ • Confidence    │    │ • Refusal check │
+└─────────────────┘    └─────────────────┘
+```
+
+### 3. Web Crawling Workflow
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Seed URLs       │ →  │ Robots.txt Check│ →  │ Content Fetch   │
+│ • User input    │    │ • Compliance    │    │ • HTTP request  │
+│ • Default seeds │    │ • Domain verify │    │ • Cache check   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                       │
+┌─────────────────┐    ┌─────────────────┐           │
+│ Link Discovery  │ ←  │ Content Parse   │ ← ─ ─ ─ ─ ┘
+│ • BeautifulSoup │    │ • HTML cleaning │
+│ • BFS queue     │    │ • Text extract  │
+│ • Depth limit   │    │ • Deduplication │
+└─────────────────┘    └─────────────────┘
+```
+
+### 4. Caching Strategy
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ HTTP Request    │ →  │ Cache Lookup    │ →  │ Freshness Check │
+│ • URL           │    │ • JSON cache    │    │ • ETag compare  │
+│ • Headers       │    │ • Metadata      │    │ • Last-Modified │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                       │
+                       ┌─────────────────┐           │
+                       │ Update Strategy │ ← ─ ─ ─ ─ ─
+                       │ • 304 handling  │
+                       │ • Content hash  │
+                       │ • Force refresh │
+                       └─────────────────┘
+```
+
+### 5. Confidence & Quality Control
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Retrieved Docs  │ →  │ Similarity Score│ →  │ Keyword Overlap │
+│ • Vector hits   │    │ • Distance→Sim  │    │ • Token stem    │
+│ • Top-k chunks  │    │ • 0.0 → 1.0     │    │ • Stop words    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                       │
+┌─────────────────┐    ┌─────────────────┐           │
+│ Answer Decision │ ←  │ Confidence Calc │ ← ─ ─ ─ ─ ─
+│ • > MIN_CONF    │    │ • 60% semantic  │
+│ • Generate      │    │ • 40% keywords  │
+│ • < MIN_CONF    │    │ • Threshold gate│
+│ • Refuse        │    └─────────────────┘
+└─────────────────┘    
+```
+
+### Technical Configuration
+
+**Environment-Driven Architecture:**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ .env Config     │ →  │ Settings Module │ →  │ Component Init  │
+│ • Model names   │    │ • Type casting  │    │ • Ollama client │
+│ • Thresholds    │    │ • Validation    │    │ • ChromaDB      │
+│ • Paths         │    │ • Defaults      │    │ • Cache setup   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+**Security Architecture:**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Domain Control  │    │ Input Validation│    │ Error Isolation │
+│ • ALLOW_HOSTS   │    │ • Length limits │    │ • Try-catch     │
+│ • Whitelist     │    │ • Type checking │    │ • HTTP codes    │
+│ • Robots.txt    │    │ • Sanitization  │    │ • Safe fallback │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
 
 ---
 
