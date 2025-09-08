@@ -45,8 +45,7 @@ class AskRequest(BaseModel):
         None, max_items=10, description="Optional domains to filter"
     )
 
-    field_validator("question")
-
+    @field_validator("question")
     def validate_question(cls, v):
         if not v.strip():
             raise ValueError("Question cannot be empty")
@@ -57,8 +56,7 @@ class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=500, description="Search query")
     k: int = Field(5, ge=1, le=20, description="Number of results to return")
 
-    field_validator("query")
-
+    @field_validator("query")
     def validate_query(cls, v):
         if not v.strip():
             raise ValueError("Query cannot be empty")
@@ -70,8 +68,7 @@ class BatchAskRequest(BaseModel):
         ..., min_items=1, max_items=10, description="List of questions"
     )
 
-    field_validator("questions")
-
+    @field_validator("questions")
     def validate_questions(cls, v):
         if not v:
             raise ValueError("Questions list cannot be empty")
@@ -91,8 +88,7 @@ class CrawlRequest(BaseModel):
         False, description="Force re-index even if content hasn't changed"
     )
 
-    field_validator("urls")
-
+    @field_validator("urls")
     def validate_urls(cls, v):
         validated = []
         for url in v:
@@ -112,8 +108,7 @@ class CrawlDepthRequest(BaseModel):
         False, description="Force re-index even if content hasn't changed"
     )
 
-    field_validator("seeds")
-
+    @field_validator("seeds")
     def validate_seeds(cls, v):
         validated = []
         for url in v:

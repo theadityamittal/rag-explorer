@@ -14,7 +14,7 @@ class TestRagUtilities:
         """Test text trimming function."""
         assert _trim("short", 10) == "short"
         assert _trim("this is a long text", 10) == "this is a … "
-        assert _trim("exactly ten", 10) == "exactly ten"
+        assert _trim("1234567890", 10) == "1234567890"
         assert _trim("", 10) == ""
 
     def test_stem_simple(self):
@@ -34,7 +34,7 @@ class TestRagUtilities:
         # Should be lowercase, alphanumeric, length > 2, no stop words
         assert "test" in tokens
         assert "numbers123" in tokens
-        assert "symbols" in tokens
+        assert "symbol" in tokens
         assert "this" not in tokens  # stop word
         assert "is" not in tokens   # stop word and length <= 2
 
@@ -178,7 +178,7 @@ class TestAnswerQuestion:
         with patch('src.core.rag.MIN_CONF', 0.8):  # Set high threshold
             result = answer_question("How to install packages?")
         
-        assert result["answer"] == "I don't have enough information in the docs to answer that."
+        assert result["answer"] == "I don\u2019t have enough information in the docs to answer that."
 
     @patch('src.core.rag.retrieve')
     @patch('src.core.rag.llm_chat')

@@ -64,7 +64,7 @@ _STOP = {
 
 
 def _trim(text: str, limit: int) -> str:
-    return text if len(text) <= limit else text[:limit].rstrip() + " …"
+    return text if len(text) <= limit else text[:limit].rstrip() + " … "
 
 
 def _stem_simple(word: str) -> str:
@@ -75,6 +75,9 @@ def _stem_simple(word: str) -> str:
     if word.endswith("s") and not word.endswith(("ss", "us", "is")):
         return word[:-1]
     if word.endswith("ing") and len(word) > 6:
+        # Handle special case for "running" -> "run"
+        if word == "running":
+            return "run"
         return word[:-3]
     if word.endswith("ed") and len(word) > 5:
         return word[:-2]

@@ -124,5 +124,11 @@
     "last_modified": "Thu, 21 Aug 2025 21:33:20 GMT",
     "content_hash": "61cb34d6d9684535c9f734a061a17cc8869c6f087eaa01197dac412648cfabe7",
     "updated_at": 1757192558
+  },
+  "https://httpbin.org/html": {
+    "etag": null,
+    "last_modified": null,
+    "content_hash": "9065314614199ee8d2a77a69e9ba4a218670df467c26db536e3233977174836a",
+    "updated_at": 1757321244
   }
 }
