@@ -4,28 +4,46 @@
 
 Transform your documentation into a smart terminal assistant that answers questions accurately or refuses gracefully. Built for reliability over chattiness.
 
-✨ **New**: Now with a beautiful CLI interface! Interactive conversations, rich terminal output, and intuitive commands.
+✨ **New**: Multi-provider AI support with cost optimization! Choose from 8 different LLM providers with automatic fallback chains and budget control.
 
-## Quick Start (5 minutes)
+## Quick Start (3 minutes)
 
+### Option 1: API Providers (Recommended)
 ```bash
-# 1. Install Ollama and models
-curl -fsSL https://ollama.com/install.sh | sh
-ollama pull llama3.1
-ollama pull nomic-embed-text
+# 1. Install with cost-effective API providers
+pip install support-deflect-bot[api]
 
-# 2. Clone and setup
+# 2. Set up your API keys (choose one or more)
+export OPENAI_API_KEY="your_openai_key"        # GPT-4o-mini (most cost-effective)
+export GROQ_API_KEY="your_groq_key"           # Ultra-fast inference
+export ANTHROPIC_API_KEY="your_claude_key"    # Claude API
+
+# 3. Start using immediately
+deflect-bot index ./docs                      # Index your documentation
+deflect-bot ask                              # Start Q&A with automatic provider selection
+# ❓ You: How do I configure the system?
+# 🤖 Bot: [Answer using best available provider]
+```
+
+### Option 2: Local Setup (Privacy-focused)
+```bash
+# 1. Install with local providers
+pip install support-deflect-bot[all]
+
+# 2. Install Ollama for local inference (optional)
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull llama3.1 && ollama pull nomic-embed-text
+
+# 3. Works offline with local models
+deflect-bot ask  # Uses local Ollama automatically
+```
+
+### Option 3: Development Setup
+```bash
+# Clone and install in development mode
 git clone https://github.com/theadityamittal/support-deflect-bot.git
 cd support-deflect-bot
-python -m venv .venv && source .venv/bin/activate
-pip install -e .  # Install CLI
-
-# 3. Index your docs and start asking questions
-deflect-bot index                          # Index ./docs folder
-deflect-bot ask                           # Start interactive Q&A
-# ❓ You: How do I configure the system?
-# 🤖 Bot: [Intelligent answer with citations]
-# ❓ You: end
+pip install -e .[dev]
 ```
 
 ## What makes this different?
@@ -42,6 +60,16 @@ deflect-bot ask                           # Start interactive Q&A
 
 > **💡 Fresh Setup**: The bot starts with an empty knowledge base. You'll need to index your documentation (local files or web crawling) before asking questions. This ensures the bot only knows what you explicitly provide.
 
+### 🚀 Multi-Provider Intelligence
+- **8 AI Providers**: OpenAI, Groq, Mistral, Google Gemini, Claude API, Claude Code, Ollama
+- **Cost Optimization**: Automatic selection of most cost-effective providers
+- **Smart Fallbacks**: Seamless switching if primary provider is unavailable  
+- **Budget Control**: Set monthly limits with real-time cost tracking
+- **Regional Compliance**: GDPR-compliant providers for EU users
+- **Subscription Leverage**: Use your existing Claude Pro and Google One AI Pro subscriptions
+
+> **💰 Cost Example**: Default setup costs ~$0.15 per 1M input tokens using GPT-4o-mini, with free tiers available through Groq and Google.
+
 ## 📖 Documentation
 
 Comprehensive documentation is now organized in the `docs/` folder:
@@ -49,6 +77,7 @@ Comprehensive documentation is now organized in the `docs/` folder:
 - **[Installation Guide](docs/installation.md)** - Step-by-step setup instructions
 - **[Usage Guide](docs/usage.md)** - CLI commands and usage patterns  
 - **[Configuration](docs/configuration.md)** - Environment variables and customization
+- **[Provider Setup](docs/providers.md)** - Multi-provider configuration and cost optimization
 - **[Features](docs/features.md)** - Complete feature overview
 - **[FAQ](docs/faq.md)** - Frequently asked questions
 - **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
@@ -72,9 +101,9 @@ The CLI is the recommended interface for daily use, while the API is perfect for
 
 ```bash
 deflect-bot ask
-# ❓ You: How do I troubleshoot connection issues?
-# ❓ You: What configuration options are available?
-# ❓ You: How do I optimize performance?
+# ❓ You: How do I set up API providers?
+# ❓ You: Which provider is most cost-effective?
+# ❓ You: How do I optimize my budget settings?
 ```
 
 For bugs, feature requests, or if the bot can't help:
