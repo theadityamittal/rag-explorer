@@ -22,7 +22,7 @@ ollama list
 
 ### 2. Setup Python environment
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/theadityamittal/support-deflect-bot.git
 cd support-deflect-bot
 
 # Create virtual environment

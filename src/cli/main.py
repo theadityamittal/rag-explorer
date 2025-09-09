@@ -1,4 +1,9 @@
 """Main CLI entry point for Support Deflect Bot."""
+
+# Initialize clean CLI environment FIRST (suppress warnings)
+from src.utils.warnings_suppressor import init_clean_cli
+init_clean_cli()
+
 import time
 from typing import List, Optional
 

@@ -9,7 +9,7 @@ ollama pull llama3.1
 ollama pull nomic-embed-text
 
 # 2. Clone and setup
-git clone <repo-url>
+git clone https://github.com/theadityamittal/support-deflect-bot.git
 cd support-deflect-bot
 python -m venv .venv && source .venv/bin/activate
 pip install -e .  # Install CLI

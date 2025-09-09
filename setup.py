@@ -10,12 +10,12 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 setup(
     name="support-deflect-bot",
     version="0.1.0",
-    author="Your Name",
-    author_email="your.email@example.com",
+    author="Aditya Mittal",
+    author_email="theadityamittal@gmail.com",
     description="Intelligent document Q&A with confidence-based refusal",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/support-deflect-bot",
+    url="https://github.com/theadityamittal/support-deflect-bot",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",

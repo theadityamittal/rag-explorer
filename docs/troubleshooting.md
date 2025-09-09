@@ -206,6 +206,20 @@ deflect-bot index
 deflect-bot crawl --default --force
 ```
 
+## ✅ Known Resolved Issues
+
+### Warnings and Noise (Fixed in Latest Version)
+The following warnings have been automatically suppressed for cleaner CLI output:
+
+- **urllib3 OpenSSL warnings**: `urllib3 v2 only supports OpenSSL 1.1.1+...`
+- **ChromaDB telemetry errors**: `Failed to send telemetry event...`
+- **Rich markup formatting**: Fixed malformed markup tags
+
+These were harmless warnings that cluttered the output but didn't affect functionality. They are now automatically suppressed when using the CLI.
+
+### Rich Formatting Issues (Fixed)
+Fixed confidence score display and other Rich markup formatting issues that could cause parsing errors.
+
 ## Debug Mode
 
 ### Enable detailed logging
@@ -310,6 +324,6 @@ deflect-bot --verbose search "problematic query"
 ```
 
 ### Contact support
-- **Issues**: [GitHub Issues](https://github.com/your-repo/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-repo/discussions)
+- **Issues**: [GitHub Issues](https://github.com/theadityamittal/support-deflect-bot/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/theadityamittal/support-deflect-bot/discussions)
 - **Ask the bot**: Use the bot itself for troubleshooting questions!

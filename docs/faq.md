@@ -120,8 +120,8 @@ Absolutely! See the deployment documentation for Docker and production configura
 ## Getting Help
 
 ### Where can I report bugs or request features?
-- **Issues**: [GitHub Issues](https://github.com/your-repo/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-repo/discussions)
+- **Issues**: [GitHub Issues](https://github.com/theadityamittal/support-deflect-bot/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/theadityamittal/support-deflect-bot/discussions)
 
 ### How do I contribute?
 See the Contributing section in the main README for development setup and guidelines.

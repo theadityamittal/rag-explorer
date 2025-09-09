@@ -15,7 +15,7 @@ ollama pull llama3.1
 ollama pull nomic-embed-text
 
 # 2. Clone and setup
-git clone <repo-url>
+git clone https://github.com/theadityamittal/support-deflect-bot.git
 cd support-deflect-bot
 python -m venv .venv && source .venv/bin/activate
 pip install -e .  # Install CLI
@@ -78,8 +78,16 @@ deflect-bot ask
 ```
 
 For bugs, feature requests, or if the bot can't help:
-- **Issues**: [GitHub Issues](link-to-issues)
-- **Discussions**: [GitHub Discussions](link-to-discussions)
+- **Issues**: [GitHub Issues](https://github.com/theadityamittal/support-deflect-bot/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/theadityamittal/support-deflect-bot/discussions)
+
+---
+
+## Developer
+
+**Aditya Mittal**
+- GitHub: [@theadityamittal](https://github.com/theadityamittal)
+- Email: theadityamittal@gmail.com
 
 ---
 

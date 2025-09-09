@@ -77,7 +77,7 @@ def format_answer(console: Console, result: Dict, quiet: bool = False):
     # Display confidence if available
     if confidence > 0:
         conf_style = "green" if confidence >= 0.5 else "yellow" if confidence >= 0.3 else "red"
-        console.print(f"\n🎯 [dim]Confidence: [/{conf_style}]{confidence:.2f}[/dim]")
+        console.print(f"\n🎯 [dim]Confidence: [/dim][{conf_style}]{confidence:.2f}[/{conf_style}]")
 
 
 def format_metrics(console: Console, metrics: Dict[str, Any]):
