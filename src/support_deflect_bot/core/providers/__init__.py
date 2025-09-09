@@ -35,6 +35,9 @@ from .config import (
     build_fallback_chain,
 )
 
+# Import all concrete provider implementations (auto-registers them)
+from .implementations import *
+
 __all__ = [
     # Base provider classes
     "BaseProvider",

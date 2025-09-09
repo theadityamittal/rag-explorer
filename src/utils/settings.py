@@ -16,6 +16,33 @@ OLLAMA_EMBED_MODEL = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
 #   OLLAMA_HOST=http://172.17.0.1:11434 or use --add-host for Linux
 OLLAMA_HOST = os.getenv("OLLAMA_HOST")  # optional; ollama pkg reads it
 
+# API Provider Models (for multi-provider setup)
+OPENAI_LLM_MODEL = os.getenv("OPENAI_LLM_MODEL", "gpt-4o-mini")  # Cost-effective default
+OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+CLAUDE_API_MODEL = os.getenv("CLAUDE_API_MODEL", "claude-3-haiku-20240307")  # Most cost-effective
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+MISTRAL_MODEL = os.getenv("MISTRAL_MODEL", "mistral-small-latest")
+GOOGLE_MODEL = os.getenv("GOOGLE_MODEL", "gemini-1.5-flash")
+
+# Claude Code (subprocess fallback)
+CLAUDE_CODE_PATH = os.getenv("CLAUDE_CODE_PATH", "claude")  # Path to Claude Code executable
+
+# API Keys (load from environment)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY") 
+MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
+# Cost Control Settings
+MONTHLY_BUDGET_USD = float(os.getenv("MONTHLY_BUDGET_USD", "10.0"))
+COST_ALERT_THRESHOLD = float(os.getenv("COST_ALERT_THRESHOLD", "0.8"))  # 80% of budget
+ENABLE_COST_TRACKING = os.getenv("ENABLE_COST_TRACKING", "true").lower() == "true"
+
+# Provider Selection Strategy
+DEFAULT_STRATEGY = os.getenv("DEFAULT_PROVIDER_STRATEGY", "cost_optimized")
+REGIONAL_COMPLIANCE = os.getenv("REGIONAL_COMPLIANCE", "true").lower() == "true"
+
 # Vector store (Chroma)
 CHROMA_DB_PATH = os.getenv("CHROMA_DB_PATH", "./chroma_db")
 CHROMA_COLLECTION = os.getenv("CHROMA_COLLECTION", "knowledge_base")
