@@ -1,10 +1,28 @@
+Metadata-Version: 2.1
+Name: support-deflect-bot
+Version: 0.1.0
+Summary: Intelligent document Q&A with confidence-based refusal
+Home-page: https://github.com/yourusername/support-deflect-bot
+Author: Your Name
+Author-email: your.email@example.com
+License: UNKNOWN
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
 # Support Deflection Bot
 
-**🤖 Intelligent CLI for document Q&A with confidence-based refusal**
+**🤖 Intelligent document Q&A with confidence-based refusal**
 
-Transform your documentation into a smart terminal assistant that answers questions accurately or refuses gracefully. Built for reliability over chattiness.
-
-✨ **New**: Now with a beautiful CLI interface! Interactive conversations, rich terminal output, and intuitive commands.
+Transform your documentation into a smart assistant that answers questions accurately or refuses gracefully. Built for reliability over chattiness.
 
 ## Quick Start (5 minutes)
 
@@ -18,14 +36,16 @@ ollama pull nomic-embed-text
 git clone <repo-url>
 cd support-deflect-bot
 python -m venv .venv && source .venv/bin/activate
-pip install -e .  # Install CLI
+pip install -r requirements.txt
 
-# 3. Index your docs and start asking questions
-deflect-bot index                          # Index ./docs folder
-deflect-bot ask                           # Start interactive Q&A
-# ❓ You: How do I configure the system?
-# 🤖 Bot: [Intelligent answer with citations]
-# ❓ You: end
+# 3. Start the API
+uvicorn src.api.app:app --reload
+
+# 4. Index your docs and ask questions
+curl -X POST http://127.0.0.1:8000/reindex
+curl -X POST http://127.0.0.1:8000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question": "How do I configure the system?"}'
 ```
 
 ## What makes this different?
@@ -53,11 +73,9 @@ deflect-bot ask                           # Start interactive Q&A
 - **Vector search**: Semantic similarity using local embeddings
 
 ### 🔍 **Question Answering**
-- **Interactive CLI**: Conversational Q&A sessions with `deflect-bot ask`
 - **RAG pipeline**: Retrieval-augmented generation with strict grounding
 - **Confidence gating**: Configurable threshold for answer quality
-- **Rich terminal output**: Beautiful tables, colors, and formatted responses
-- **Dual interfaces**: Primary CLI + REST API for integrations
+- **Batch processing**: Handle multiple questions efficiently  
 - **Performance metrics**: Response times and accuracy tracking
 
 ### 🌐 **Web Integration** 
@@ -105,11 +123,8 @@ deflect-bot ask                           # Start interactive Q&A
    python -m venv .venv
    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    
-   # Install CLI application
-   pip install -e .
-   
-   # Verify CLI installation
-   deflect-bot --help
+   # Install dependencies  
+   pip install -r requirements.txt
    ```
 
 3. **Configure environment (optional)**
@@ -124,153 +139,145 @@ deflect-bot ask                           # Start interactive Q&A
    cp your-docs/*.md docs/
    ```
 
-5. **Ready to use CLI**
+5. **Start the application**
    ```bash
-   # The deflect-bot command is now available!
-   deflect-bot config    # Show configuration
-   deflect-bot --help    # Show all available commands
+   uvicorn src.api.app:app --reload --port 8000
    ```
 
 6. **Index your documentation**
    ```bash
    # Index local files from ./docs folder  
-   deflect-bot index
+   curl -X POST http://127.0.0.1:8000/reindex
    
-   # Output: ✅ Successfully indexed N chunks from ./docs
+   # Should return: {"chunks_indexed": N}
    ```
 
 7. **Verify setup**
    ```bash
-   # Check system health
-   deflect-bot status
+   # Check API health
+   curl http://127.0.0.1:8000/healthz
    
    # Check LLM connectivity  
-   deflect-bot ping
+   curl http://127.0.0.1:8000/llm_ping
    
    # Test asking a question
-   deflect-bot ask
-   # ❓ You: How do I configure the system?
-   # 🤖 Bot: [Intelligent answer with citations]
-   # ❓ You: end
+   curl -X POST http://127.0.0.1:8000/ask \
+     -H "Content-Type: application/json" \
+     -d '{"question": "How do I configure the system?"}'
    ```
 
 ---
 
-## CLI Usage Guide
+## API Usage Guide
 
-### 📚 **Document Management**
+### Core Endpoints
 
+#### Health Check
 ```bash
-# Index local documentation
-deflect-bot index
-# 🔄 Indexing local documentation...
-# ✅ Successfully indexed 129 chunks from ./docs
-
-# Search through documents
-deflect-bot search "installation process"
-# Shows beautiful formatted table with results
-
-# Search with options
-deflect-bot search "docker" --limit 3 --output json
-deflect-bot --quiet search "api"  # Just file paths
+curl http://127.0.0.1:8000/healthz
 ```
 
-### 🤖 **Interactive Q&A Session**
-
+#### Index Documents
 ```bash
-# Start conversational mode
-deflect-bot ask
-# 🤖 Support Deflect Bot - Interactive Q&A Session
-# Ask me anything about your documentation. Type 'end' to exit.
-# 
-# ❓ You: How do I configure the database?
-# 🤖 Bot: The database can be configured by setting CHROMA_DB_PATH...
-#      📚 Sources:
-#        [1] ./docs/configuration.md:25 - Database configuration...
-# 
-# ❓ You: end
-# 👋 Goodbye! Asked 1 questions in this session.
+# Index local files from ./docs folder
+curl -X POST http://127.0.0.1:8000/reindex
 
-# Filter responses by domains
-deflect-bot ask --domains "docs.python.org,github.com"
+# Response: {"chunks_indexed": 42}
 ```
 
-### 🕷️ **Web Crawling**
-
+#### Ask Questions  
 ```bash
-# Crawl specific URLs
-deflect-bot crawl https://docs.python.org/3/library/os.html
-
-# Deep crawl with options  
-deflect-bot crawl https://example.com --depth 2 --max-pages 50
-
-# Crawl with domain restrictions
-deflect-bot crawl https://docs.myapi.com --depth 2 --same-domain
-
-# Use configured default URLs
-deflect-bot crawl --default
-
-# Force refresh cached content
-deflect-bot crawl https://example.com/docs --force
-```
-
-### ⚙️ **System Operations**
-
-```bash
-# Check system health
-deflect-bot status
-# 🏥 Checking system health...
-# ✅ System status: OK
-
-# Test LLM connection
-deflect-bot ping  
-# 🏓 Pinging LLM service...
-# ✅ LLM responded: Yeah Yeah! I'm awake!
-
-# Show performance metrics
-deflect-bot metrics
-# Beautiful table with response times and counts
-
-# View configuration
-deflect-bot config
-# Shows all current settings in a formatted table
-```
-
-### 🔧 **Global Options**
-
-**Important**: Global options must come BEFORE commands!
-
-```bash
-# ✅ Correct syntax:
-deflect-bot --quiet search "docker"     # Minimal output  
-deflect-bot --verbose index            # Extra details
-deflect-bot --help                     # Show help
-
-# ❌ Wrong syntax (will error):
-deflect-bot search "docker" --quiet    # Error: No such option
-```
-
-### 📄 **Complete CLI Documentation**
-
-For comprehensive CLI documentation with all options, examples, and troubleshooting:
-
-**➡️ [See CLI_USAGE.md](CLI_USAGE.md) for the complete CLI guide**
-
-### 🚀 **Alternative: REST API**
-
-The original REST API is still available for integration scenarios:
-
-```bash
-# Start the API server (optional)
-uvicorn src.api.app:app --reload --port 8000
-
-# Then use curl commands
 curl -X POST http://127.0.0.1:8000/ask \
   -H "Content-Type: application/json" \
-  -d '{"question": "How do I configure the system?"}'
+  -d '{"question": "How do I enable debug mode?"}'
+
+# Response:
+{
+  "answer": "Set DEBUG=true in your environment variables...",
+  "citations": [
+    {
+      "rank": 1,
+      "path": "configuration.md", 
+      "chunk_id": 2,
+      "preview": "Debug mode can be enabled by setting..."
+    }
+  ],
+  "confidence": 0.85
+}
 ```
 
-The CLI is the recommended interface for daily use, while the API is perfect for integrations and automation.
+#### Search Documents
+```bash
+curl -X POST http://127.0.0.1:8000/search \
+  -H "Content-Type: application/json" \
+  -d '{"query": "authentication", "k": 5}'
+```
+
+### Web Crawling
+
+#### Crawl Specific URLs
+```bash
+curl -X POST http://127.0.0.1:8000/crawl \
+  -H "Content-Type: application/json" \
+  -d '{
+    "urls": ["https://docs.python.org/3/library/venv.html"],
+    "force": false
+  }'
+```
+
+#### Crawl with Depth
+```bash
+curl -X POST http://127.0.0.1:8000/crawl_depth \
+  -H "Content-Type: application/json" \
+  -d '{
+    "seeds": ["https://docs.python.org/3/"],
+    "depth": 2,
+    "max_pages": 50,
+    "same_domain": true
+  }'
+```
+
+#### Crawl Default Sites
+```bash
+curl -X POST http://127.0.0.1:8000/crawl_default
+```
+
+### Advanced Features
+
+#### Domain Filtering
+```bash
+curl -X POST http://127.0.0.1:8000/ask \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "How to create virtual environments?",
+    "domains": ["docs.python.org"]
+  }'
+```
+
+#### Batch Processing
+```bash
+curl -X POST http://127.0.0.1:8000/batch_ask \
+  -H "Content-Type: application/json" \
+  -d '{
+    "questions": [
+      "How do I install packages?",
+      "Where are logs stored?",
+      "How to enable debugging?"
+    ]
+  }'
+```
+
+#### Performance Metrics
+```bash
+curl http://127.0.0.1:8000/metrics
+
+# Response:
+{
+  "ask": {"count": 15, "p50_ms": 245.3, "p95_ms": 892.1},
+  "search": {"count": 8, "p50_ms": 89.2, "p95_ms": 156.7},
+  "version": "0.1.0"
+}
+```
 
 ---
 
@@ -754,3 +761,4 @@ MIT License - see LICENSE file for details.
 - **Documentation**: [Full Documentation](link-to-docs)
 
 Built with ❤️ for reliable, grounded AI assistance.
+

@@ -730,5 +730,11 @@
     "last_modified": null,
     "content_hash": "5fe0bbf677c2049a44023122dcfd398e4027ce4b26f7e7cf9e729d091b1e3f94",
     "updated_at": 1757380994
+  },
+  "https://invalid-url-that-does-not-exist.com": {
+    "etag": null,
+    "last_modified": null,
+    "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "updated_at": 1757388835
   }
 }
