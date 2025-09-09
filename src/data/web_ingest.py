@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup, Tag
 from src.data.chunker import chunk_text
 from src.data.embeddings import embed_texts
 from src.data.store import get_collection
-from src.utils.settings import ALLOW_HOSTS, CRAWL_CACHE_PATH
+from src.utils.settings import ALLOW_HOSTS, CRAWL_CACHE_PATH, TRUSTED_DOMAINS
 from src.utils.settings import USER_AGENT as UA
 
 # Cache file for freshness (ETag/Last-Modified + content_hash)
@@ -61,15 +61,42 @@ def _same_host(a: str, b: str) -> bool:
 
 
 def _robots_ok(url: str) -> bool:
-    # Basic robots.txt check per host
-    host = f"{urlparse(url).scheme}://{urlparse(url).netloc}"
-    rp = robotparser.RobotFileParser()
-    rp.set_url(urljoin(host, "/robots.txt"))
+    # Check if domain is trusted (Option B: bypass robots.txt for trusted domains)
+    parsed_url = urlparse(url)
+    host = parsed_url.netloc
+    if host in TRUSTED_DOMAINS:
+        logging.info(f"Bypassing robots.txt check for trusted domain: {host}")
+        return True
+    
+    # Option D: Fix robotparser remote fetching by using our own fetch_html
+    host_url = f"{parsed_url.scheme}://{host}"
+    robots_url = urljoin(host_url, "/robots.txt")
+    
     try:
-        rp.read()
-        return rp.can_fetch(UA, url)  # use UA from settings
-    except (urllib.error.URLError, urllib.error.HTTPError, requests.RequestException):
+        # Use our own fetch_html function which has proper headers and error handling
+        resp = fetch_html(robots_url, timeout=10)
+        resp.raise_for_status()
+        
+        # Parse robots.txt content locally using robotparser
+        import tempfile
+        import os
+        
+        # Create a temporary file with robots.txt content
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+            f.write(resp.text)
+            temp_path = f.name
+        
+        try:
+            rp = robotparser.RobotFileParser()
+            rp.set_url('file://' + temp_path)
+            rp.read()
+        finally:
+            os.unlink(temp_path)
+        
+        return rp.can_fetch(UA, url)
+    except (urllib.error.URLError, urllib.error.HTTPError, requests.RequestException) as e:
         # If robots.txt fails to load, be conservative and allow
+        logging.info(f"Failed to fetch robots.txt from {robots_url}: {e}. Allowing crawl.")
         return True
     except Exception as e:
         logging.warning(f"Unexpected error checking robots.txt for {url}: {e}")

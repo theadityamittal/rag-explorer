@@ -269,6 +269,7 @@ MAX_CHARS_PER_CHUNK=800                  # Max characters per chunk
 
 # Web Crawling
 ALLOW_HOSTS=docs.python.org,pip.pypa.io  # Comma-separated allowed domains
+TRUSTED_DOMAINS=help.sigmacomputing.com  # Domains that bypass robots.txt checks
 CRAWL_DEPTH=1                            # Default crawl depth
 CRAWL_MAX_PAGES=40                       # Max pages per crawl session
 CRAWL_SAME_DOMAIN=true                   # Restrict to same domain

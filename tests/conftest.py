@@ -72,6 +72,7 @@ def mock_settings():
         "MAX_CHUNKS": 5,
         "MAX_CHARS_PER_CHUNK": 800,
         "ALLOW_HOSTS": {"docs.python.org", "test.example.com"},
+        "TRUSTED_DOMAINS": {"test.example.com"},
         "DOCS_FOLDER": "./test_docs",
         "CRAWL_CACHE_PATH": "./test_cache.json"
     }

@@ -39,7 +39,13 @@ USER_AGENT = os.getenv(
 ALLOW_HOSTS = set(
     _csv(
         "ALLOW_HOSTS",
-        "docs.python.org,packaging.python.org,pip.pypa.io,virtualenv.pypa.io",
+        "docs.python.org,packaging.python.org,pip.pypa.io,virtualenv.pypa.io,help.sigmacomputing.com",
+    )
+)
+TRUSTED_DOMAINS = set(
+    _csv(
+        "TRUSTED_DOMAINS",
+        "help.sigmacomputing.com",
     )
 )
 DEFAULT_SEEDS = _csv(
