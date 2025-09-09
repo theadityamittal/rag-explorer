@@ -40,6 +40,8 @@ curl -X POST http://127.0.0.1:8000/ask \
 - **Confidence scoring**: Combines semantic similarity + keyword matching
 - **Domain filtering**: Restrict answers to specific documentation sources
 
+> **💡 Fresh Setup**: The bot starts with an empty knowledge base. You'll need to index your documentation (local files or web crawling) before asking questions. This ensures the bot only knows what you explicitly provide.
+
 ---
 
 ## Features Overview
@@ -122,13 +124,26 @@ curl -X POST http://127.0.0.1:8000/ask \
    uvicorn src.api.app:app --reload --port 8000
    ```
 
-6. **Verify setup**
+6. **Index your documentation**
+   ```bash
+   # Index local files from ./docs folder  
+   curl -X POST http://127.0.0.1:8000/reindex
+   
+   # Should return: {"chunks_indexed": N}
+   ```
+
+7. **Verify setup**
    ```bash
    # Check API health
    curl http://127.0.0.1:8000/healthz
    
    # Check LLM connectivity  
    curl http://127.0.0.1:8000/llm_ping
+   
+   # Test asking a question
+   curl -X POST http://127.0.0.1:8000/ask \
+     -H "Content-Type: application/json" \
+     -d '{"question": "How do I configure the system?"}'
    ```
 
 ---
@@ -531,6 +546,9 @@ docker run -d \
   -v $(pwd)/chroma_db:/app/chroma_db \
   --name support-bot \
   support-deflect-bot
+
+# Index your documents
+curl -X POST http://127.0.0.1:8000/reindex
 ```
 
 ### Production Configuration
