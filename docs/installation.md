@@ -10,36 +10,69 @@
 
 Choose the installation path that best fits your needs:
 
-### Path 1: API Providers (Recommended) 🚀
-**Best for**: Most users, cost-effective operation, reliable performance
-- **Setup time**: 3 minutes
-- **Cost**: ~$0.15 per 1M tokens (GPT-4o-mini)
-- **Benefits**: No local setup, automatic updates, multiple provider options
+### Path 1: Local Deployment (Recommended) 🔒
+**Best for**: Most users, privacy-focused operation, full control
+- **Setup time**: 5 minutes
+- **Cost**: Free (hardware requirements: 4GB+ RAM)
+- **Benefits**: Complete privacy, offline capability, no API costs, reliable default setup
 
-### Path 2: Local Deployment 🔒
-**Best for**: Privacy-focused users, offline usage, full control
+### Path 2: API Providers Setup ⚡
+**Best for**: Advanced users seeking multiple provider options
 - **Setup time**: 10 minutes
-- **Cost**: Free (hardware requirements)
-- **Benefits**: Complete privacy, offline capability, no API costs
+- **Cost**: ~$0.15 per 1M tokens (GPT-4o-mini)
+- **Benefits**: Enhanced performance, multiple fallback options, cloud-based reliability
 
-### Path 3: Hybrid Setup ⚡
-**Best for**: Advanced users, maximum flexibility
+### Path 3: Development Setup 🛠️
+**Best for**: Contributors and developers
 - **Setup time**: 15 minutes
-- **Benefits**: Best of both worlds, automatic fallback
+- **Benefits**: Full development environment, testing capabilities, contribution-ready
 
 ---
 
-## Path 1: API Providers Installation (Recommended)
+## Path 1: Local Deployment (Recommended)
 
-### 1. Install with API providers
+### 1. Install Ollama and models
 ```bash
-# Install directly from pip (coming soon)
-pip install support-deflect-bot[api]
+# Install Ollama
+curl -fsSL https://ollama.com/install.sh | sh
 
-# OR install from source
+# Pull required models (this may take 10-15 minutes)
+ollama pull llama3.1        # ~4GB - Default LLM model
+ollama pull nomic-embed-text # ~274MB - Default embedding model
+
+# Verify installation
+ollama list
+```
+
+### 2. Install support-deflect-bot
+```bash
+# Clone and install from source
 git clone https://github.com/theadityamittal/support-deflect-bot.git
 cd support-deflect-bot
-pip install -e .[api]
+pip install -e .
+```
+
+### 3. Start using locally
+```bash
+# Index your documentation
+deflect-bot index ./docs
+
+# Uses local Ollama automatically (no API keys needed)
+deflect-bot ask
+# ❓ You: How do I configure the system?
+# 🤖 Bot: [Answer using local llama3.1 model]
+```
+
+---
+
+## Path 2: API Providers Setup (Advanced)
+
+### 1. Install support-deflect-bot
+```bash
+# Clone and install from source
+git clone https://github.com/theadityamittal/support-deflect-bot.git
+cd support-deflect-bot
+pip install -e .
 ```
 
 ### 2. Set up your API keys
@@ -50,7 +83,7 @@ Choose one or more providers and get API keys:
 # Get API key from: https://platform.openai.com/api-keys
 export OPENAI_API_KEY="your_openai_api_key_here"
 
-# Test connection
+# Test connection (if openai package installed)
 python -c "import openai; print('✅ OpenAI connection ready')"
 ```
 
@@ -58,36 +91,12 @@ python -c "import openai; print('✅ OpenAI connection ready')"
 ```bash
 # Get API key from: https://console.groq.com/keys
 export GROQ_API_KEY="your_groq_api_key_here"
-
-# Test connection
-python -c "import groq; print('✅ Groq connection ready')"
 ```
 
 #### Claude API (Premium Quality)
 ```bash
 # Get API key from: https://console.anthropic.com/
 export ANTHROPIC_API_KEY="your_claude_api_key_here"
-
-# Test connection
-python -c "import anthropic; print('✅ Claude API connection ready')"
-```
-
-#### Google Gemini (Free Tier Available)
-```bash
-# Get API key from: https://aistudio.google.com/app/apikey
-export GOOGLE_API_KEY="your_google_api_key_here"
-
-# Test connection
-python -c "import google.generativeai; print('✅ Google Gemini connection ready')"
-```
-
-#### Mistral (EU-Compliant)
-```bash
-# Get API key from: https://console.mistral.ai/
-export MISTRAL_API_KEY="your_mistral_api_key_here"
-
-# Test connection
-python -c "from mistralai.client import MistralClient; print('✅ Mistral connection ready')"
 ```
 
 ### 3. Configure environment
@@ -96,82 +105,49 @@ cp .env.example .env
 # Edit .env to add your API keys and customize settings
 ```
 
-### 4. Start using immediately
-```bash
-# Add your documentation to ./docs folder
-cp your-docs/*.md docs/
-
-# Index your documentation
-deflect-bot index
-
-# Start Q&A with automatic provider selection
-deflect-bot ask
-# ❓ You: How do I configure the system?
-# 🤖 Bot: [Answer using best available provider]
-```
-
----
-
-## Path 2: Local Deployment (Privacy-Focused)
-
-### 1. Install Ollama and models
-```bash
-# Install Ollama
-curl -fsSL https://ollama.com/install.sh | sh
-
-# Pull required models (this may take 10-15 minutes)
-ollama pull llama3.1        # ~4GB - for text generation
-ollama pull nomic-embed-text # ~274MB - for embeddings
-
-# Verify installation
-ollama list
-```
-
-### 2. Install support-deflect-bot
-```bash
-# Install with all providers (including local)
-pip install support-deflect-bot[all]
-
-# OR from source
-git clone https://github.com/theadityamittal/support-deflect-bot.git
-cd support-deflect-bot
-pip install -e .[all]
-```
-
-### 3. Start using locally
+### 4. Start using with API providers
 ```bash
 # Index your documentation
 deflect-bot index ./docs
 
-# Uses local Ollama automatically (no API keys needed)
+# Start Q&A with automatic provider selection
 deflect-bot ask
+# ❓ You: How do I configure the system?
+# 🤖 Bot: [Answer using best available API provider]
 ```
 
 ---
 
-## Path 3: Hybrid Setup (Maximum Flexibility)
+## Path 3: Development Setup
 
-### 1. Install with all providers
+### 1. Clone and install in development mode
 ```bash
-pip install support-deflect-bot[all]
+# Clone repository
+git clone https://github.com/theadityamittal/support-deflect-bot.git
+cd support-deflect-bot
+
+# Install with development dependencies
+pip install -e .[dev]
 ```
 
-### 2. Set up both API keys AND local Ollama
+### 2. Set up testing environment
 ```bash
-# Set up API providers (follow Path 1, Step 2)
-export OPENAI_API_KEY="your_key"
-export GROQ_API_KEY="your_key"
-
-# Install Ollama (follow Path 2, Step 1)
+# Install Ollama for local testing
 curl -fsSL https://ollama.com/install.sh | sh
 ollama pull llama3.1
+
+# Copy environment template
+cp .env.example .env
+# Edit .env to add API keys for testing (optional)
 ```
 
-### 3. Configure fallback strategy
+### 3. Run tests and development tools
 ```bash
-# Edit .env to set provider priority
-DEFAULT_PROVIDER_STRATEGY=cost_optimized  # API providers first
-# System automatically falls back to Ollama if API providers fail
+# Run test suite
+python -m pytest tests/
+
+# Start development server with hot reload
+uvicorn src.app:app --reload --port 8000
 ```
 
 ---

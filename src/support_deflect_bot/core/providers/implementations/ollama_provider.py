@@ -12,6 +12,10 @@ from ..base import (
 
 logger = logging.getLogger(__name__)
 
+# Default model constants for reliable operation
+DEFAULT_LLM_MODEL = "llama3.1"          # Reliable, well-tested
+DEFAULT_EMBEDDING_MODEL = "nomic-embed-text"  # Fast, accurate embeddings
+
 
 class OllamaProvider(CombinedProvider):
     """Local Ollama provider for backward compatibility and privacy-focused deployment."""

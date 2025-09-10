@@ -6,41 +6,43 @@ Transform your documentation into a smart terminal assistant that answers questi
 
 ✨ **New**: Multi-provider AI support with cost optimization! Choose from 8 different LLM providers with automatic fallback chains and budget control.
 
-## Quick Start (3 minutes)
+## Quick Start (5 minutes)
 
-### Option 1: API Providers (Recommended)
+### Local Setup (Recommended)
 ```bash
-# 1. Install with cost-effective API providers
-pip install support-deflect-bot[api]
+# 1. Clone and install
+git clone https://github.com/theadityamittal/support-deflect-bot.git
+cd support-deflect-bot
+pip install -e .
 
-# 2. Set up your API keys (choose one or more)
-export OPENAI_API_KEY="your_openai_key"        # GPT-4o-mini (most cost-effective)
+# 2. Install Ollama (default AI provider)
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull llama3.1            # Default LLM model
+ollama pull nomic-embed-text    # Default embedding model
+
+# 3. Start using immediately
+deflect-bot index ./docs        # Index your documentation
+deflect-bot ask                 # Start Q&A with Ollama
+# ❓ You: How do I configure the system?
+# 🤖 Bot: [Answer using local llama3.1 model]
+```
+
+### API Providers Setup (Advanced)
+For enhanced performance and multiple provider options:
+
+```bash
+# 1. Install as above, then add API keys
+export OPENAI_API_KEY="your_openai_key"        # GPT-4o-mini (cost-effective)
 export GROQ_API_KEY="your_groq_key"           # Ultra-fast inference
 export ANTHROPIC_API_KEY="your_claude_key"    # Claude API
 
-# 3. Start using immediately
-deflect-bot index ./docs                      # Index your documentation
-deflect-bot ask                              # Start Q&A with automatic provider selection
-# ❓ You: How do I configure the system?
-# 🤖 Bot: [Answer using best available provider]
+# 2. System automatically uses API providers when available
+deflect-bot ask  # Now uses API providers with Ollama fallback
 ```
 
-### Option 2: Local Setup (Privacy-focused)
+### Development Setup
 ```bash
-# 1. Install with local providers
-pip install support-deflect-bot[all]
-
-# 2. Install Ollama for local inference (optional)
-curl -fsSL https://ollama.com/install.sh | sh
-ollama pull llama3.1 && ollama pull nomic-embed-text
-
-# 3. Works offline with local models
-deflect-bot ask  # Uses local Ollama automatically
-```
-
-### Option 3: Development Setup
-```bash
-# Clone and install in development mode
+# Clone and install in development mode with all dependencies
 git clone https://github.com/theadityamittal/support-deflect-bot.git
 cd support-deflect-bot
 pip install -e .[dev]

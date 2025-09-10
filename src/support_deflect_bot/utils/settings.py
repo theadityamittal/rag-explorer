@@ -103,6 +103,7 @@ GOOGLE_EMBEDDING_MODEL = os.getenv('GOOGLE_EMBEDDING_MODEL', 'text-embedding-004
 # Ollama (local LLM + embeddings) - Optional fallback
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.1")
 OLLAMA_EMBED_MODEL = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
+OLLAMA_HOST = os.getenv("OLLAMA_HOST")  # Optional; defaults to localhost:11434
 
 # ============================================================================
 # VECTOR STORE CONFIGURATION
