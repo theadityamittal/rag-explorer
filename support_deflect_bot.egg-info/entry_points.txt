@@ -1,3 +1,0 @@
-[console_scripts]
-deflect-bot = src.cli.main:cli
-

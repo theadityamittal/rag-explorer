@@ -81,7 +81,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "deflect-bot=src.cli.main:cli",
+            "deflect-bot=support_deflect_bot.cli.main:cli",
         ],
     },
     include_package_data=True,
