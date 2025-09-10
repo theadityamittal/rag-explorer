@@ -1,4 +1,5 @@
 """Stderr suppression utilities for ChromaDB telemetry noise."""
+
 import sys
 import os
 from contextlib import contextmanager
@@ -22,30 +23,33 @@ def suppress_stderr():
 def filter_stderr_lines():
     """Context manager to filter out known noise from stderr."""
     original_stderr = sys.stderr
-    
+
     class FilteredStderr:
         def __init__(self, original):
             self.original = original
-            
+
         def write(self, text):
             # Filter out known telemetry error messages
-            if any(phrase in text for phrase in [
-                "Failed to send telemetry event",
-                "capture() takes 1 positional argument",
-                "ClientStartEvent",
-                "ClientCreateCollectionEvent", 
-                "CollectionAddEvent",
-                "CollectionQueryEvent"
-            ]):
+            if any(
+                phrase in text
+                for phrase in [
+                    "Failed to send telemetry event",
+                    "capture() takes 1 positional argument",
+                    "ClientStartEvent",
+                    "ClientCreateCollectionEvent",
+                    "CollectionAddEvent",
+                    "CollectionQueryEvent",
+                ]
+            ):
                 return  # Don't write these lines
             return self.original.write(text)
-            
+
         def flush(self):
             return self.original.flush()
-            
+
         def __getattr__(self, name):
             return getattr(self.original, name)
-    
+
     try:
         sys.stderr = FilteredStderr(original_stderr)
         yield

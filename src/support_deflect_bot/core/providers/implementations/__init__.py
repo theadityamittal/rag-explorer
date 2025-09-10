@@ -17,31 +17,31 @@ from .ollama_provider import OllamaProvider
 from ..config import register_provider
 
 __all__ = [
-    'OpenAIProvider',
-    'GroqProvider',
-    'MistralProvider',
-    'GoogleGeminiFreeProvider',
-    'GoogleGeminiPaidProvider',
-    'ClaudeAPIProvider',
-    'ClaudeCodeProvider',
-    'OllamaProvider',
-    'register_all_providers',
+    "OpenAIProvider",
+    "GroqProvider",
+    "MistralProvider",
+    "GoogleGeminiFreeProvider",
+    "GoogleGeminiPaidProvider",
+    "ClaudeAPIProvider",
+    "ClaudeCodeProvider",
+    "OllamaProvider",
+    "register_all_providers",
 ]
 
 
 def register_all_providers():
     """Register all available providers with the default registry."""
     providers = [
-        ('openai', OpenAIProvider),
-        ('groq', GroqProvider),
-        ('mistral', MistralProvider),
-        ('google_gemini_free', GoogleGeminiFreeProvider),
-        ('google_gemini_paid', GoogleGeminiPaidProvider),
-        ('claude_api', ClaudeAPIProvider),
-        ('claude_code', ClaudeCodeProvider),
-        ('ollama', OllamaProvider),
+        ("openai", OpenAIProvider),
+        ("groq", GroqProvider),
+        ("mistral", MistralProvider),
+        ("google_gemini_free", GoogleGeminiFreeProvider),
+        ("google_gemini_paid", GoogleGeminiPaidProvider),
+        ("claude_api", ClaudeAPIProvider),
+        ("claude_code", ClaudeCodeProvider),
+        ("ollama", OllamaProvider),
     ]
-    
+
     registered_count = 0
     for name, provider_class in providers:
         try:
@@ -50,7 +50,7 @@ def register_all_providers():
             logger.debug(f"Registered provider: {name}")
         except Exception as e:
             logger.warning(f"Failed to register provider {name}: {e}")
-    
+
     logger.info(f"Registered {registered_count} providers with default registry")
     return registered_count
 

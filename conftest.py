@@ -1,6 +1,7 @@
 """
 Global pytest configuration file to ensure src module is available for imports.
 """
+
 import sys
 import os
 

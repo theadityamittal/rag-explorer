@@ -1,9 +1,16 @@
 import pytest
 from unittest.mock import Mock, patch
 from src.core.rag import (
-    _trim, _stem_simple, _tokens, _keyword_overlap, 
-    _overlap_ratio, _similarity_from_distance, _confidence,
-    _to_citations, _format_context, answer_question
+    _trim,
+    _stem_simple,
+    _tokens,
+    _keyword_overlap,
+    _overlap_ratio,
+    _similarity_from_distance,
+    _confidence,
+    _to_citations,
+    _format_context,
+    answer_question,
 )
 
 
@@ -30,22 +37,22 @@ class TestRagUtilities:
         """Test tokenization function."""
         text = "This is a TEST with numbers123 and symbols!"
         tokens = _tokens(text)
-        
+
         # Should be lowercase, alphanumeric, length > 2, no stop words
         assert "test" in tokens
         assert "numbers123" in tokens
         assert "symbol" in tokens
         assert "this" not in tokens  # stop word
-        assert "is" not in tokens   # stop word and length <= 2
+        assert "is" not in tokens  # stop word and length <= 2
 
     def test_keyword_overlap(self):
         """Test keyword overlap calculation."""
         question = "How to install Python packages?"
         text = "Install Python packages using pip install command"
-        
+
         overlap = _keyword_overlap(question, text)
         assert overlap > 0  # Should have some overlap
-        
+
         # Test with no overlap
         no_overlap = _keyword_overlap("cats dogs", "birds fish")
         assert no_overlap == 0
@@ -54,11 +61,11 @@ class TestRagUtilities:
         """Test overlap ratio calculation."""
         question = "install package"
         text = "install package using pip"
-        
+
         ratio = _overlap_ratio(question, text)
         assert 0 <= ratio <= 1
         assert ratio > 0  # Should have overlap
-        
+
         # Test with empty question
         empty_ratio = _overlap_ratio("", "some text")
         assert empty_ratio == 0.0
@@ -82,10 +89,10 @@ class TestRagConfidence:
         """Test confidence calculation with hits."""
         hits = [
             {"text": "install package using pip", "distance": 0.3},
-            {"text": "other content", "distance": 0.8}
+            {"text": "other content", "distance": 0.8},
         ]
         question = "how to install package"
-        
+
         confidence = _confidence(hits, question)
         assert 0 <= confidence <= 1
         assert isinstance(confidence, float)
@@ -103,14 +110,15 @@ class TestRagCitations:
     def test_to_citations(self):
         """Test citation generation from hits."""
         hits = [
-            {"text": "Long text content for testing citations", 
-             "meta": {"path": "test.md", "chunk_id": 0}},
-            {"text": "Another text chunk", 
-             "meta": {"path": "test2.md", "chunk_id": 1}}
+            {
+                "text": "Long text content for testing citations",
+                "meta": {"path": "test.md", "chunk_id": 0},
+            },
+            {"text": "Another text chunk", "meta": {"path": "test2.md", "chunk_id": 1}},
         ]
-        
+
         citations = _to_citations(hits, take=2)
-        
+
         assert len(citations) == 2
         assert citations[0]["rank"] == 1
         assert citations[0]["path"] == "test.md"
@@ -125,14 +133,15 @@ class TestRagCitations:
     def test_format_context(self):
         """Test context formatting for LLM."""
         hits = [
-            {"text": "First chunk content", 
-             "meta": {"path": "doc1.md", "chunk_id": 0}},
-            {"text": "Second chunk content", 
-             "meta": {"path": "doc2.md", "chunk_id": 1}}
+            {"text": "First chunk content", "meta": {"path": "doc1.md", "chunk_id": 0}},
+            {
+                "text": "Second chunk content",
+                "meta": {"path": "doc2.md", "chunk_id": 1},
+            },
         ]
-        
+
         context = _format_context(hits)
-        
+
         assert "[1] (doc1.md)" in context
         assert "[2] (doc2.md)" in context
         assert "First chunk content" in context
@@ -142,76 +151,92 @@ class TestRagCitations:
 class TestAnswerQuestion:
     """Test the main answer_question function."""
 
-    @patch('src.core.rag.retrieve')
-    @patch('src.core.rag.llm_chat')
+    @patch("src.core.rag.retrieve")
+    @patch("src.core.rag.llm_chat")
     def test_answer_question_high_confidence(self, mock_llm, mock_retrieve):
         """Test answering with high confidence."""
         # Mock retrieve to return relevant hits
         mock_retrieve.return_value = [
-            {"text": "Install packages using pip install", 
-             "meta": {"path": "docs.md", "chunk_id": 0}, 
-             "distance": 0.2}
+            {
+                "text": "Install packages using pip install",
+                "meta": {"path": "docs.md", "chunk_id": 0},
+                "distance": 0.2,
+            }
         ]
-        
+
         # Mock LLM response
         mock_llm.return_value = "Use pip install to install packages."
-        
-        with patch('src.core.rag.MIN_CONF', 0.1):  # Set low threshold
+
+        with patch("src.core.rag.MIN_CONF", 0.1):  # Set low threshold
             result = answer_question("How to install packages?")
-        
+
         assert "answer" in result
         assert "citations" in result
         assert "confidence" in result
         assert result["answer"] == "Use pip install to install packages."
         assert len(result["citations"]) > 0
 
-    @patch('src.core.rag.retrieve')
+    @patch("src.core.rag.retrieve")
     def test_answer_question_low_confidence(self, mock_retrieve):
         """Test refusal with low confidence."""
         # Mock retrieve to return irrelevant hits
         mock_retrieve.return_value = [
-            {"text": "Completely unrelated content", 
-             "meta": {"path": "docs.md", "chunk_id": 0}, 
-             "distance": 0.9}
+            {
+                "text": "Completely unrelated content",
+                "meta": {"path": "docs.md", "chunk_id": 0},
+                "distance": 0.9,
+            }
         ]
-        
-        with patch('src.core.rag.MIN_CONF', 0.8):  # Set high threshold
-            result = answer_question("How to install packages?")
-        
-        assert result["answer"] == "I don\u2019t have enough information in the docs to answer that."
 
-    @patch('src.core.rag.retrieve')
-    @patch('src.core.rag.llm_chat')
+        with patch("src.core.rag.MIN_CONF", 0.8):  # Set high threshold
+            result = answer_question("How to install packages?")
+
+        assert (
+            result["answer"]
+            == "I don\u2019t have enough information in the docs to answer that."
+        )
+
+    @patch("src.core.rag.retrieve")
+    @patch("src.core.rag.llm_chat")
     def test_answer_question_empty_llm_response(self, mock_llm, mock_retrieve):
         """Test handling of empty LLM response."""
         mock_retrieve.return_value = [
-            {"text": "Some relevant content", 
-             "meta": {"path": "docs.md", "chunk_id": 0}, 
-             "distance": 0.3}
+            {
+                "text": "Some relevant content",
+                "meta": {"path": "docs.md", "chunk_id": 0},
+                "distance": 0.3,
+            }
         ]
-        
+
         # Mock empty LLM response
         mock_llm.return_value = ""
-        
-        with patch('src.core.rag.MIN_CONF', 0.1):  # Set low threshold
+
+        with patch("src.core.rag.MIN_CONF", 0.1):  # Set low threshold
             result = answer_question("Test question?")
-        
+
         # Should fallback to extractive answer
         assert "answer" in result
         assert len(result["answer"]) > 0
-        assert result["answer"] != "I don't have enough information in the docs to answer that."
+        assert (
+            result["answer"]
+            != "I don't have enough information in the docs to answer that."
+        )
 
-    @patch('src.core.rag.retrieve')
+    @patch("src.core.rag.retrieve")
     def test_answer_question_with_domains(self, mock_retrieve):
         """Test answering with domain filtering."""
         mock_retrieve.return_value = [
-            {"text": "Domain-specific content", 
-             "meta": {"path": "docs.md", "chunk_id": 0}, 
-             "distance": 0.3}
+            {
+                "text": "Domain-specific content",
+                "meta": {"path": "docs.md", "chunk_id": 0},
+                "distance": 0.3,
+            }
         ]
-        
-        with patch('src.core.rag.MIN_CONF', 0.8):  # High threshold for refusal
+
+        with patch("src.core.rag.MIN_CONF", 0.8):  # High threshold for refusal
             result = answer_question("Test question?", domains=["example.com"])
-        
+
         # Should call retrieve with domains parameter
-        mock_retrieve.assert_called_once_with("Test question?", k=5, domains=["example.com"])
+        mock_retrieve.assert_called_once_with(
+            "Test question?", k=5, domains=["example.com"]
+        )

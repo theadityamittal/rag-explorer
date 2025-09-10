@@ -4,16 +4,18 @@ from typing import List
 try:
     # Try to use new provider system (preferred)
     from support_deflect_bot.core.providers import (
-        get_default_registry, 
+        get_default_registry,
         ProviderType,
         ProviderError,
-        ProviderUnavailableError
+        ProviderUnavailableError,
     )
+
     USE_NEW_SYSTEM = True
 except ImportError:
     # Fallback to direct Ollama for backward compatibility
     import ollama
     from support_deflect_bot.utils.settings import OLLAMA_EMBED_MODEL as EMBED_MODEL
+
     USE_NEW_SYSTEM = False
 
 
@@ -32,13 +34,15 @@ def embed_texts(texts: List[str], batch_size: int = 10) -> List[List[float]]:
         return _embed_texts_ollama_direct(texts, batch_size)
 
 
-def _embed_texts_new_system(texts: List[str], batch_size: int = 10) -> List[List[float]]:
+def _embed_texts_new_system(
+    texts: List[str], batch_size: int = 10
+) -> List[List[float]]:
     """Embed texts using new multi-provider system with fallback chain."""
     registry = get_default_registry()
-    
+
     # Build fallback chain for embedding providers (Gemini primary, Ollama fallback)
     chain = registry.build_fallback_chain(ProviderType.EMBEDDING)
-    
+
     for provider in chain:
         try:
             return provider.embed_texts(texts, batch_size=batch_size)
@@ -46,13 +50,15 @@ def _embed_texts_new_system(texts: List[str], batch_size: int = 10) -> List[List
             # Log error but continue to next provider
             logging.warning(f"Provider {provider.get_config().name} failed: {e}")
             continue
-    
+
     # If all providers fail, return zero vectors
     logging.error("All embedding providers failed, returning zero vectors")
     return [[0.0] * 768 for _ in texts]
 
 
-def _embed_texts_ollama_direct(texts: List[str], batch_size: int = 10) -> List[List[float]]:
+def _embed_texts_ollama_direct(
+    texts: List[str], batch_size: int = 10
+) -> List[List[float]]:
     """Direct Ollama embedding for backward compatibility."""
     vectors = []
 

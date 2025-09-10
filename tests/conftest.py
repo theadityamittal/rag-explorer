@@ -33,7 +33,7 @@ This document covers advanced configuration options.
 
 ## Environment Variables
 Set `API_KEY=your-key` in your environment.
-Configure `DEBUG=true` for development mode."""
+Configure `DEBUG=true` for development mode.""",
     }
 
 
@@ -42,7 +42,7 @@ def mock_ollama_response():
     """Mock response from Ollama API."""
     return {
         "embedding": [0.1] * 768,  # Mock 768-dimensional embedding
-        "message": {"content": "This is a test response from the LLM."}
+        "message": {"content": "This is a test response from the LLM."},
     }
 
 
@@ -51,11 +51,13 @@ def mock_chroma_collection():
     """Mock ChromaDB collection."""
     mock_collection = Mock()
     mock_collection.add = Mock()
-    mock_collection.query = Mock(return_value={
-        "documents": [["Sample document content for testing"]],
-        "metadatas": [[{"path": "test.md", "chunk_id": 0}]],
-        "distances": [[0.5]]
-    })
+    mock_collection.query = Mock(
+        return_value={
+            "documents": [["Sample document content for testing"]],
+            "metadatas": [[{"path": "test.md", "chunk_id": 0}]],
+            "distances": [[0.5]],
+        }
+    )
     mock_collection.count = Mock(return_value=10)
     return mock_collection
 
@@ -74,7 +76,7 @@ def mock_settings():
         "ALLOW_HOSTS": {"docs.python.org", "test.example.com"},
         "TRUSTED_DOMAINS": {"test.example.com"},
         "DOCS_FOLDER": "./test_docs",
-        "CRAWL_CACHE_PATH": "./test_cache.json"
+        "CRAWL_CACHE_PATH": "./test_cache.json",
     }
 
 
@@ -87,15 +89,15 @@ def sample_crawl_cache(temp_dir):
             "last_modified": "Wed, 21 Oct 2015 07:28:00 GMT",
             "content_hash": "abc123def456",
             "timestamp": 1635724800,
-            "status_code": 200
+            "status_code": 200,
         },
         "https://test.example.com/doc2": {
             "etag": "test-etag-456",
-            "last_modified": "Thu, 22 Oct 2015 08:30:00 GMT", 
+            "last_modified": "Thu, 22 Oct 2015 08:30:00 GMT",
             "content_hash": "def456ghi789",
             "timestamp": 1635811200,
-            "status_code": 200
-        }
+            "status_code": 200,
+        },
     }
     cache_path = os.path.join(temp_dir, "test_cache.json")
     with open(cache_path, "w") as f:
@@ -111,7 +113,7 @@ def mock_requests_response():
     mock_response.headers = {
         "content-type": "text/html",
         "etag": "test-etag-789",
-        "last-modified": "Fri, 23 Oct 2015 09:30:00 GMT"
+        "last-modified": "Fri, 23 Oct 2015 09:30:00 GMT",
     }
     mock_response.text = """
     <html>

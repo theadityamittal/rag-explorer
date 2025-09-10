@@ -11,11 +11,11 @@ from .schema import (
 )
 
 __all__ = [
-    'ConfigurationManager',
-    'ApiKeysConfig',
-    'DocsConfig', 
-    'RagConfig',
-    'CrawlConfig',
-    'ModelOverridesConfig',
-    'AppConfig',
+    "ConfigurationManager",
+    "ApiKeysConfig",
+    "DocsConfig",
+    "RagConfig",
+    "CrawlConfig",
+    "ModelOverridesConfig",
+    "AppConfig",
 ]
