@@ -1,6 +1,8 @@
-import pytest
 from unittest.mock import Mock, patch
-from src.data.embeddings import embed_texts, embed_one
+
+import pytest
+
+from src.data.embeddings import embed_one, embed_texts
 
 
 class TestEmbedTexts:

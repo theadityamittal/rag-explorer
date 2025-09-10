@@ -5,43 +5,45 @@ Tests provider registration, fallback chains, cost optimization,
 regional compliance, and error handling.
 """
 
-import pytest
-import os
 import logging
-from unittest.mock import Mock, patch, MagicMock
-from typing import List, Dict, Any
+import os
+from typing import Any, Dict, List
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+
+from support_deflect_bot.core.providers.base import (
+    ProviderError,
+    ProviderRateLimitError,
+    ProviderTier,
+    ProviderType,
+    ProviderUnavailableError,
+)
+from support_deflect_bot.core.providers.config import (
+    ProviderInstance,
+    ProviderRegistry,
+    ProviderSelector,
+    get_default_registry,
+)
 
 # Import the multi-provider system
 from support_deflect_bot.core.providers.implementations import (
-    register_all_providers,
-    OpenAIProvider,
-    GroqProvider,
-    MistralProvider,
-    GoogleGeminiFreeProvider,
-    GoogleGeminiPaidProvider,
     ClaudeAPIProvider,
     ClaudeCodeProvider,
+    GoogleGeminiFreeProvider,
+    GoogleGeminiPaidProvider,
+    GroqProvider,
+    MistralProvider,
     OllamaProvider,
-)
-from support_deflect_bot.core.providers.config import (
-    ProviderRegistry,
-    get_default_registry,
-    ProviderSelector,
-    ProviderInstance,
+    OpenAIProvider,
+    register_all_providers,
 )
 from support_deflect_bot.core.providers.strategies import (
+    COST_OPTIMIZED_STRATEGY,
+    QUALITY_FIRST_STRATEGY,
+    SPEED_FOCUSED_STRATEGY,
     StrategyManager,
     StrategyType,
-    COST_OPTIMIZED_STRATEGY,
-    SPEED_FOCUSED_STRATEGY,
-    QUALITY_FIRST_STRATEGY,
-)
-from support_deflect_bot.core.providers.base import (
-    ProviderType,
-    ProviderTier,
-    ProviderError,
-    ProviderUnavailableError,
-    ProviderRateLimitError,
 )
 
 logger = logging.getLogger(__name__)
@@ -329,8 +331,8 @@ class TestCostOptimization:
         # This would require implementing actual cost tracking
         # For now, test that the configuration exists
         from support_deflect_bot.utils.settings import (
-            MONTHLY_BUDGET_USD,
             COST_ALERT_THRESHOLD,
+            MONTHLY_BUDGET_USD,
         )
 
         assert isinstance(MONTHLY_BUDGET_USD, float)
@@ -524,14 +526,14 @@ class TestConfiguration:
     def test_settings_integration(self):
         """Test that provider settings are properly integrated."""
         from support_deflect_bot.utils.settings import (
-            OPENAI_API_KEY,
-            GROQ_API_KEY,
-            MISTRAL_API_KEY,
             ANTHROPIC_API_KEY,
-            GOOGLE_API_KEY,
-            MONTHLY_BUDGET_USD,
             COST_ALERT_THRESHOLD,
             DEFAULT_STRATEGY,
+            GOOGLE_API_KEY,
+            GROQ_API_KEY,
+            MISTRAL_API_KEY,
+            MONTHLY_BUDGET_USD,
+            OPENAI_API_KEY,
             REGIONAL_COMPLIANCE,
         )
 
@@ -547,11 +549,11 @@ class TestConfiguration:
     def test_model_configuration(self):
         """Test that model configurations are accessible."""
         from support_deflect_bot.utils.settings import (
-            OPENAI_LLM_MODEL,
             CLAUDE_API_MODEL,
+            GOOGLE_MODEL,
             GROQ_MODEL,
             MISTRAL_MODEL,
-            GOOGLE_MODEL,
+            OPENAI_LLM_MODEL,
         )
 
         # Test that model settings exist

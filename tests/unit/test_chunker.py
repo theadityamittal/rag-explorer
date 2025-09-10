@@ -1,5 +1,6 @@
 import pytest
-from src.data.chunker import chunk_text, build_docs_from_files
+
+from src.data.chunker import build_docs_from_files, chunk_text
 
 
 class TestChunkText:

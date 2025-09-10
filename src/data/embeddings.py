@@ -4,16 +4,17 @@ from typing import List
 try:
     # Try to use new provider system (preferred)
     from support_deflect_bot.core.providers import (
-        get_default_registry,
-        ProviderType,
         ProviderError,
+        ProviderType,
         ProviderUnavailableError,
+        get_default_registry,
     )
 
     USE_NEW_SYSTEM = True
 except ImportError:
     # Fallback to direct Ollama for backward compatibility
     import ollama
+
     from support_deflect_bot.utils.settings import OLLAMA_EMBED_MODEL as EMBED_MODEL
 
     USE_NEW_SYSTEM = False

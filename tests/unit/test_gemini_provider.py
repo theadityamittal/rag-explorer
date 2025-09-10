@@ -1,18 +1,18 @@
 """Unit tests for Google Gemini provider."""
 
 import os
-from unittest.mock import patch, MagicMock, Mock
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
+from support_deflect_bot.core.providers.base import (
+    ProviderError,
+    ProviderRateLimitError,
+    ProviderUnavailableError,
+)
 from support_deflect_bot.core.providers.implementations.google_gemini import (
     GoogleGeminiFreeProvider,
     GoogleGeminiPaidProvider,
-)
-from support_deflect_bot.core.providers.base import (
-    ProviderError,
-    ProviderUnavailableError,
-    ProviderRateLimitError,
 )
 
 

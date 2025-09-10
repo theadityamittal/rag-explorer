@@ -7,11 +7,11 @@ from typing import List, Optional
 
 import click
 from rich.console import Console
-from rich.prompt import Prompt, Confirm
-from rich.table import Table
 from rich.panel import Panel
+from rich.prompt import Confirm, Prompt
+from rich.table import Table
 
-from ..config import ConfigurationManager, AppConfig
+from ..config import AppConfig, ConfigurationManager
 
 console = Console()
 

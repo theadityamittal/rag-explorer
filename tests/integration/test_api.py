@@ -1,9 +1,10 @@
+import json
+import os
+import tempfile
+from unittest.mock import Mock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch
-import json
-import tempfile
-import os
 
 # Import the FastAPI app
 from src.api.app import app

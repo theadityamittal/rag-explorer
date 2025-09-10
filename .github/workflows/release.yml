@@ -133,15 +133,23 @@ jobs:
         cat release_notes.md
         
     - name: Create GitHub Release
-      uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ inputs.tag_name }}
-        release_name: Release ${{ inputs.tag_name }}
-        body_path: release_notes.md
-        draft: ${{ inputs.draft }}
-        prerelease: ${{ inputs.pre_release }}
+      run: |
+        DRAFT_FLAG=""
+        PRERELEASE_FLAG=""
+        if [ "${{ inputs.draft }}" == "true" ]; then
+          DRAFT_FLAG="--draft"
+        fi
+        if [ "${{ inputs.pre_release }}" == "true" ]; then
+          PRERELEASE_FLAG="--prerelease"
+        fi
+        
+        gh release create "${{ inputs.tag_name }}" \
+          --title "Release ${{ inputs.tag_name }}" \
+          --notes-file release_notes.md \
+          $DRAFT_FLAG \
+          $PRERELEASE_FLAG
 
   update-documentation:
     name: Update Documentation

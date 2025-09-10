@@ -1,21 +1,21 @@
 """Provider configuration and management system."""
 
-import os
-import logging
-from typing import Dict, List, Optional, Type, Any, Tuple
-from dataclasses import dataclass
 import importlib.util
+import logging
+import os
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple, Type
 
+from ...utils.region_detector import ComplianceChecker, RegionDetector, is_gdpr_region
 from .base import (
     BaseProvider,
-    LLMProvider,
     EmbeddingProvider,
+    LLMProvider,
     ProviderConfig,
-    ProviderType,
     ProviderTier,
+    ProviderType,
 )
 from .strategies import ProviderStrategy, StrategyManager, StrategyType
-from ...utils.region_detector import RegionDetector, ComplianceChecker, is_gdpr_region
 
 logger = logging.getLogger(__name__)
 

@@ -1,11 +1,12 @@
 """Regional compliance and detection utilities."""
 
-import os
-import logging
-import requests
-from typing import List, Optional, Dict, Any
-from dataclasses import dataclass
 import json
+import logging
+import os
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
+import requests
 
 logger = logging.getLogger(__name__)
 

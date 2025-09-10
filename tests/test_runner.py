@@ -3,10 +3,11 @@ Test runner script for comprehensive testing.
 This can be used to run different test suites individually or together.
 """
 
-import pytest
-import sys
 import os
+import sys
 from pathlib import Path
+
+import pytest
 
 # Add src to path for imports
 project_root = Path(__file__).parent.parent

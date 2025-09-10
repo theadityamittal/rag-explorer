@@ -18,25 +18,25 @@ from src.core.rag import answer_question
 from src.core.retrieve import retrieve
 from src.data.ingest import ingest_folder
 from src.data.web_ingest import crawl_urls, index_urls
+
 from ..utils.metrics import Meter
 
 # Use new settings from support_deflect_bot structure
 from ..utils.settings import (
+    ANSWER_MIN_CONF,
     APP_NAME,
     APP_VERSION,
-    DOCS_FOLDER,
-    ANSWER_MIN_CONF,
-    MAX_CHUNKS,
-    MAX_CHARS_PER_CHUNK,
     CRAWL_DEPTH,
     CRAWL_MAX_PAGES,
     CRAWL_SAME_DOMAIN,
     DEFAULT_SEEDS,
+    DOCS_FOLDER,
+    MAX_CHARS_PER_CHUNK,
+    MAX_CHUNKS,
 )
-
 from .ask_session import start_interactive_session
-from .output import format_search_results, format_answer, format_metrics
 from .configure import configure
+from .output import format_answer, format_metrics, format_search_results
 
 console = Console()
 

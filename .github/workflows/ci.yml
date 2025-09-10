@@ -45,7 +45,7 @@ jobs:
         python-version: '3.11'
         
     - name: Cache pip dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-quality-${{ hashFiles('**/requirements.txt', 'setup.py', 'pyproject.toml') }}
@@ -89,7 +89,7 @@ jobs:
         python-version: '3.11'
         
     - name: Cache pip dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-build-${{ hashFiles('**/requirements.txt', 'setup.py', 'pyproject.toml') }}
@@ -162,7 +162,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
         
     - name: Cache pip dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-${{ matrix.python-version }}-pip-unit-${{ hashFiles('**/requirements.txt', 'setup.py', 'pyproject.toml') }}
@@ -181,7 +181,7 @@ jobs:
         
     - name: Upload coverage to Codecov
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         flags: unittests
@@ -205,7 +205,7 @@ jobs:
         python-version: '3.11'
         
     - name: Cache pip dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-integration-${{ hashFiles('**/requirements.txt', 'setup.py', 'pyproject.toml') }}
@@ -238,7 +238,7 @@ jobs:
         python-version: '3.11'
         
     - name: Cache pip dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-providers-${{ hashFiles('**/requirements.txt', 'setup.py', 'pyproject.toml') }}
@@ -277,13 +277,13 @@ jobs:
         python-version: '3.11'
         
     - name: Cache pip dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-system-${{ hashFiles('**/requirements.txt', 'setup.py', 'pyproject.toml') }}
         
     - name: Cache ChromaDB
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ./ci_chroma_db
         key: ${{ runner.os }}-chroma-${{ hashFiles('tests/**/*.py') }}
@@ -321,7 +321,7 @@ jobs:
         python-version: '3.11'
         
     - name: Download build artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: dist-artifacts
         path: dist/

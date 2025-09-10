@@ -1,8 +1,8 @@
 """Provider selection strategies for different use cases."""
 
 from dataclasses import dataclass
-from typing import Dict, List
 from enum import Enum
+from typing import Dict, List
 
 
 class StrategyType(Enum):

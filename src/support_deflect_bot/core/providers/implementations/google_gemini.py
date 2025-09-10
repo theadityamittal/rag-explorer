@@ -2,15 +2,15 @@
 
 import logging
 import time
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 
 from ..base import (
     CombinedProvider,
     ProviderConfig,
-    ProviderType,
-    ProviderTier,
     ProviderError,
     ProviderRateLimitError,
+    ProviderTier,
+    ProviderType,
     ProviderUnavailableError,
 )
 
@@ -44,7 +44,7 @@ class GoogleGeminiBaseProvider(CombinedProvider):
             genai.configure(api_key=self.api_key)
 
         # Default models from settings
-        from ....utils.settings import GOOGLE_LLM_MODEL, GOOGLE_EMBEDDING_MODEL
+        from ....utils.settings import GOOGLE_EMBEDDING_MODEL, GOOGLE_LLM_MODEL
 
         self.default_llm_model = GOOGLE_LLM_MODEL
         self.default_embedding_model = GOOGLE_EMBEDDING_MODEL

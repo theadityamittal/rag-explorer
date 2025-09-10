@@ -1,20 +1,20 @@
 """Claude Code provider implementation using user's Claude Pro subscription via subprocess."""
 
 import logging
-import subprocess
-import time
-import shutil
-import tempfile
 import os
-from typing import Optional, Dict, Any
+import shutil
+import subprocess
+import tempfile
+import time
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 from ..base import (
     LLMProvider,
     ProviderConfig,
-    ProviderType,
-    ProviderTier,
     ProviderError,
+    ProviderTier,
+    ProviderType,
     ProviderUnavailableError,
 )
 

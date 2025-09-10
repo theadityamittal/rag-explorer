@@ -6,12 +6,13 @@ These tests require a fully configured environment with:
 - Test data available
 """
 
-import pytest
-import requests
-import time
 import os
 import tempfile
+import time
 from pathlib import Path
+
+import pytest
+import requests
 
 
 @pytest.mark.requires_ollama

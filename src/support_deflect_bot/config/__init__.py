@@ -3,11 +3,11 @@
 from .manager import ConfigurationManager
 from .schema import (
     ApiKeysConfig,
-    DocsConfig,
-    RagConfig,
-    CrawlConfig,
-    ModelOverridesConfig,
     AppConfig,
+    CrawlConfig,
+    DocsConfig,
+    ModelOverridesConfig,
+    RagConfig,
 )
 
 __all__ = [

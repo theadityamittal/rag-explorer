@@ -1,7 +1,8 @@
 """Configuration schema definitions using Pydantic."""
 
-from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field, validator, model_validator
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field, model_validator, validator
 
 
 class ApiKeysConfig(BaseModel):

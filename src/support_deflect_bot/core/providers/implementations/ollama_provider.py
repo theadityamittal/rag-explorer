@@ -1,16 +1,16 @@
 """Ollama provider implementation for local models - backward compatibility."""
 
 import logging
-import time
 import os
-from typing import List, Optional, Dict, Any
+import time
+from typing import Any, Dict, List, Optional
 
 from ..base import (
     CombinedProvider,
     ProviderConfig,
-    ProviderType,
-    ProviderTier,
     ProviderError,
+    ProviderTier,
+    ProviderType,
     ProviderUnavailableError,
 )
 
@@ -44,7 +44,7 @@ class OllamaProvider(CombinedProvider):
         super().__init__(api_key=None, **kwargs)  # No API key needed for local
 
         # Get Ollama configuration from settings
-        from ....utils.settings import OLLAMA_MODEL, OLLAMA_EMBED_MODEL, OLLAMA_HOST
+        from ....utils.settings import OLLAMA_EMBED_MODEL, OLLAMA_HOST, OLLAMA_MODEL
 
         self.default_llm_model = OLLAMA_MODEL
         self.default_embedding_model = OLLAMA_EMBED_MODEL

@@ -3,14 +3,14 @@
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, Mock, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
-import pytest
 import click.testing
+import pytest
 
-from support_deflect_bot.config.manager import ConfigurationManager
-from support_deflect_bot.config.schema import AppConfig, ApiKeysConfig
 from support_deflect_bot.cli.main import cli
+from support_deflect_bot.config.manager import ConfigurationManager
+from support_deflect_bot.config.schema import ApiKeysConfig, AppConfig
 
 
 class TestConfigurationWorkflow:
@@ -329,8 +329,8 @@ class TestProviderIntegrationWorkflow:
     def test_provider_fallback_workflow(self):
         """Test provider fallback workflow."""
         from support_deflect_bot.core.providers import (
-            get_default_registry,
             ProviderType,
+            get_default_registry,
         )
 
         registry = get_default_registry()

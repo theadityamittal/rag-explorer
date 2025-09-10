@@ -1,15 +1,17 @@
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
+
 from src.core.rag import (
-    _trim,
-    _stem_simple,
-    _tokens,
+    _confidence,
+    _format_context,
     _keyword_overlap,
     _overlap_ratio,
     _similarity_from_distance,
-    _confidence,
+    _stem_simple,
     _to_citations,
-    _format_context,
+    _tokens,
+    _trim,
     answer_question,
 )
 

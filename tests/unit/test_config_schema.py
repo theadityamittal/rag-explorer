@@ -5,11 +5,11 @@ from pydantic import ValidationError
 
 from support_deflect_bot.config.schema import (
     ApiKeysConfig,
-    DocsConfig,
-    RagConfig,
-    CrawlConfig,
-    ModelOverridesConfig,
     AppConfig,
+    CrawlConfig,
+    DocsConfig,
+    ModelOverridesConfig,
+    RagConfig,
 )
 
 

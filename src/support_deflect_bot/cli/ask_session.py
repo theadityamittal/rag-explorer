@@ -9,6 +9,7 @@ from rich.panel import Panel
 
 # Use RAG functionality from src module
 from src.core.rag import answer_question
+
 from .output import format_answer
 
 

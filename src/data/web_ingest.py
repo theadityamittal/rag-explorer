@@ -82,8 +82,8 @@ def _robots_ok(url: str) -> bool:
         resp.raise_for_status()
 
         # Parse robots.txt content locally using robotparser
-        import tempfile
         import os
+        import tempfile
 
         # Create a temporary file with robots.txt content
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:

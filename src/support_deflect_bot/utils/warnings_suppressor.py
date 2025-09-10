@@ -1,8 +1,8 @@
 """Warning suppression utilities for cleaner CLI output."""
 
-import warnings
-import os
 import logging
+import os
+import warnings
 from contextlib import contextmanager
 
 

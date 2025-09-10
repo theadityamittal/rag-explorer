@@ -2,11 +2,12 @@
 Pytest configuration and fixtures for provider tests.
 """
 
-import pytest
-import os
 import logging
-from unittest.mock import patch, Mock
-from typing import Dict, Any
+import os
+from typing import Any, Dict
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Configure test logging
 logging.basicConfig(level=logging.INFO)
@@ -66,8 +67,8 @@ def mock_provider_config():
     ):
         from support_deflect_bot.core.providers.base import (
             ProviderConfig,
-            ProviderType,
             ProviderTier,
+            ProviderType,
         )
 
         return ProviderConfig(

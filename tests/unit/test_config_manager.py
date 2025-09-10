@@ -4,17 +4,17 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from support_deflect_bot.config.manager import ConfigurationManager
 from support_deflect_bot.config.schema import (
-    AppConfig,
     ApiKeysConfig,
+    AppConfig,
+    CrawlConfig,
     DocsConfig,
     RagConfig,
-    CrawlConfig,
 )
 
 

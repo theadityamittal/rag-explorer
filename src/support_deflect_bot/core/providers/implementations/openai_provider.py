@@ -2,15 +2,15 @@
 
 import logging
 import time
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 
 from ..base import (
     CombinedProvider,
     ProviderConfig,
-    ProviderType,
-    ProviderTier,
     ProviderError,
     ProviderRateLimitError,
+    ProviderTier,
+    ProviderType,
     ProviderUnavailableError,
 )
 
@@ -50,7 +50,7 @@ class OpenAIProvider(CombinedProvider):
                 self.client = None
 
         # Default models from settings
-        from ....utils.settings import OPENAI_LLM_MODEL, OPENAI_EMBEDDING_MODEL
+        from ....utils.settings import OPENAI_EMBEDDING_MODEL, OPENAI_LLM_MODEL
 
         self.default_llm_model = OPENAI_LLM_MODEL
         self.default_embedding_model = OPENAI_EMBEDDING_MODEL

@@ -9,11 +9,10 @@ authors = [{name = "Aditya Mittal", email = "theadityamittal@gmail.com"}]
 description = "Intelligent document Q&A with multi-provider LLM support"
 readme = "README.md"
 requires-python = ">=3.9"
-license = {text = "MIT"}
+license = "MIT"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",

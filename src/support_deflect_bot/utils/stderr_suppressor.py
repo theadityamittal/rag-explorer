@@ -1,7 +1,7 @@
 """Stderr suppression utilities for ChromaDB telemetry noise."""
 
-import sys
 import os
+import sys
 from contextlib import contextmanager
 from io import StringIO
 

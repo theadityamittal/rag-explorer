@@ -4,11 +4,12 @@ Integration tests for multi-provider functionality.
 Tests real provider integration, cost tracking, and end-to-end workflows.
 """
 
-import pytest
-import os
 import logging
-from unittest.mock import patch, Mock
+import os
 import time
+from unittest.mock import Mock, patch
+
+import pytest
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +56,8 @@ class TestMultiProviderIntegration:
 
     def test_fallback_chain_building_integration(self):
         """Test complete fallback chain building process."""
-        from support_deflect_bot.core.providers.config import get_default_registry
         from support_deflect_bot.core.providers.base import ProviderType
+        from support_deflect_bot.core.providers.config import get_default_registry
 
         registry = get_default_registry()
 
@@ -117,11 +118,11 @@ class TestMultiProviderIntegration:
 
     def test_provider_selector_integration(self):
         """Test provider selector with real registry."""
-        from support_deflect_bot.core.providers.config import (
-            get_default_registry,
-            ProviderSelector,
-        )
         from support_deflect_bot.core.providers.base import ProviderType
+        from support_deflect_bot.core.providers.config import (
+            ProviderSelector,
+            get_default_registry,
+        )
 
         registry = get_default_registry()
         selector = ProviderSelector(registry)
@@ -183,21 +184,21 @@ class TestMultiProviderIntegration:
         """Test that all required settings are accessible."""
         try:
             from support_deflect_bot.utils.settings import (
-                OPENAI_API_KEY,
-                GROQ_API_KEY,
-                MISTRAL_API_KEY,
                 ANTHROPIC_API_KEY,
-                GOOGLE_API_KEY,
-                MONTHLY_BUDGET_USD,
+                CLAUDE_API_MODEL,
+                CLAUDE_CODE_PATH,
                 COST_ALERT_THRESHOLD,
                 DEFAULT_STRATEGY,
-                REGIONAL_COMPLIANCE,
-                OPENAI_LLM_MODEL,
-                CLAUDE_API_MODEL,
-                GROQ_MODEL,
-                MISTRAL_MODEL,
+                GOOGLE_API_KEY,
                 GOOGLE_MODEL,
-                CLAUDE_CODE_PATH,
+                GROQ_API_KEY,
+                GROQ_MODEL,
+                MISTRAL_API_KEY,
+                MISTRAL_MODEL,
+                MONTHLY_BUDGET_USD,
+                OPENAI_API_KEY,
+                OPENAI_LLM_MODEL,
+                REGIONAL_COMPLIANCE,
             )
 
             # Test that settings exist and have correct types
@@ -229,11 +230,11 @@ class TestRegionalComplianceIntegration:
 
     def test_gdpr_provider_filtering(self):
         """Test GDPR compliance filtering integration."""
+        from support_deflect_bot.core.providers.base import ProviderType
         from support_deflect_bot.core.providers.config import ProviderRegistry
         from support_deflect_bot.core.providers.implementations import (
             register_all_providers,
         )
-        from support_deflect_bot.core.providers.base import ProviderType
 
         register_all_providers()
         registry = ProviderRegistry()
@@ -283,6 +284,7 @@ class TestErrorHandlingIntegration:
 
     def test_no_api_keys_graceful_degradation(self):
         """Test system behavior with no API keys."""
+        from support_deflect_bot.core.providers.base import ProviderType
         from support_deflect_bot.core.providers.config import (
             ProviderRegistry,
             ProviderSelector,
@@ -290,7 +292,6 @@ class TestErrorHandlingIntegration:
         from support_deflect_bot.core.providers.implementations import (
             register_all_providers,
         )
-        from support_deflect_bot.core.providers.base import ProviderType
 
         # Clear all API keys
         with patch.dict(os.environ, {}, clear=True):
@@ -314,11 +315,11 @@ class TestErrorHandlingIntegration:
 
     def test_provider_failure_handling(self):
         """Test handling of individual provider failures."""
-        from support_deflect_bot.core.providers.config import ProviderRegistry
         from support_deflect_bot.core.providers.base import (
             ProviderType,
             ProviderUnavailableError,
         )
+        from support_deflect_bot.core.providers.config import ProviderRegistry
 
         registry = ProviderRegistry()
 
@@ -468,14 +469,14 @@ class TestRealProviderIntegration:
     )
     def test_multi_provider_real_fallback(self):
         """Test real multi-provider fallback with available providers."""
+        from support_deflect_bot.core.providers.base import ProviderType
         from support_deflect_bot.core.providers.config import (
-            get_default_registry,
             ProviderSelector,
+            get_default_registry,
         )
         from support_deflect_bot.core.providers.implementations import (
             register_all_providers,
         )
-        from support_deflect_bot.core.providers.base import ProviderType
 
         register_all_providers()
         registry = get_default_registry()

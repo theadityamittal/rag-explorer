@@ -1,12 +1,14 @@
-import pytest
 import os
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+
 from src.data.store import (
     get_client,
     get_collection,
-    upsert_chunks,
     query_by_embedding,
     reset_collection,
+    upsert_chunks,
 )
 
 
