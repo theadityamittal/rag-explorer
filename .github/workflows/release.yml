@@ -1,0 +1,316 @@
+name: Release Management
+
+on:
+  release:
+    types: [created, edited]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for release (e.g., v0.1.1)'
+        required: true
+        type: string
+      pre_release:
+        description: 'Mark as pre-release'
+        required: false
+        type: boolean
+        default: false
+      draft:
+        description: 'Create as draft release'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  validate-release:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install setuptools-scm
+      run: pip install setuptools-scm
+      
+    - name: Extract version info
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          TAG_NAME="${{ inputs.tag_name }}"
+          IS_PRERELEASE="${{ inputs.pre_release }}"
+        else
+          TAG_NAME="${{ github.event.release.tag_name }}"
+          IS_PRERELEASE="${{ github.event.release.prerelease }}"
+        fi
+        
+        echo "version=${TAG_NAME#v}" >> $GITHUB_OUTPUT
+        echo "is_prerelease=${IS_PRERELEASE}" >> $GITHUB_OUTPUT
+        echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
+        
+        echo "Release version: ${TAG_NAME#v}"
+        echo "Is prerelease: ${IS_PRERELEASE}"
+        
+    - name: Validate version format
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+(\.[0-9]+)?)?$ ]]; then
+          echo "❌ Invalid version format: $VERSION"
+          echo "Expected format: X.Y.Z or X.Y.Z-alpha.N"
+          exit 1
+        fi
+        echo "✅ Version format is valid: $VERSION"
+
+  create-release-notes:
+    name: Create Release Notes
+    runs-on: ubuntu-latest
+    needs: validate-release
+    timeout-minutes: 10
+    if: github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Get the last tag for comparison
+        LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        CURRENT_TAG="${{ inputs.tag_name }}"
+        
+        echo "Generating changelog from ${LAST_TAG} to ${CURRENT_TAG}"
+        
+        # Generate commit messages since last tag
+        if [ -n "$LAST_TAG" ]; then
+          COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%an)" --no-merges)
+        else
+          COMMITS=$(git log --pretty=format:"- %s (%an)" --no-merges | head -20)
+        fi
+        
+        # Create release notes
+        cat > release_notes.md << EOF
+        ## What's Changed
+        
+        $COMMITS
+        
+        ## Installation
+        
+        \`\`\`bash
+        pip install support-deflect-bot==${{ needs.validate-release.outputs.version }}
+        \`\`\`
+        
+        ## Quick Start
+        
+        \`\`\`bash
+        # Install Ollama (for local usage)
+        curl -fsSL https://ollama.com/install.sh | sh
+        ollama pull llama3.1
+        ollama pull nomic-embed-text
+        
+        # Or use with Gemini API
+        export GOOGLE_API_KEY="your-api-key"
+        
+        # Start using
+        deflect-bot index ./docs
+        deflect-bot ask
+        \`\`\`
+        
+        **Full Changelog**: https://github.com/theadityamittal/support-deflect-bot/compare/${LAST_TAG}...${CURRENT_TAG}
+        EOF
+        
+        echo "Generated release notes:"
+        cat release_notes.md
+        
+    - name: Create GitHub Release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        DRAFT_FLAG=""
+        PRERELEASE_FLAG=""
+        if [ "${{ inputs.draft }}" == "true" ]; then
+          DRAFT_FLAG="--draft"
+        fi
+        if [ "${{ inputs.pre_release }}" == "true" ]; then
+          PRERELEASE_FLAG="--prerelease"
+        fi
+        
+        gh release create "${{ inputs.tag_name }}" \
+          --title "Release ${{ inputs.tag_name }}" \
+          --notes-file release_notes.md \
+          $DRAFT_FLAG \
+          $PRERELEASE_FLAG
+
+  update-documentation:
+    name: Update Documentation
+    runs-on: ubuntu-latest
+    needs: validate-release
+    timeout-minutes: 10
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Update version in documentation
+      run: |
+        VERSION="${{ needs.validate-release.outputs.version }}"
+        
+        # Update README.md if it contains version references
+        if grep -q "support-deflect-bot==" README.md; then
+          sed -i "s/support-deflect-bot==[0-9.]*/support-deflect-bot==$VERSION/g" README.md
+          echo "Updated README.md with version $VERSION"
+        fi
+        
+        # Update installation docs
+        if [ -f "docs/installation.md" ]; then
+          if grep -q "support-deflect-bot==" docs/installation.md; then
+            sed -i "s/support-deflect-bot==[0-9.]*/support-deflect-bot==$VERSION/g" docs/installation.md
+            echo "Updated docs/installation.md with version $VERSION"
+          fi
+        fi
+        
+    - name: Update changelog
+      run: |
+        VERSION="${{ needs.validate-release.outputs.version }}"
+        DATE=$(date +%Y-%m-%d)
+        
+        # Create or update CHANGELOG.md
+        if [ ! -f "CHANGELOG.md" ]; then
+          cat > CHANGELOG.md << EOF
+        # Changelog
+        
+        All notable changes to this project will be documented in this file.
+        
+        The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+        and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+        
+        ## [${VERSION}] - ${DATE}
+        
+        ### Added
+        - Initial release
+        
+        EOF
+        else
+          # Add new version entry at the top
+          sed -i "2i\\
+        ## [${VERSION}] - ${DATE}\\
+        \\
+        ### Changed\\
+        - Version ${VERSION} release\\
+        \\
+        " CHANGELOG.md
+        fi
+        
+    - name: Commit documentation updates
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        if git diff --quiet; then
+          echo "No documentation changes to commit"
+        else
+          git add README.md docs/installation.md CHANGELOG.md
+          git commit -m "docs: update documentation for release ${{ needs.validate-release.outputs.version }}"
+          git push
+          echo "Documentation updated and pushed"
+        fi
+
+  validate-package:
+    name: Validate Package Build
+    runs-on: ubuntu-latest
+    needs: validate-release
+    timeout-minutes: 15
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ref: ${{ github.event.release.tag_name || inputs.tag_name }}
+        
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install build dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine setuptools-scm
+        
+    - name: Build package
+      run: |
+        python -m build
+        ls -la dist/
+        
+    - name: Verify version matches tag
+      run: |
+        EXPECTED_VERSION="${{ needs.validate-release.outputs.version }}"
+        
+        # Extract version from wheel filename
+        WHEEL_VERSION=$(ls dist/*.whl | sed -n 's/.*-\([0-9][^-]*\)-.*/\1/p')
+        
+        echo "Expected version: $EXPECTED_VERSION"
+        echo "Wheel version: $WHEEL_VERSION"
+        
+        if [ "$WHEEL_VERSION" != "$EXPECTED_VERSION" ]; then
+          echo "❌ Version mismatch!"
+          echo "Expected: $EXPECTED_VERSION"
+          echo "Got: $WHEEL_VERSION"
+          exit 1
+        fi
+        
+        echo "✅ Version matches tag"
+        
+    - name: Check package
+      run: twine check dist/*
+      
+    - name: Test package installation
+      run: |
+        pip install dist/*.whl
+        deflect-bot --version | grep "${{ needs.validate-release.outputs.version }}"
+
+  release-summary:
+    name: Release Summary
+    runs-on: ubuntu-latest
+    needs: [validate-release, update-documentation, validate-package]
+    if: always()
+    
+    steps:
+    - name: Create release summary
+      run: |
+        echo "# 🚀 Release Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Version:** ${{ needs.validate-release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Prerelease:** ${{ needs.validate-release.outputs.is_prerelease }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Status" >> $GITHUB_STEP_SUMMARY
+        echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Validation | ${{ needs.validate-release.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Documentation Update | ${{ needs.update-documentation.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Package Validation | ${{ needs.validate-package.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ needs.validate-release.result }}" == "success" && 
+              "${{ needs.update-documentation.result }}" == "success" && 
+              "${{ needs.validate-package.result }}" == "success" ]]; then
+          echo "✅ **Release preparation completed successfully!**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The package is ready for PyPI publishing via the publish workflow." >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Release preparation failed.**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Please check the failed steps above and resolve issues before proceeding." >> $GITHUB_STEP_SUMMARY
+        fi
