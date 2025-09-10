@@ -1,7 +1,7 @@
 """Main CLI entry point for Support Deflect Bot."""
 
 # Initialize clean CLI environment FIRST (suppress warnings)  
-from ..compat import init_clean_cli
+from ..utils.warnings_suppressor import init_clean_cli
 init_clean_cli()
 
 import time
@@ -11,8 +11,13 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-# Use compatibility bridges for core functionality
-from ..compat import llm_echo, answer_question, retrieve, ingest_folder, crawl_urls, index_urls, Meter
+# Use core functionality from src modules
+from src.core.llm_local import llm_echo
+from src.core.rag import answer_question
+from src.core.retrieve import retrieve
+from src.data.ingest import ingest_folder
+from src.data.web_ingest import crawl_urls, index_urls
+from ..utils.metrics import Meter
 
 # Use new settings from support_deflect_bot structure
 from ..utils.settings import (
@@ -30,6 +35,7 @@ from ..utils.settings import (
 
 from .ask_session import start_interactive_session
 from .output import format_search_results, format_answer, format_metrics
+from .configure import configure
 
 console = Console()
 
@@ -51,14 +57,17 @@ def cli(ctx, verbose, quiet):
 
 
 @cli.command()
+@click.option('--docs-path', help='Override documentation folder path')
 @click.pass_context
-def index(ctx):
+def index(ctx, docs_path):
     """Index local documentation from ./docs folder."""
     try:
-        if not ctx.obj['quiet']:
-            console.print("🔄 Indexing local documentation...", style="cyan")
+        folder_path = docs_path or DOCS_FOLDER
         
-        n = ingest_folder(DOCS_FOLDER)
+        if not ctx.obj['quiet']:
+            console.print(f"🔄 Indexing local documentation from {folder_path}...", style="cyan")
+        
+        n = ingest_folder(folder_path)
         
         if ctx.obj['quiet']:
             console.print(f"{n}")
@@ -122,9 +131,12 @@ def search(ctx, query, limit, output):
 
 @cli.command()
 @click.option('--domains', help='Comma-separated list of domains to filter')
-@click.option('--confidence', type=float, help='Override confidence threshold')
+@click.option('--confidence', type=float, help='Override confidence threshold (0.0-1.0)')
+@click.option('--model', help='Override LLM model (e.g., gemini-2.5-flash-lite)')
+@click.option('--api-key', help='Override API key for the session')
+@click.option('--max-chunks', type=int, help='Override max chunks to retrieve')
 @click.pass_context
-def ask(ctx, domains, confidence):
+def ask(ctx, domains, confidence, model, api_key, max_chunks):
     """Start interactive Q&A session (exit with 'end')."""
     domain_list = [d.strip() for d in domains.split(',')] if domains else None
     
@@ -140,12 +152,15 @@ def ask(ctx, domains, confidence):
 @cli.command()
 @click.argument('urls', nargs=-1, required=False)
 @click.option('--force', is_flag=True, help='Force re-index even if content unchanged')
-@click.option('--depth', type=int, help='Crawl depth (1-3)')
-@click.option('--max-pages', type=int, help='Maximum pages to crawl (1-100)')
+@click.option('--depth', type=int, help='Crawl depth (1-5)')
+@click.option('--max-pages', type=int, help='Maximum pages to crawl (1-500)')
 @click.option('--same-domain', is_flag=True, help='Restrict to same domain')
+@click.option('--allow-hosts', help='Comma-separated list of allowed hosts')
+@click.option('--trusted-domains', help='Comma-separated list of trusted domains')
+@click.option('--seeds', help='Comma-separated list of seed URLs (alternative to positional URLs)')
 @click.option('--default', 'use_default', is_flag=True, help='Use configured default seeds')
 @click.pass_context
-def crawl(ctx, urls, force, depth, max_pages, same_domain, use_default):
+def crawl(ctx, urls, force, depth, max_pages, same_domain, allow_hosts, trusted_domains, seeds, use_default):
     """Crawl and index web pages with various options."""
     try:
         if use_default:
@@ -316,6 +331,10 @@ def config(ctx, show, set_config):
         table.add_row(key, str(value))
     
     console.print(table)
+
+
+# Add configure command to CLI
+cli.add_command(configure)
 
 
 if __name__ == '__main__':

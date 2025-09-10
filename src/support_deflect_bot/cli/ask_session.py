@@ -6,8 +6,8 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 
-# Use compatibility bridge for RAG functionality
-from ..compat import answer_question
+# Use RAG functionality from src module
+from src.core.rag import answer_question
 from .output import format_answer
 
 

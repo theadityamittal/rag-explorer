@@ -293,7 +293,7 @@ class TestCostOptimization:
         """Test that budget limits are enforced."""
         # This would require implementing actual cost tracking
         # For now, test that the configuration exists
-        from src.utils.settings import MONTHLY_BUDGET_USD, COST_ALERT_THRESHOLD
+        from support_deflect_bot.utils.settings import MONTHLY_BUDGET_USD, COST_ALERT_THRESHOLD
         
         assert isinstance(MONTHLY_BUDGET_USD, float)
         assert isinstance(COST_ALERT_THRESHOLD, float)
@@ -472,7 +472,7 @@ class TestConfiguration:
     
     def test_settings_integration(self):
         """Test that provider settings are properly integrated."""
-        from src.utils.settings import (
+        from support_deflect_bot.utils.settings import (
             OPENAI_API_KEY, GROQ_API_KEY, MISTRAL_API_KEY,
             ANTHROPIC_API_KEY, GOOGLE_API_KEY,
             MONTHLY_BUDGET_USD, COST_ALERT_THRESHOLD,
@@ -488,7 +488,7 @@ class TestConfiguration:
     
     def test_model_configuration(self):
         """Test that model configurations are accessible."""
-        from src.utils.settings import (
+        from support_deflect_bot.utils.settings import (
             OPENAI_LLM_MODEL, CLAUDE_API_MODEL, GROQ_MODEL,
             MISTRAL_MODEL, GOOGLE_MODEL
         )

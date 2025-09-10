@@ -4,7 +4,7 @@ import os
 import time
 from typing import Dict, List
 
-from src.utils.batch import batch_ask
+from support_deflect_bot.utils.batch import batch_ask
 
 REFUSAL_SENTENCE = "I don’t have enough information in the docs to answer that."
 

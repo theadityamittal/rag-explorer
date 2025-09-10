@@ -12,7 +12,7 @@ try:
 except ImportError:
     # Fallback to direct Ollama for backward compatibility
     import ollama
-    from src.utils.settings import OLLAMA_MODEL
+    from support_deflect_bot.utils.settings import OLLAMA_MODEL
     USE_NEW_SYSTEM = False
     MODEL_NAME = OLLAMA_MODEL
 

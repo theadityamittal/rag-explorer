@@ -15,8 +15,8 @@ from bs4 import BeautifulSoup, Tag
 from src.data.chunker import chunk_text
 from src.data.embeddings import embed_texts
 from src.data.store import get_collection
-from src.utils.settings import ALLOW_HOSTS, CRAWL_CACHE_PATH, TRUSTED_DOMAINS
-from src.utils.settings import USER_AGENT as UA
+from support_deflect_bot.utils.settings import ALLOW_HOSTS, CRAWL_CACHE_PATH, TRUSTED_DOMAINS
+from support_deflect_bot.utils.settings import USER_AGENT as UA
 
 # Cache file for freshness (ETag/Last-Modified + content_hash)
 CACHE_PATH = CRAWL_CACHE_PATH

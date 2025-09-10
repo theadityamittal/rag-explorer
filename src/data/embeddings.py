@@ -13,7 +13,7 @@ try:
 except ImportError:
     # Fallback to direct Ollama for backward compatibility
     import ollama
-    from src.utils.settings import OLLAMA_EMBED_MODEL as EMBED_MODEL
+    from support_deflect_bot.utils.settings import OLLAMA_EMBED_MODEL as EMBED_MODEL
     USE_NEW_SYSTEM = False
 
 

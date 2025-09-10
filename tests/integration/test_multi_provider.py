@@ -157,7 +157,7 @@ class TestMultiProviderIntegration:
     def test_settings_integration(self):
         """Test that all required settings are accessible."""
         try:
-            from src.utils.settings import (
+            from support_deflect_bot.utils.settings import (
                 OPENAI_API_KEY, GROQ_API_KEY, MISTRAL_API_KEY,
                 ANTHROPIC_API_KEY, GOOGLE_API_KEY,
                 MONTHLY_BUDGET_USD, COST_ALERT_THRESHOLD,
