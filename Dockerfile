@@ -15,7 +15,6 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 # Copy source
 COPY src /app/src
 COPY docs /app/docs
-COPY configs /app/configs
 COPY data /app/data
 
 ENV PYTHONUNBUFFERED=1 \

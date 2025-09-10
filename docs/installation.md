@@ -147,7 +147,7 @@ cp .env.example .env
 python -m pytest tests/
 
 # Start development server with hot reload
-uvicorn src.app:app --reload --port 8000
+uvicorn src.api.app:app --reload --port 8000
 ```
 
 ---

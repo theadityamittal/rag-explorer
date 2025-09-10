@@ -12,7 +12,7 @@ from unittest.mock import Mock, patch, MagicMock
 from typing import List, Dict, Any
 
 # Import the multi-provider system
-from src.support_deflect_bot.core.providers.implementations import (
+from support_deflect_bot.core.providers.implementations import (
     register_all_providers,
     OpenAIProvider,
     GroqProvider,
@@ -23,20 +23,20 @@ from src.support_deflect_bot.core.providers.implementations import (
     ClaudeCodeProvider,
     OllamaProvider,
 )
-from src.support_deflect_bot.core.providers.config import (
+from support_deflect_bot.core.providers.config import (
     ProviderRegistry,
     get_default_registry,
     ProviderSelector,
     ProviderInstance,
 )
-from src.support_deflect_bot.core.providers.strategies import (
+from support_deflect_bot.core.providers.strategies import (
     StrategyManager,
     StrategyType,
     COST_OPTIMIZED_STRATEGY,
     SPEED_FOCUSED_STRATEGY,
     QUALITY_FIRST_STRATEGY,
 )
-from src.support_deflect_bot.core.providers.base import (
+from support_deflect_bot.core.providers.base import (
     ProviderType,
     ProviderTier,
     ProviderError,
@@ -149,7 +149,7 @@ class TestFallbackChains:
 
     def test_cost_optimized_fallback_order(self):
         """Test that cost-optimized strategy orders providers by cost."""
-        from src.support_deflect_bot.core.providers.base import ProviderConfig
+        from support_deflect_bot.core.providers.base import ProviderConfig
 
         with patch.object(self.registry, "get_available_providers") as mock_available:
             # Mock available providers with different costs
@@ -357,7 +357,7 @@ class TestErrorHandling:
 
     def test_provider_failure_fallback(self):
         """Test that system falls back when providers fail."""
-        from src.support_deflect_bot.core.providers.base import ProviderConfig
+        from support_deflect_bot.core.providers.base import ProviderConfig
 
         # Mock a provider that fails
         failing_provider = Mock()

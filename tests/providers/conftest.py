@@ -64,7 +64,7 @@ def mock_provider_config():
         gdpr_compliant: bool = True,
         free_tier: bool = False,
     ):
-        from src.support_deflect_bot.core.providers.base import (
+        from support_deflect_bot.core.providers.base import (
             ProviderConfig,
             ProviderType,
             ProviderTier,
@@ -98,7 +98,7 @@ def mock_provider():
         available: bool = True,
         config_override: Dict[str, Any] = None,
     ):
-        from src.support_deflect_bot.core.providers.base import LLMProvider
+        from support_deflect_bot.core.providers.base import LLMProvider
 
         provider = Mock(spec=LLMProvider)
         provider.is_available.return_value = available
@@ -155,7 +155,7 @@ def sample_providers(mock_provider):
 @pytest.fixture
 def registry_with_providers(sample_providers):
     """Fixture that provides a registry with sample providers."""
-    from src.support_deflect_bot.core.providers.config import ProviderRegistry
+    from support_deflect_bot.core.providers.config import ProviderRegistry
 
     registry = ProviderRegistry()
 
