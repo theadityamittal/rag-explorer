@@ -22,8 +22,8 @@ PROVIDER_STRATEGY = os.getenv('PROVIDER_STRATEGY', 'cost_optimized')
 # Options: cost_optimized, speed_focused, quality_first, balanced, custom
 
 # Primary Providers (legally compliant defaults)
-PRIMARY_LLM_PROVIDER = os.getenv('PRIMARY_LLM_PROVIDER', 'openai')
-PRIMARY_EMBEDDING_PROVIDER = os.getenv('PRIMARY_EMBEDDING_PROVIDER', 'openai')
+PRIMARY_LLM_PROVIDER = os.getenv('PRIMARY_LLM_PROVIDER', 'google_gemini_paid')
+PRIMARY_EMBEDDING_PROVIDER = os.getenv('PRIMARY_EMBEDDING_PROVIDER', 'google_gemini_paid')
 
 # Fallback Provider Chains
 def _parse_csv(env_var: str, default: str = "") -> List[str]:
@@ -31,8 +31,8 @@ def _parse_csv(env_var: str, default: str = "") -> List[str]:
     val = os.getenv(env_var, default)
     return [s.strip() for s in val.split(",") if s.strip()]
 
-FALLBACK_LLM_PROVIDERS = _parse_csv('FALLBACK_LLM_PROVIDERS', 'groq,mistral')
-FALLBACK_EMBEDDING_PROVIDERS = _parse_csv('FALLBACK_EMBEDDING_PROVIDERS', 'google_gemini_paid')
+FALLBACK_LLM_PROVIDERS = _parse_csv('FALLBACK_LLM_PROVIDERS', 'openai,groq,ollama')
+FALLBACK_EMBEDDING_PROVIDERS = _parse_csv('FALLBACK_EMBEDDING_PROVIDERS', 'openai,ollama')
 
 # ============================================================================
 # REGIONAL COMPLIANCE AND LEGAL SETTINGS
@@ -93,8 +93,8 @@ MISTRAL_LLM_MODEL = os.getenv('MISTRAL_LLM_MODEL', 'mistral-small-latest')
 ANTHROPIC_LLM_MODEL = os.getenv('ANTHROPIC_LLM_MODEL', 'claude-3-haiku-20240307')
 
 # Google Models
-GOOGLE_LLM_MODEL = os.getenv('GOOGLE_LLM_MODEL', 'gemini-2.5-pro')
-GOOGLE_EMBEDDING_MODEL = os.getenv('GOOGLE_EMBEDDING_MODEL', 'text-embedding-004')
+GOOGLE_LLM_MODEL = os.getenv('GOOGLE_LLM_MODEL', 'gemini-2.5-flash-lite')
+GOOGLE_EMBEDDING_MODEL = os.getenv('GOOGLE_EMBEDDING_MODEL', 'gemini-embedding-001')
 
 # ============================================================================
 # LEGACY OLLAMA SETTINGS (FOR BACKWARD COMPATIBILITY)

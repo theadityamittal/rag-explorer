@@ -38,9 +38,9 @@ class GoogleGeminiBaseProvider(CombinedProvider):
             genai.configure(api_key=self.api_key)
         
         # Default models from settings
-        from ....utils.settings import GOOGLE_MODEL
-        self.default_llm_model = GOOGLE_MODEL
-        self.default_embedding_model = "text-embedding-004"  # Google's embedding model
+        from ....utils.settings import GOOGLE_LLM_MODEL, GOOGLE_EMBEDDING_MODEL
+        self.default_llm_model = GOOGLE_LLM_MODEL
+        self.default_embedding_model = GOOGLE_EMBEDDING_MODEL
         
         # Initialize models
         try:
@@ -244,6 +244,7 @@ class GoogleGeminiBaseProvider(CombinedProvider):
         
         # Google embedding model dimensions
         dimensions = {
+            'gemini-embedding-001': 768,
             'text-embedding-004': 768,
             'embedding-001': 768,
         }
@@ -292,7 +293,7 @@ class GoogleGeminiFreeProvider(GoogleGeminiBaseProvider):
             tier=ProviderTier.FREE,
             regions_supported=['US', 'CA', 'AU', 'JP'],  # Restricted in GDPR regions
             gdpr_compliant=False,                  # Free tier not GDPR compliant
-            models_available=['gemini-2.5-pro', 'text-embedding-004']
+            models_available=['gemini-2.5-flash-lite', 'gemini-embedding-001']
         )
 
 
@@ -314,5 +315,5 @@ class GoogleGeminiPaidProvider(GoogleGeminiBaseProvider):
             tier=ProviderTier.PAID,
             regions_supported=['global'],          # Works everywhere
             gdpr_compliant=True,                   # Paid tier is GDPR compliant
-            models_available=['gemini-2.5-pro', 'text-embedding-004']
+            models_available=['gemini-2.5-flash-lite', 'gemini-embedding-001']
         )
