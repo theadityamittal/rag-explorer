@@ -26,4 +26,4 @@ EXPOSE 8000
 # If Ollama is on host, pass OLLAMA_HOST at runtime, e.g.:
 # -e OLLAMA_HOST=http://host.docker.internal:11434
 
-CMD ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "8000"]

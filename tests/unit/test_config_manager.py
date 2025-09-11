@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from support_deflect_bot.config.manager import ConfigurationManager
-from support_deflect_bot.config.schema import (
+from support_deflect_bot_old.config.manager import ConfigurationManager
+from support_deflect_bot_old.config.schema import (
     ApiKeysConfig,
     AppConfig,
     CrawlConfig,

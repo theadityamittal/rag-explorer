@@ -20,7 +20,7 @@ class TestMultiProviderIntegration:
     def setup_method(self):
         """Setup for each test method."""
         # Import here to avoid circular imports during test collection
-        from support_deflect_bot.core.providers.implementations import (
+        from support_deflect_bot_old.core.providers.implementations import (
             register_all_providers,
         )
 
@@ -28,7 +28,7 @@ class TestMultiProviderIntegration:
 
     def test_provider_registration_integration(self):
         """Test that all providers register and are accessible."""
-        from support_deflect_bot.core.providers.config import get_default_registry
+        from support_deflect_bot_old.core.providers.config import get_default_registry
 
         registry = get_default_registry()
 
@@ -56,8 +56,8 @@ class TestMultiProviderIntegration:
 
     def test_fallback_chain_building_integration(self):
         """Test complete fallback chain building process."""
-        from support_deflect_bot.core.providers.base import ProviderType
-        from support_deflect_bot.core.providers.config import get_default_registry
+        from support_deflect_bot_old.core.providers.base import ProviderType
+        from support_deflect_bot_old.core.providers.config import get_default_registry
 
         registry = get_default_registry()
 
@@ -85,7 +85,7 @@ class TestMultiProviderIntegration:
 
     def test_provider_health_checks_integration(self):
         """Test provider health checking across all providers."""
-        from support_deflect_bot.core.providers.config import get_default_registry
+        from support_deflect_bot_old.core.providers.config import get_default_registry
 
         registry = get_default_registry()
         health_results = {}
@@ -118,8 +118,8 @@ class TestMultiProviderIntegration:
 
     def test_provider_selector_integration(self):
         """Test provider selector with real registry."""
-        from support_deflect_bot.core.providers.base import ProviderType
-        from support_deflect_bot.core.providers.config import (
+        from support_deflect_bot_old.core.providers.base import ProviderType
+        from support_deflect_bot_old.core.providers.config import (
             ProviderSelector,
             get_default_registry,
         )
@@ -147,7 +147,7 @@ class TestMultiProviderIntegration:
 
     def test_cost_optimization_integration(self):
         """Test cost optimization features."""
-        from support_deflect_bot.core.providers.strategies import (
+        from support_deflect_bot_old.core.providers.strategies import (
             StrategyManager,
             StrategyType,
         )
@@ -183,7 +183,7 @@ class TestMultiProviderIntegration:
     def test_settings_integration(self):
         """Test that all required settings are accessible."""
         try:
-            from support_deflect_bot.utils.settings import (
+            from support_deflect_bot_old.utils.settings import (
                 ANTHROPIC_API_KEY,
                 CLAUDE_API_MODEL,
                 CLAUDE_CODE_PATH,
@@ -230,9 +230,9 @@ class TestRegionalComplianceIntegration:
 
     def test_gdpr_provider_filtering(self):
         """Test GDPR compliance filtering integration."""
-        from support_deflect_bot.core.providers.base import ProviderType
-        from support_deflect_bot.core.providers.config import ProviderRegistry
-        from support_deflect_bot.core.providers.implementations import (
+        from support_deflect_bot_old.core.providers.base import ProviderType
+        from support_deflect_bot_old.core.providers.config import ProviderRegistry
+        from support_deflect_bot_old.core.providers.implementations import (
             register_all_providers,
         )
 
@@ -284,12 +284,12 @@ class TestErrorHandlingIntegration:
 
     def test_no_api_keys_graceful_degradation(self):
         """Test system behavior with no API keys."""
-        from support_deflect_bot.core.providers.base import ProviderType
-        from support_deflect_bot.core.providers.config import (
+        from support_deflect_bot_old.core.providers.base import ProviderType
+        from support_deflect_bot_old.core.providers.config import (
             ProviderRegistry,
             ProviderSelector,
         )
-        from support_deflect_bot.core.providers.implementations import (
+        from support_deflect_bot_old.core.providers.implementations import (
             register_all_providers,
         )
 
@@ -315,11 +315,11 @@ class TestErrorHandlingIntegration:
 
     def test_provider_failure_handling(self):
         """Test handling of individual provider failures."""
-        from support_deflect_bot.core.providers.base import (
+        from support_deflect_bot_old.core.providers.base import (
             ProviderType,
             ProviderUnavailableError,
         )
-        from support_deflect_bot.core.providers.config import ProviderRegistry
+        from support_deflect_bot_old.core.providers.config import ProviderRegistry
 
         registry = ProviderRegistry()
 
@@ -353,7 +353,7 @@ class TestRealProviderIntegration:
     )
     def test_openai_real_integration(self):
         """Test real OpenAI provider integration."""
-        from support_deflect_bot.core.providers.implementations import (
+        from support_deflect_bot_old.core.providers.implementations import (
             OpenAIProvider,
         )
 
@@ -380,7 +380,7 @@ class TestRealProviderIntegration:
     @pytest.mark.skipif(not os.getenv("GROQ_API_KEY"), reason="Requires GROQ_API_KEY")
     def test_groq_real_integration(self):
         """Test real Groq provider integration."""
-        from support_deflect_bot.core.providers.implementations import GroqProvider
+        from support_deflect_bot_old.core.providers.implementations import GroqProvider
 
         provider = GroqProvider(api_key=os.getenv("GROQ_API_KEY"))
 
@@ -406,7 +406,7 @@ class TestRealProviderIntegration:
     )
     def test_claude_api_real_integration(self):
         """Test real Claude API provider integration."""
-        from support_deflect_bot.core.providers.implementations import (
+        from support_deflect_bot_old.core.providers.implementations import (
             ClaudeAPIProvider,
         )
 
@@ -435,7 +435,7 @@ class TestRealProviderIntegration:
 
     def test_claude_code_integration(self):
         """Test Claude Code provider integration (no API key required)."""
-        from support_deflect_bot.core.providers.implementations import (
+        from support_deflect_bot_old.core.providers.implementations import (
             ClaudeCodeProvider,
         )
 
@@ -469,12 +469,12 @@ class TestRealProviderIntegration:
     )
     def test_multi_provider_real_fallback(self):
         """Test real multi-provider fallback with available providers."""
-        from support_deflect_bot.core.providers.base import ProviderType
-        from support_deflect_bot.core.providers.config import (
+        from support_deflect_bot_old.core.providers.base import ProviderType
+        from support_deflect_bot_old.core.providers.config import (
             ProviderSelector,
             get_default_registry,
         )
-        from support_deflect_bot.core.providers.implementations import (
+        from support_deflect_bot_old.core.providers.implementations import (
             register_all_providers,
         )
 

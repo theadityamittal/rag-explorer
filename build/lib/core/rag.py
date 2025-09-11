@@ -3,8 +3,8 @@ from typing import Dict, List, Optional
 
 from src.core.llm_local import llm_chat
 from src.core.retrieve import retrieve
-from support_deflect_bot.utils.settings import ANSWER_MIN_CONF as MIN_CONF
-from support_deflect_bot.utils.settings import (
+from support_deflect_bot_old.utils.settings import ANSWER_MIN_CONF as MIN_CONF
+from support_deflect_bot_old.utils.settings import (
     MAX_CHARS_PER_CHUNK,
     MAX_CHUNKS,
 )

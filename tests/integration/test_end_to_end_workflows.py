@@ -8,9 +8,9 @@ from unittest.mock import MagicMock, Mock, patch
 import click.testing
 import pytest
 
-from support_deflect_bot.cli.main import cli
-from support_deflect_bot.config.manager import ConfigurationManager
-from support_deflect_bot.config.schema import ApiKeysConfig, AppConfig
+from support_deflect_bot_old.cli.main import cli
+from support_deflect_bot_old.config.manager import ConfigurationManager
+from support_deflect_bot_old.config.schema import ApiKeysConfig, AppConfig
 
 
 class TestConfigurationWorkflow:
@@ -283,7 +283,7 @@ class TestProviderIntegrationWorkflow:
     @patch("support_deflect_bot.core.providers.implementations.google_gemini.genai")
     def test_gemini_provider_integration(self, mock_genai):
         """Test Gemini provider integration workflow."""
-        from support_deflect_bot.core.providers.implementations.google_gemini import (
+        from support_deflect_bot_old.core.providers.implementations.google_gemini import (
             GoogleGeminiPaidProvider,
         )
 
@@ -328,7 +328,7 @@ class TestProviderIntegrationWorkflow:
 
     def test_provider_fallback_workflow(self):
         """Test provider fallback workflow."""
-        from support_deflect_bot.core.providers import (
+        from support_deflect_bot_old.core.providers import (
             ProviderType,
             get_default_registry,
         )

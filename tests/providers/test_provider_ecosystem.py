@@ -12,14 +12,14 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from support_deflect_bot.core.providers.base import (
+from support_deflect_bot_old.core.providers.base import (
     ProviderError,
     ProviderRateLimitError,
     ProviderTier,
     ProviderType,
     ProviderUnavailableError,
 )
-from support_deflect_bot.core.providers.config import (
+from support_deflect_bot_old.core.providers.config import (
     ProviderInstance,
     ProviderRegistry,
     ProviderSelector,
@@ -27,7 +27,7 @@ from support_deflect_bot.core.providers.config import (
 )
 
 # Import the multi-provider system
-from support_deflect_bot.core.providers.implementations import (
+from support_deflect_bot_old.core.providers.implementations import (
     ClaudeAPIProvider,
     ClaudeCodeProvider,
     GoogleGeminiFreeProvider,
@@ -38,7 +38,7 @@ from support_deflect_bot.core.providers.implementations import (
     OpenAIProvider,
     register_all_providers,
 )
-from support_deflect_bot.core.providers.strategies import (
+from support_deflect_bot_old.core.providers.strategies import (
     COST_OPTIMIZED_STRATEGY,
     QUALITY_FIRST_STRATEGY,
     SPEED_FOCUSED_STRATEGY,
@@ -151,7 +151,7 @@ class TestFallbackChains:
 
     def test_cost_optimized_fallback_order(self):
         """Test that cost-optimized strategy orders providers by cost."""
-        from support_deflect_bot.core.providers.base import ProviderConfig
+        from support_deflect_bot_old.core.providers.base import ProviderConfig
 
         with patch.object(self.registry, "get_available_providers") as mock_available:
             # Mock available providers with different costs
@@ -330,7 +330,7 @@ class TestCostOptimization:
         """Test that budget limits are enforced."""
         # This would require implementing actual cost tracking
         # For now, test that the configuration exists
-        from support_deflect_bot.utils.settings import (
+        from support_deflect_bot_old.utils.settings import (
             COST_ALERT_THRESHOLD,
             MONTHLY_BUDGET_USD,
         )
@@ -359,7 +359,7 @@ class TestErrorHandling:
 
     def test_provider_failure_fallback(self):
         """Test that system falls back when providers fail."""
-        from support_deflect_bot.core.providers.base import ProviderConfig
+        from support_deflect_bot_old.core.providers.base import ProviderConfig
 
         # Mock a provider that fails
         failing_provider = Mock()
@@ -525,7 +525,7 @@ class TestConfiguration:
 
     def test_settings_integration(self):
         """Test that provider settings are properly integrated."""
-        from support_deflect_bot.utils.settings import (
+        from support_deflect_bot_old.utils.settings import (
             ANTHROPIC_API_KEY,
             COST_ALERT_THRESHOLD,
             DEFAULT_STRATEGY,
@@ -548,7 +548,7 @@ class TestConfiguration:
 
     def test_model_configuration(self):
         """Test that model configurations are accessible."""
-        from support_deflect_bot.utils.settings import (
+        from support_deflect_bot_old.utils.settings import (
             CLAUDE_API_MODEL,
             GOOGLE_MODEL,
             GROQ_MODEL,

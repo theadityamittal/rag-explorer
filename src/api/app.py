@@ -9,9 +9,9 @@ from src.core.rag import answer_question
 from src.core.retrieve import retrieve
 from src.data.ingest import ingest_folder
 from src.data.web_ingest import crawl_urls, index_urls
-from support_deflect_bot.utils.batch import batch_ask
-from support_deflect_bot.utils.metrics import Meter
-from support_deflect_bot.utils.settings import (
+from support_deflect_bot_old.utils.batch import batch_ask
+from support_deflect_bot_old.utils.metrics import Meter
+from support_deflect_bot_old.utils.settings import (
     APP_NAME,
     APP_VERSION,
     CRAWL_DEPTH,
@@ -22,15 +22,6 @@ from support_deflect_bot.utils.settings import (
 )
 
 app = FastAPI(title=APP_NAME, version=APP_VERSION)
-
-# Optional CORS for a simple web UI later
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["*"],  # tighten later
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
 
 # meters
 ASK_METER = Meter()

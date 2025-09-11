@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from support_deflect_bot.config.schema import (
+from support_deflect_bot_old.config.schema import (
     ApiKeysConfig,
     AppConfig,
     CrawlConfig,

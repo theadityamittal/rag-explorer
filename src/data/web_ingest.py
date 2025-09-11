@@ -17,12 +17,12 @@ logger = logging.getLogger(__name__)
 from src.data.chunker import chunk_text
 from src.data.embeddings import embed_texts
 from src.data.store import get_collection
-from support_deflect_bot.utils.settings import (
+from support_deflect_bot_old.utils.settings import (
     ALLOW_HOSTS,
     CRAWL_CACHE_PATH,
     TRUSTED_DOMAINS,
 )
-from support_deflect_bot.utils.settings import USER_AGENT as UA
+from support_deflect_bot_old.utils.settings import USER_AGENT as UA
 
 # Cache file for freshness (ETag/Last-Modified + content_hash)
 CACHE_PATH = CRAWL_CACHE_PATH
