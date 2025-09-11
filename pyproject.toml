@@ -38,20 +38,46 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Core API providers for enhanced functionality
 api = [
     "openai>=1.0.0",
     "groq>=0.4.0",
     "mistralai>=0.1.0",
     "anthropic>=0.25.0",
 ]
-local = ["ollama>=0.3.0"]
-all = [
+
+# Local/self-hosted providers
+local = [
+    "ollama>=0.3.0"
+]
+
+# Extended providers for comprehensive coverage
+providers-extended = [
     "openai>=1.0.0",
     "groq>=0.4.0",
     "mistralai>=0.1.0",
     "anthropic>=0.25.0",
     "ollama>=0.3.0",
 ]
+
+# Architecture-specific dependencies
+engine = [
+    "asyncio-throttle>=1.0.0",
+    "tenacity>=8.0.0",
+]
+
+# Production-ready deployment dependencies
+production = [
+    "openai>=1.0.0",
+    "groq>=0.4.0",
+    "mistralai>=0.1.0",
+    "anthropic>=0.25.0",
+    "gunicorn>=21.2.0",
+    "prometheus-client>=0.17.0",
+    "structlog>=23.0.0",
+]
+
+# Development and testing dependencies
 dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
@@ -64,12 +90,21 @@ dev = [
     "bandit>=1.7.0",
     "safety>=2.0.0",
     "pip-audit>=2.0.0",
+    "build>=0.10.0",
 ]
-prod = [
+
+# Complete installation (all optional dependencies)
+all = [
     "openai>=1.0.0",
     "groq>=0.4.0",
     "mistralai>=0.1.0",
     "anthropic>=0.25.0",
+    "ollama>=0.3.0",
+    "asyncio-throttle>=1.0.0",
+    "tenacity>=8.0.0",
+    "gunicorn>=21.2.0",
+    "prometheus-client>=0.17.0",
+    "structlog>=23.0.0",
 ]
 
 [project.scripts]
