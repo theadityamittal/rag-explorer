@@ -11,13 +11,21 @@ from datetime import datetime
 try:
     from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
 except ImportError:
-    # Fallback to old provider system during transition
-    from support_deflect_bot_old.core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
-try:
-    from ..utils.settings import USER_AGENT
-except ImportError:
-    # Fallback to old settings during transition
-    from support_deflect_bot_old.utils.settings import USER_AGENT
+    # Provider system not fully implemented yet - use mock implementations
+    def get_default_registry():
+        return {}
+    
+    class ProviderType:
+        LLM = "llm"
+        EMBEDDING = "embedding"
+    
+    class ProviderError(Exception):
+        pass
+        
+    class ProviderUnavailableError(Exception):
+        pass
+
+from ..utils.settings import USER_AGENT
 
 
 class UnifiedEmbeddingService:

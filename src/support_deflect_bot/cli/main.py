@@ -8,32 +8,18 @@ from rich.console import Console
 
 from ..engine import UnifiedRAGEngine, UnifiedDocumentProcessor, UnifiedQueryService, UnifiedEmbeddingService
 
-# Import settings with fallback
-try:
-    from ..utils.settings import (
-        ANSWER_MIN_CONF,
-        CRAWL_DEPTH,
-        CRAWL_MAX_PAGES,
-        CRAWL_SAME_DOMAIN,
-        DEFAULT_SEEDS,
-        DOCS_FOLDER,
-        MAX_CHUNKS,
-    )
-    APP_NAME = "Support Deflect Bot"
-    APP_VERSION = "2.0.0"
-except ImportError:
-    # Fallback to old settings
-    from support_deflect_bot_old.utils.settings import (
-        ANSWER_MIN_CONF,
-        APP_NAME,
-        APP_VERSION,
-        CRAWL_DEPTH,
-        CRAWL_MAX_PAGES,
-        CRAWL_SAME_DOMAIN,
-        DEFAULT_SEEDS,
-        DOCS_FOLDER,
-        MAX_CHUNKS,
-    )
+# Import settings
+from ..utils.settings import (
+    ANSWER_MIN_CONF,
+    CRAWL_DEPTH,
+    CRAWL_MAX_PAGES,
+    CRAWL_SAME_DOMAIN,
+    DEFAULT_SEEDS,
+    DOCS_FOLDER,
+    MAX_CHUNKS,
+    APP_NAME,
+    APP_VERSION
+)
 
 from .output import format_answer, format_search_results
 from .ask_session import UnifiedAskSession
