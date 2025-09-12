@@ -77,23 +77,23 @@ User Input → CLI/API → RAG Engine → Vector Search → LLM Provider → Res
 
 ```
 src/
-├── api/                          # REST API interface (secondary)
-│   └── app.py                    # FastAPI application with endpoints
-├── core/                         # Core RAG functionality (legacy structure)
-│   ├── llm_local.py             # Local LLM communication
-│   ├── rag.py                   # Main RAG implementation
-│   └── retrieve.py              # Document retrieval logic
 ├── data/                        # Data processing and storage
 │   ├── chunker.py               # Text chunking algorithms
 │   ├── embeddings.py            # Embedding generation
 │   ├── ingest.py                # Document ingestion pipeline
 │   ├── store.py                 # ChromaDB vector store operations
 │   └── web_ingest.py            # Web crawling and indexing
-└── support_deflect_bot/         # Main package (modern structure)
+└── support_deflect_bot/         # Main application package
+    ├── api/                     # REST API interface
+    │   ├── dependencies/        # API dependency injection
+    │   ├── endpoints/           # API route handlers
+    │   ├── middleware/          # Request/response middleware
+    │   ├── models/              # Request/response models
+    │   └── app.py               # FastAPI application
     ├── cli/                     # Command-line interface
-    │   ├── main.py              # CLI entry point and commands
+    │   ├── commands/            # CLI command implementations
+    │   ├── main.py              # CLI entry point
     │   ├── ask_session.py       # Interactive Q&A session
-    │   ├── configure.py         # Configuration management
     │   └── output.py            # Terminal output formatting
     ├── config/                  # Configuration system
     │   ├── manager.py           # Configuration management
@@ -104,10 +104,15 @@ src/
     │       ├── config.py        # Provider configuration
     │       ├── strategies.py    # Selection strategies
     │       └── implementations/ # Individual provider implementations
+    ├── engine/                  # Unified RAG engine
+    │   ├── document_processor.py # Document processing pipeline
+    │   ├── embedding_service.py # Embedding service abstraction
+    │   ├── query_service.py     # Query processing service
+    │   └── rag_engine.py        # Main RAG orchestration
     └── utils/                   # Utility modules
         ├── settings.py          # Application settings
         ├── metrics.py           # Performance monitoring
-        └── warnings_suppressor.py # Clean output handling
+        └── batch.py             # Batch processing utilities
 ```
 
 ### Test Organization (`tests/`)
@@ -163,11 +168,11 @@ class TextChunker:
 
 ### 2. RAG (Retrieval-Augmented Generation) Engine
 
-#### File: `src/core/rag.py` (Lines 153-203)
-**Purpose**: The brain of the system
+#### File: `src/support_deflect_bot/engine/rag_engine.py`
+**Purpose**: The brain of the system - unified RAG orchestration
 
 ```python
-def answer_question(question, domains=None):
+class UnifiedRAGEngine:
     """
     The main RAG pipeline:
     
@@ -176,18 +181,20 @@ def answer_question(question, domains=None):
     3. If confidence < threshold: refuse to answer
     4. If confidence >= threshold: generate answer
     5. Return answer with citations
+    6. Collect metrics and performance data
     """
 ```
 
-#### Confidence Calculation (Lines 126-136)
+#### Confidence Calculation
 **Purpose**: Prevent hallucinations by measuring answer reliability
 
 ```python
-def _confidence(hits, question):
+def calculate_confidence(hits, question):
     """
-    Combines two metrics:
-    - Semantic similarity (from vector search): 60% weight
-    - Keyword overlap (exact word matches): 40% weight
+    Combines multiple metrics:
+    - Semantic similarity (from vector search): Primary factor
+    - Keyword overlap (exact word matches): Secondary factor
+    - Provider confidence scores: Tertiary factor
     
     Returns: 0.0 (no confidence) to 1.0 (high confidence)
     """
@@ -347,10 +354,14 @@ API Providers → Ollama (Local) → Error
 
 | Command | Function | Purpose |
 |---------|----------|---------|
-| `deflect-bot index` | `index()` | Index documentation |
-| `deflect-bot ask` | `ask()` | Start Q&A session |
-| `deflect-bot search` | `search()` | Search documents |
-| `deflect-bot crawl` | `crawl()` | Index web pages |
+| `deflect-bot index` | `index()` | Index local documentation |
+| `deflect-bot ask` | `ask()` | Start interactive Q&A session |
+| `deflect-bot search` | `search()` | Search indexed documents |
+| `deflect-bot crawl` | `crawl()` | Crawl and index web pages |
+| `deflect-bot status` | `status()` | Check system health |
+| `deflect-bot ping` | `ping()` | Test LLM connectivity |
+| `deflect-bot config` | `config()` | Display configuration |
+| `deflect-bot metrics` | `metrics()` | Show performance metrics |
 
 ### Provider Management
 
@@ -500,7 +511,7 @@ The system uses GitHub Actions with 8 parallel job types:
 
 #### 1. **"I don't have enough information" responses**
 - **Cause**: Confidence score below threshold
-- **Debug**: Check `_confidence()` calculation in `src/core/rag.py:126-136`
+- **Debug**: Check confidence calculation in `src/support_deflect_bot/engine/rag_engine.py`
 - **Fix**: Adjust `ANSWER_MIN_CONF` or improve document indexing
 
 #### 2. **ChromaDB connection errors**
@@ -552,7 +563,7 @@ flake8 src tests
 ### Understanding the Codebase
 
 1. **Start with**: `src/support_deflect_bot/cli/main.py` to understand user interface
-2. **Core logic**: `src/core/rag.py` for the main RAG implementation
+2. **Core logic**: `src/support_deflect_bot/engine/rag_engine.py` for the main RAG implementation
 3. **Data flow**: `src/data/store.py` for database operations
 4. **Configuration**: `src/support_deflect_bot/utils/settings.py` for all settings
 

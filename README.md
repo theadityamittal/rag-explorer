@@ -1,10 +1,10 @@
-# Support Deflection Bot
+# Support Deflect Bot
 
 **🤖 Intelligent CLI for document Q&A with confidence-based refusal**
 
 Transform your documentation into a smart terminal assistant that answers questions accurately or refuses gracefully. Built for reliability over chattiness.
 
-✨ **New**: Multi-provider AI support with cost optimization! Choose from 8 different LLM providers with automatic fallback chains and budget control.
+✨ **Multi-provider AI Architecture**: Choose from 8 different LLM providers with automatic fallback chains, cost optimization, and budget control.
 
 ## Quick Start (5 minutes)
 
