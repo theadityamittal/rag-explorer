@@ -1,0 +1,81 @@
+version: 2
+
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "theadityamittal"
+    assignees:
+      - "theadityamittal"
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    # Group related updates
+    groups:
+      testing:
+        patterns:
+          - "pytest*"
+          - "coverage"
+          - "*-mock"
+        update-types:
+          - "minor"
+          - "patch"
+      linting:
+        patterns:
+          - "black"
+          - "isort"
+          - "flake8"
+          - "mypy"
+          - "bandit"
+        update-types:
+          - "minor"
+          - "patch"
+      api-providers:
+        patterns:
+          - "openai"
+          - "groq"
+          - "mistralai"
+          - "google-generativeai"
+          - "anthropic"
+        update-types:
+          - "patch"
+      core-deps:
+        patterns:
+          - "fastapi"
+          - "uvicorn"
+          - "pydantic"
+          - "click"
+          - "rich"
+        update-types:
+          - "patch"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "theadityamittal"
+    assignees:
+      - "theadityamittal"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+      include: "scope"

@@ -12,11 +12,17 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup, Tag
 
+logger = logging.getLogger(__name__)
+
 from src.data.chunker import chunk_text
 from src.data.embeddings import embed_texts
 from src.data.store import get_collection
-from src.utils.settings import ALLOW_HOSTS, CRAWL_CACHE_PATH, TRUSTED_DOMAINS
-from src.utils.settings import USER_AGENT as UA
+from support_deflect_bot_old.utils.settings import (
+    ALLOW_HOSTS,
+    CRAWL_CACHE_PATH,
+    TRUSTED_DOMAINS,
+)
+from support_deflect_bot_old.utils.settings import USER_AGENT as UA
 
 # Cache file for freshness (ETag/Last-Modified + content_hash)
 CACHE_PATH = CRAWL_CACHE_PATH
@@ -67,36 +73,42 @@ def _robots_ok(url: str) -> bool:
     if host in TRUSTED_DOMAINS:
         logging.info(f"Bypassing robots.txt check for trusted domain: {host}")
         return True
-    
+
     # Option D: Fix robotparser remote fetching by using our own fetch_html
     host_url = f"{parsed_url.scheme}://{host}"
     robots_url = urljoin(host_url, "/robots.txt")
-    
+
     try:
         # Use our own fetch_html function which has proper headers and error handling
         resp = fetch_html(robots_url, timeout=10)
         resp.raise_for_status()
-        
+
         # Parse robots.txt content locally using robotparser
-        import tempfile
         import os
-        
+        import tempfile
+
         # Create a temporary file with robots.txt content
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write(resp.text)
             temp_path = f.name
-        
+
         try:
             rp = robotparser.RobotFileParser()
-            rp.set_url('file://' + temp_path)
+            rp.set_url("file://" + temp_path)
             rp.read()
         finally:
             os.unlink(temp_path)
-        
+
         return rp.can_fetch(UA, url)
-    except (urllib.error.URLError, urllib.error.HTTPError, requests.RequestException) as e:
+    except (
+        urllib.error.URLError,
+        urllib.error.HTTPError,
+        requests.RequestException,
+    ) as e:
         # If robots.txt fails to load, be conservative and allow
-        logging.info(f"Failed to fetch robots.txt from {robots_url}: {e}. Allowing crawl.")
+        logging.info(
+            f"Failed to fetch robots.txt from {robots_url}: {e}. Allowing crawl."
+        )
         return True
     except Exception as e:
         logging.warning(f"Unexpected error checking robots.txt for {url}: {e}")
@@ -188,8 +200,8 @@ def _index_single(url: str, html: str, title: str, text: str) -> int:
     coll = get_collection()
     try:
         coll.delete(where={"path": url})
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Failed to delete path {url} from collection: {e}")
 
     chunks = chunk_text(text, chunk_size=900, overlap=150)
     if not chunks:
