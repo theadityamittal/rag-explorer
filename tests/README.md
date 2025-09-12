@@ -1,289 +1,322 @@
-# Test Suite Documentation
+# Test Suite - Unified Architecture
 
-This directory contains comprehensive tests for the Support Deflect Bot application.
+**Comprehensive test suite aligned with the Support Deflect Bot unified architecture.**
 
-## Test Structure
+This test suite was completely rebuilt in 2025 to align with the new unified engine architecture, replacing the legacy test structure with modern testing practices and comprehensive coverage.
 
+## 🏗️ Test Architecture
+
+### **Test Structure**
 ```
 tests/
-├── conftest.py              # Global test fixtures and configuration
-├── pytest.ini              # Pytest configuration (in root directory)
-├── test_runner.py           # Custom test runner script
-├── unit/                    # Unit tests for individual components
-│   ├── test_chunker.py      # Text chunking functionality
-│   ├── test_embeddings.py   # Embedding generation and processing
-│   ├── test_rag.py          # RAG pipeline components
-│   └── test_store.py        # ChromaDB storage operations
-├── integration/             # Integration tests for API endpoints
-│   └── test_api.py          # FastAPI endpoint testing
-├── system/                  # End-to-end system tests
-│   └── test_e2e.py          # Complete workflow testing
-└── fixtures/                # Test data and fixtures
+├── conftest.py                    # Global fixtures for unified architecture
+├── base.py                        # Base test classes and utilities
+├── README.md                      # This documentation
+│
+├── unit/                          # Unit tests (isolated component testing)
+│   ├── engine/                    # Test unified engine services
+│   ├── providers/                 # Test provider ecosystem
+│   ├── cli/                       # Test CLI interface
+│   ├── api/                       # Test API interface
+│   ├── config/                    # Test configuration system
+│   ├── utils/                     # Test utility modules
+│   └── data/                      # Test data processing
+│
+├── integration/                   # Integration tests (cross-component)
+├── system/                        # System-level E2E tests
+└── fixtures/                      # Shared test data and fixtures
+    ├── sample_documents/
+    ├── provider_responses/
+    └── configuration/
 ```
 
-## Test Categories
+## 🎯 Test Categories
 
-### Unit Tests (`tests/unit/`)
-- **Purpose**: Test individual functions and classes in isolation
-- **Dependencies**: Minimal - use mocks for external services
-- **Coverage**: Core business logic, utility functions, data processing
-- **Speed**: Fast (< 1 second per test)
+### **Unit Tests** (`tests/unit/`)
+- **Purpose**: Test individual components in complete isolation
+- **Dependencies**: All external services mocked
+- **Coverage Target**: 95%+ code coverage
+- **Speed**: <1 second per test
 
-### Integration Tests (`tests/integration/`)
-- **Purpose**: Test API endpoints and component interactions
-- **Dependencies**: FastAPI TestClient, mocked external services
-- **Coverage**: HTTP endpoints, request/response validation, error handling
-- **Speed**: Medium (1-5 seconds per test)
+**Key Areas:**
+- **Engine Services**: `UnifiedRAGEngine`, `UnifiedQueryService`, `UnifiedDocumentProcessor`, `UnifiedEmbeddingService`
+- **Providers**: All 8 AI provider implementations with fallback testing
+- **CLI Commands**: All CLI functionality with rich output testing
+- **API Endpoints**: All REST API endpoints with middleware testing
 
-### System Tests (`tests/system/`)
-- **Purpose**: Test complete end-to-end workflows
-- **Dependencies**: Full application stack, Ollama service, real databases
-- **Coverage**: Complete user workflows, performance, system behavior
-- **Speed**: Slow (5-30 seconds per test)
+### **Integration Tests** (`tests/integration/`)
+- **Purpose**: Test component interactions and workflows
+- **Dependencies**: Real engine services, mocked external APIs
+- **Coverage Target**: Critical user paths
+- **Speed**: <10 seconds per test
 
-## Running Tests
+**Key Areas:**
+- CLI and API consistency (both using same engine services)
+- Provider fallback chain testing
+- End-to-end user workflows
+- Cost optimization scenarios
 
-### Prerequisites
-```bash
-# Install test dependencies
-pip install pytest pytest-asyncio pytest-cov httpx
+### **System Tests** (`tests/system/`)
+- **Purpose**: Complete end-to-end system validation
+- **Dependencies**: Full system stack (with guarded real API calls)
+- **Coverage Target**: Production readiness
+- **Speed**: <60 seconds per test
 
-# For system tests, ensure Ollama is running
-ollama pull llama3.1
-ollama pull nomic-embed-text
-```
+**Key Areas:**
+- Full deployment testing
+- Performance benchmarking
+- Architecture compliance validation
 
-### Quick Commands
+## 🛠️ Available Fixtures
+
+### **Engine Service Fixtures**
+- `mock_rag_engine`: Mock `UnifiedRAGEngine` with realistic responses
+- `mock_document_processor`: Mock `UnifiedDocumentProcessor` 
+- `mock_query_service`: Mock `UnifiedQueryService`
+- `mock_embedding_service`: Mock `UnifiedEmbeddingService`
+
+### **Provider Fixtures**
+- `mock_openai_provider`: Mock OpenAI provider with GPT-4 responses
+- `mock_groq_provider`: Mock Groq provider with Llama responses
+- `mock_ollama_provider`: Mock Ollama provider with local model responses
+- *(More providers available in `conftest.py`)*
+
+### **Test Data Fixtures**
+- `sample_documents`: Realistic documentation content
+- `sample_embeddings`: Test embedding vectors
+- `sample_chunks`: Document chunks with metadata
+- `sample_api_responses`: Mock API responses from providers
+
+### **Utility Fixtures**
+- `temp_dir`: Temporary directory for file operations
+- `temp_chroma_db`: Temporary ChromaDB instance
+- `test_settings`: Test configuration settings
+- `cli_runner`: Click CLI test runner
+
+## 🚀 Running Tests
+
+### **Quick Commands**
 ```bash
 # Run all tests
 pytest
 
-# Run unit tests only
-pytest tests/unit/ -v
+# Run specific categories
+pytest -m unit                    # Unit tests only
+pytest -m integration             # Integration tests only
+pytest -m "unit and engine"       # Engine unit tests only
 
-# Run integration tests only  
-pytest tests/integration/ -v
+# Run specific components
+pytest tests/unit/engine/         # All engine tests
+pytest tests/unit/providers/      # All provider tests
+pytest tests/integration/         # All integration tests
 
-# Run with coverage report
-pytest --cov=src --cov-report=html
+# Run with coverage
+pytest --cov=src/support_deflect_bot --cov-report=html
 
-# Run specific test file
-pytest tests/unit/test_chunker.py -v
-
-# Run specific test function
-pytest tests/unit/test_rag.py::TestRagUtilities::test_stem_simple -v
+# Skip slow/expensive tests
+pytest -m "not slow and not requires_api"
 ```
 
-### Using the Test Runner
+### **Test Markers**
 ```bash
-# Quick tests (no external dependencies)
-python tests/test_runner.py --quick
+# By component
+-m unit                # Unit tests for isolated components
+-m integration         # Integration tests for component interaction
+-m system             # System-level end-to-end tests
 
-# Unit tests only
-python tests/test_runner.py --unit
+# By requirement
+-m slow               # Slow running tests (>10 seconds)
+-m requires_api       # Tests requiring real API access (guarded)
+-m requires_ollama    # Tests requiring Ollama service
+-m cost_sensitive     # Tests that may incur API costs
 
-# Integration tests only
-python tests/test_runner.py --integration
-
-# Tests requiring Ollama
-python tests/test_runner.py --ollama
-
-# All tests (default)
-python tests/test_runner.py --all
+# By architecture area  
+-m engine             # Tests for unified engine services
+-m providers          # Tests for AI provider implementations
+-m cli                # Tests for CLI interface
+-m api                # Tests for REST API interface
 ```
 
-## Test Markers
+## 📝 Writing New Tests
 
-Tests are organized with pytest markers:
-
-- `@pytest.mark.unit`: Unit tests
-- `@pytest.mark.integration`: Integration tests  
-- `@pytest.mark.slow`: Long-running tests
-- `@pytest.mark.requires_ollama`: Tests needing Ollama service
-
-### Running by Markers
-```bash
-# Skip slow tests
-pytest -m "not slow"
-
-# Run only unit tests
-pytest -m "unit"
-
-# Skip tests requiring Ollama
-pytest -m "not requires_ollama"
-```
-
-## Test Configuration
-
-### pytest.ini
-Located in project root, configures:
-- Test discovery patterns
-- Default options and markers
-- Warning filters
-- Output formatting
-
-### conftest.py
-Provides shared fixtures:
-- `temp_dir`: Temporary directory for test files
-- `sample_docs`: Mock documentation content
-- `mock_ollama_response`: Mocked Ollama API responses
-- `mock_chroma_collection`: Mocked ChromaDB collection
-- `sample_crawl_cache`: Test web crawl cache data
-
-## Test Data and Fixtures
-
-### Sample Documents
-```python
-sample_docs = {
-    "getting_started.md": "# Getting Started\nInstall with pip install...",
-    "advanced.md": "# Advanced Configuration\nSet API_KEY=..."
-}
-```
-
-### Mock Responses
-- Ollama embeddings: 768-dimensional float vectors
-- ChromaDB queries: Document chunks with metadata
-- HTTP responses: HTML content with proper headers
-
-## Writing New Tests
-
-### Unit Test Example
+### **Unit Test Example**
 ```python
 import pytest
-from src.module import function_to_test
+from tests.base import BaseEngineTest
 
-class TestFunctionToTest:
-    def test_basic_functionality(self):
-        result = function_to_test("input")
-        assert result == "expected_output"
+class TestUnifiedRAGEngine(BaseEngineTest):
+    """Test the UnifiedRAGEngine service."""
     
-    def test_error_handling(self):
-        with pytest.raises(ValueError):
-            function_to_test("invalid_input")
+    @pytest.mark.unit
+    @pytest.mark.engine
+    async def test_query_documents_success(self, mock_rag_engine):
+        """Test successful document querying."""
+        # Arrange
+        query = "How do I install the bot?"
+        
+        # Act
+        result = await mock_rag_engine.query_documents(query)
+        
+        # Assert
+        assert result["confidence"] > 0.8
+        assert "install" in result["answer"].lower()
+        mock_rag_engine.query_documents.assert_called_once_with(query)
 ```
 
-### Integration Test Example
+### **Integration Test Example**
 ```python
-from fastapi.testclient import TestClient
-from unittest.mock import patch
-from src.api.app import app
+import pytest
+from tests.base import BaseIntegrationTest
 
-def test_api_endpoint():
-    client = TestClient(app)
-    with patch('src.api.app.external_service') as mock_service:
-        mock_service.return_value = "mocked_result"
-        response = client.post("/endpoint", json={"data": "test"})
-        assert response.status_code == 200
-```
-
-### System Test Example
-```python
-import requests
-
-@pytest.mark.requires_ollama
-def test_complete_workflow():
-    # Index documents
-    reindex_response = requests.post("http://127.0.0.1:8000/reindex")
-    assert reindex_response.status_code == 200
+class TestCLIAPIConsistency(BaseIntegrationTest):
+    """Test CLI and API use same engine services."""
     
-    # Ask question
-    ask_response = requests.post("http://127.0.0.1:8000/ask", 
-                                json={"question": "How to install?"})
-    assert ask_response.status_code == 200
+    @pytest.mark.integration
+    async def test_cli_api_same_results(self, mock_rag_engine):
+        """Test CLI and API return consistent results."""
+        # Test implementation here
+        pass
 ```
 
-## Test Best Practices
+### **Provider Test Example**
+```python
+import pytest
+from tests.base import BaseProviderTest
 
-### 1. Test Isolation
-- Each test should be independent
+class TestOpenAIProvider(BaseProviderTest):
+    """Test OpenAI provider implementation."""
+    
+    @pytest.mark.unit
+    @pytest.mark.providers
+    @pytest.mark.cost_sensitive
+    async def test_generate_response(self, mock_openai_provider):
+        """Test OpenAI response generation."""
+        # Arrange
+        query = "Test query"
+        
+        # Act
+        response = await mock_openai_provider.generate_response(query)
+        
+        # Assert
+        assert response["content"] is not None
+        assert response["model"].startswith("gpt")
+        self.assert_provider_response(mock_openai_provider, query, response["content"])
+```
+
+## 🔧 Base Classes
+
+### **BaseEngineTest**
+Use for testing unified engine services:
+- `create_mock_provider()`: Create consistent provider mocks
+- `assert_async_called_with()`: Assert async method calls
+
+### **BaseProviderTest**
+Use for testing AI provider implementations:
+- `create_mock_response()`: Create realistic API responses
+- `assert_provider_available()`: Test provider availability
+- `assert_provider_response()`: Test provider responses
+
+### **BaseAPITest**
+Use for testing REST API endpoints:
+- `assert_status_code()`: Assert HTTP status codes
+- `assert_json_response()`: Assert JSON response structure
+
+### **BaseCLITest**
+Use for testing CLI commands:
+- `assert_cli_success()`: Assert successful command execution
+- `assert_cli_error()`: Assert command failures
+
+## 📊 Test Utilities
+
+### **TestUtils**
+Static utility methods:
+- `create_test_document()`: Generate test documents
+- `create_test_embedding()`: Generate test embeddings
+- `create_test_chunk()`: Generate document chunks
+
+### **MockFactory**
+Consistent mock creation:
+- `create_engine_service_mock()`: Mock any engine service
+- `create_provider_mock()`: Mock any AI provider
+
+### **TestDataBuilder**
+Fluent test data creation:
+```python
+test_data = (TestDataBuilder()
+    .with_documents(3)
+    .with_chunks(5)
+    .with_embeddings(5)
+    .build())
+```
+
+## 🔍 Best Practices
+
+### **1. Test Isolation**
+- Each test should be completely independent
 - Use fixtures for setup/teardown
-- Mock external dependencies
-- Clean up resources after tests
+- Mock all external dependencies (APIs, databases)
 
-### 2. Test Naming
-- Use descriptive test names: `test_function_behavior_condition`
-- Group related tests in classes: `TestClassName`
-- Use consistent naming patterns
+### **2. Realistic Mocks**
+- Use provided fixtures that simulate real behavior
+- Mock at system boundaries, not internal methods
+- Test both success and failure scenarios
 
-### 3. Assertions
-- One logical assertion per test
-- Use specific assertion methods: `assert_called_once_with()`
-- Include meaningful error messages
+### **3. Clear Test Names**
+- Use descriptive names: `test_method_scenario_expected_outcome`
+- Group related tests in classes: `TestUnifiedRAGEngine`
+- Use markers to categorize tests
 
-### 4. Mocking
-- Mock external services (Ollama, ChromaDB, HTTP requests)
-- Mock at the boundary of your system
-- Use `patch` decorators for clean mocking
+### **4. Coverage Goals**
+- **Unit Tests**: 95%+ coverage of all components
+- **Integration Tests**: 100% coverage of critical user paths
+- **System Tests**: 100% coverage of deployment scenarios
 
-### 5. Test Data
-- Keep test data minimal and focused
-- Use fixtures for reusable test data
-- Generate data programmatically when possible
+### **5. Performance Testing**
+- Mark slow tests with `@pytest.mark.slow`
+- Monitor test execution time
+- Use `@pytest.mark.cost_sensitive` for tests that may incur API costs
 
-## Continuous Integration
+## 🛡️ Cost Control
 
-### GitHub Actions Example
-```yaml
-- name: Run Tests
-  run: |
-    pip install -r requirements.txt
-    pip install pytest pytest-cov
-    pytest tests/ --cov=src --cov-report=xml
+### **API Cost Management**
+- All provider tests use mocks by default
+- Real API tests are marked with `@pytest.mark.requires_api`
+- Real API tests only run in CI with budget controls
+- Use `@pytest.mark.cost_sensitive` for cost-aware testing
+
+### **Running Cost-Sensitive Tests**
+```bash
+# Skip all cost-sensitive tests (default)
+pytest -m "not cost_sensitive"
+
+# Run cost-sensitive tests (CI only)
+pytest -m cost_sensitive
+
+# Run with API budget guard
+MONTHLY_BUDGET_USD=2.0 pytest -m requires_api
 ```
 
-### Pre-commit Hooks
-```yaml
-- repo: local
-  hooks:
-    - id: pytest-check
-      name: pytest-check
-      entry: pytest tests/unit/ --tb=short
-      language: system
-      pass_filenames: false
+## 📈 Coverage Reports
+
+Generate comprehensive coverage reports:
+
+```bash
+# Terminal report with missing lines
+pytest --cov=src --cov-report=term-missing
+
+# HTML report (creates htmlcov/ directory)  
+pytest --cov=src --cov-report=html
+
+# XML report for CI systems
+pytest --cov=src --cov-report=xml
 ```
 
-## Performance Testing
+## 🔧 Debugging Tests
 
-### Load Testing
-Use system tests to verify performance:
-```python
-import time
-
-def test_response_time():
-    start = time.time()
-    response = requests.post("/ask", json={"question": "test"})
-    duration = time.time() - start
-    assert duration < 2.0  # Should respond within 2 seconds
-```
-
-### Memory Testing
-Monitor memory usage during long-running tests:
-```python
-import psutil
-import os
-
-def test_memory_usage():
-    process = psutil.Process(os.getpid())
-    initial_memory = process.memory_info().rss
-    # Perform operations...
-    final_memory = process.memory_info().rss
-    assert final_memory - initial_memory < 100_000_000  # 100MB limit
-```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Import Errors**: Ensure `src/` is in Python path
-2. **Ollama Connection**: Check if Ollama service is running
-3. **Database Errors**: Verify ChromaDB path permissions
-4. **Timeout Issues**: Increase timeout values for slow tests
-5. **Mock Conflicts**: Check mock patch paths and decorators
-
-### Debug Commands
+### **Common Debug Commands**
 ```bash
 # Verbose output with full tracebacks
-pytest -v --tb=long
+pytest -vv --tb=long
 
 # Stop on first failure
 pytest -x
@@ -291,26 +324,34 @@ pytest -x
 # Run with Python debugger
 pytest --pdb
 
-# Print output (disable capture)
+# Print all output (disable capture)
 pytest -s
+
+# Run specific failing test
+pytest tests/unit/engine/test_rag_engine.py::TestUnifiedRAGEngine::test_specific_method -v
 ```
 
-## Coverage Reports
+## 🏁 Migration from Legacy Tests
 
-Generate coverage reports to identify untested code:
+This test suite completely replaces the previous test structure. Key improvements:
 
-```bash
-# Terminal report
-pytest --cov=src --cov-report=term-missing
+### **Architecture Alignment**
+- ✅ Tests mirror unified engine architecture exactly
+- ✅ Separate testing for CLI and API interfaces using shared services
+- ✅ Comprehensive provider ecosystem testing
 
-# HTML report (creates htmlcov/ directory)
-pytest --cov=src --cov-report=html
+### **Modern Testing Practices**
+- ✅ Comprehensive fixture system for consistent mocking
+- ✅ Base classes for common testing patterns  
+- ✅ Clear test categorization with markers
+- ✅ Cost-aware testing with budget controls
 
-# XML report (for CI systems)
-pytest --cov=src --cov-report=xml
-```
+### **Enhanced Coverage**
+- ✅ 4 unified engine services fully tested
+- ✅ 8 AI provider implementations tested
+- ✅ Complete CLI and API interface coverage
+- ✅ Integration and system-level testing
 
-Target coverage goals:
-- Unit tests: 90%+ coverage
-- Critical paths: 100% coverage
-- Overall project: 80%+ coverage
+---
+
+*This test suite was rebuilt in 2025 to align with the unified architecture. All tests follow modern pytest practices with comprehensive mocking and realistic fixtures.*
