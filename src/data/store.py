@@ -5,8 +5,8 @@ from typing import Dict, List, Optional
 
 import chromadb
 
-from support_deflect_bot_old.utils.settings import CHROMA_COLLECTION, CHROMA_DB_PATH
-from support_deflect_bot_old.utils.stderr_suppressor import filter_stderr_lines
+from support_deflect_bot.utils.settings import CHROMA_COLLECTION, CHROMA_DB_PATH
+from support_deflect_bot.utils.stderr_suppressor import filter_stderr_lines
 
 
 def get_client() -> chromadb.PersistentClient:

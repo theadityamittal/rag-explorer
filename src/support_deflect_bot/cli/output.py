@@ -10,11 +10,10 @@ from rich.text import Text
 def format_search_results(console: Console, query: str, results: List[Dict], quiet: bool = False):
     """Format search results for display."""
     if quiet:
-        # Quiet mode: just show count
-        console.print(len(results))
+        console.print(f"{len(results)} results found")
         return
-    
-    if not results:
+
+    if not results and not quiet:
         console.print("No results found.", style="yellow")
         return
     

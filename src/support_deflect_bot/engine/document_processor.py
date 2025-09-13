@@ -14,29 +14,14 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup, Tag
 
-try:
-    from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
-except ImportError:
-    # Fallback to old provider system during transition
-    from support_deflect_bot_old.core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
-try:
-    from ..utils.settings import (
-        ALLOW_HOSTS,
-        CRAWL_CACHE_PATH,
-        TRUSTED_DOMAINS,
-        USER_AGENT,
-        CHROMA_COLLECTION
-    )
-except ImportError:
-    # Fallback to old settings during transition
-    from support_deflect_bot_old.utils.settings import (
-        ALLOW_HOSTS,
-        CRAWL_CACHE_PATH,
-        TRUSTED_DOMAINS,
-        USER_AGENT,
-        CHROMA_COLLECTION
-    )
-
+from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
+from ..utils.settings import (
+    ALLOW_HOSTS,
+    CRAWL_CACHE_PATH,
+    TRUSTED_DOMAINS,
+    USER_AGENT,
+    CHROMA_COLLECTION
+)
 
 class UnifiedDocumentProcessor:
     """

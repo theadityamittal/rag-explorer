@@ -1,5 +1,3 @@
-"""Configuration settings for Support Deflect Bot with multi-provider support."""
-
 import os
 from typing import List
 
@@ -7,35 +5,52 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Optional overlay from the persisted configuration manager (not user-visible)
+try:
+    # Local import to avoid import cycles in some tooling
+    from ..config.manager import ConfigurationManager  # type: ignore
+
+    _CFG = None
+    try:
+        _CFG = ConfigurationManager().get_config()
+    except Exception:
+        _CFG = None
+except Exception:
+    _CFG = None
+
 # ============================================================================
 # GENERAL APPLICATION SETTINGS
 # ============================================================================
 
 APP_NAME = os.getenv("APP_NAME", "Support Deflection Bot")
-APP_VERSION = os.getenv("APP_VERSION", "2.0.0")
+APP_VERSION = os.getenv("APP_VERSION", "0.2.0")
 
 # ============================================================================
 # PROVIDER CONFIGURATION (NEW MULTI-PROVIDER SYSTEM)
 # ============================================================================
 
-# Provider Selection Strategy
-PROVIDER_STRATEGY = os.getenv("PROVIDER_STRATEGY", "cost_optimized")
-# Options: cost_optimized, speed_focused, quality_first, balanced, custom
-
-# Primary Providers (legally compliant defaults)
-PRIMARY_LLM_PROVIDER = os.getenv("PRIMARY_LLM_PROVIDER", "google_gemini_paid")
-PRIMARY_EMBEDDING_PROVIDER = os.getenv(
-    "PRIMARY_EMBEDDING_PROVIDER", "google_gemini_paid"
-)
-
-
-# Fallback Provider Chains
 def _parse_csv(env_var: str, default: str = "") -> List[str]:
     """Parse comma-separated values from environment variables."""
     val = os.getenv(env_var, default)
     return [s.strip() for s in val.split(",") if s.strip()]
 
 
+# Provider Selection Strategy (kept internal; can be overridden via ENV if needed)
+PROVIDER_STRATEGY = os.getenv("PROVIDER_STRATEGY", "cost_optimized")
+# Options: cost_optimized, speed_focused, quality_first, balanced, custom
+
+# Primary Providers (user-visible picks; default to legally compliant provider)
+PRIMARY_LLM_PROVIDER = os.getenv(
+    "PRIMARY_LLM_PROVIDER",
+    (_CFG.primary_llm_provider if _CFG else "google_gemini_paid"),
+)
+PRIMARY_EMBEDDING_PROVIDER = os.getenv(
+    "PRIMARY_EMBEDDING_PROVIDER",
+    (_CFG.primary_embedding_provider if _CFG else "google_gemini_paid"),
+)
+
+
+# Fallback Provider Chains
 FALLBACK_LLM_PROVIDERS = _parse_csv("FALLBACK_LLM_PROVIDERS", "openai,groq,ollama")
 FALLBACK_EMBEDDING_PROVIDERS = _parse_csv(
     "FALLBACK_EMBEDDING_PROVIDERS", "openai,ollama"
@@ -46,9 +61,7 @@ FALLBACK_EMBEDDING_PROVIDERS = _parse_csv(
 # ============================================================================
 
 # Regional Detection and Compliance
-USER_REGION = os.getenv(
-    "USER_REGION", "auto"
-)  # auto-detect or manual override (e.g., 'US', 'EU')
+USER_REGION = os.getenv("USER_REGION", "auto")  # auto-detect or manual override
 ENFORCE_REGIONAL_COMPLIANCE = (
     os.getenv("ENFORCE_REGIONAL_COMPLIANCE", "true").lower() == "true"
 )
@@ -79,16 +92,16 @@ COST_TRACKING_FILE = os.getenv("COST_TRACKING_FILE", "./usage_costs.json")
 # API KEYS (ALL OPTIONAL - CONFIGURE ONLY WHAT YOU NEED)
 # ============================================================================
 
-# Primary Providers (Legally Compliant)
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-
-# Budget-Friendly Alternatives
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
-
-# Google Services (Different Compliance for Free vs Paid)
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+# Primary Providers (user-supplied API keys)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or (_CFG.api_keys.openai_api_key if _CFG else None)
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY") or (
+    _CFG.api_keys.anthropic_api_key if _CFG else None
+)
+GROQ_API_KEY = os.getenv("GROQ_API_KEY") or (_CFG.api_keys.groq_api_key if _CFG else None)
+MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY") or (
+    _CFG.api_keys.mistral_api_key if _CFG else None
+)
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") or (_CFG.api_keys.google_api_key if _CFG else None)
 
 # Local/Self-Hosted Options (Optional)
 OLLAMA_HOST = os.getenv("OLLAMA_HOST")  # For backward compatibility
@@ -99,8 +112,12 @@ CLAUDE_CODE_PATH = os.getenv("CLAUDE_CODE_PATH", "claude")  # Path to Claude Cod
 # ============================================================================
 
 # OpenAI Models (Default/Primary)
-OPENAI_LLM_MODEL = os.getenv("OPENAI_LLM_MODEL", "gpt-3.5-turbo")
-OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+OPENAI_LLM_MODEL = os.getenv("OPENAI_LLM_MODEL") or (
+    (_CFG.model_overrides.openai_llm_model if _CFG and _CFG.model_overrides else None)
+) or "gpt-3.5-turbo"
+OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL") or (
+    (_CFG.model_overrides.openai_embedding_model if _CFG and _CFG.model_overrides else None)
+) or "text-embedding-3-small"
 
 # Alternative Provider Models
 GROQ_LLM_MODEL = os.getenv("GROQ_LLM_MODEL", "llama-3.1-70b-versatile")
@@ -108,8 +125,12 @@ MISTRAL_LLM_MODEL = os.getenv("MISTRAL_LLM_MODEL", "mistral-small-latest")
 ANTHROPIC_LLM_MODEL = os.getenv("ANTHROPIC_LLM_MODEL", "claude-3-haiku-20240307")
 
 # Google Models
-GOOGLE_LLM_MODEL = os.getenv("GOOGLE_LLM_MODEL", "gemini-2.5-flash-lite")
-GOOGLE_EMBEDDING_MODEL = os.getenv("GOOGLE_EMBEDDING_MODEL", "gemini-embedding-001")
+GOOGLE_LLM_MODEL = os.getenv("GOOGLE_LLM_MODEL") or (
+    (_CFG.model_overrides.gemini_llm_model if _CFG and _CFG.model_overrides else None)
+) or "gemini-2.5-flash-lite"
+GOOGLE_EMBEDDING_MODEL = os.getenv("GOOGLE_EMBEDDING_MODEL") or (
+    (_CFG.model_overrides.gemini_embedding_model if _CFG and _CFG.model_overrides else None)
+) or "gemini-embedding-001"
 
 # ============================================================================
 # LEGACY OLLAMA SETTINGS (FOR BACKWARD COMPATIBILITY)
@@ -133,16 +154,23 @@ CHROMA_COLLECTION = os.getenv("CHROMA_COLLECTION", "knowledge_base")
 # ============================================================================
 
 # RAG behavior
-ANSWER_MIN_CONF = float(os.getenv("ANSWER_MIN_CONF", "0.25"))
-MAX_CHUNKS = int(os.getenv("MAX_CHUNKS", "5"))
-MAX_CHARS_PER_CHUNK = int(os.getenv("MAX_CHARS_PER_CHUNK", "800"))
+ANSWER_MIN_CONF = float(
+    os.getenv("ANSWER_MIN_CONF")
+    or (str(_CFG.rag.confidence_threshold) if _CFG else "0.25")
+)
+MAX_CHUNKS = int(os.getenv("MAX_CHUNKS") or (str(_CFG.rag.max_chunks) if _CFG else "5"))
+MAX_CHARS_PER_CHUNK = int(
+    os.getenv("MAX_CHARS_PER_CHUNK")
+    or (str(_CFG.rag.max_chars_per_chunk) if _CFG else "800")
+)
 
 # ============================================================================
 # DOCUMENTATION SOURCES (FLEXIBLE)
 # ============================================================================
 
 # Documentation sources (comma-separated, supports local and remote)
-DOCS_SOURCES = _parse_csv("DOCS_SOURCES", "./docs")
+_docs_default = _CFG.docs.local_path if _CFG else "./docs"
+DOCS_SOURCES = _parse_csv("DOCS_SOURCES", _docs_default)
 # Example: "./docs,/home/user/my-docs,https://my-site.com/docs"
 
 # Remote documentation settings
@@ -156,29 +184,37 @@ DOCS_AUTO_REFRESH_HOURS = int(os.getenv("DOCS_AUTO_REFRESH_HOURS", "24"))
 # Crawl config
 USER_AGENT = os.getenv(
     "CRAWL_USER_AGENT",
-    "SupportDeflectBot/2.0 (+https://github.com/theadityamittal/support-deflect-bot; contact: theadityamittal@gmail.com)",
+    (_CFG.crawl.user_agent if _CFG else "SupportDeflectBot/0.2 (+https://github.com/theadityamittal/support-deflect-bot; contact: theadityamittal@gmail.com)"),
 )
 
 # Allowed and trusted domains for crawling
-ALLOW_HOSTS = set(
-    _parse_csv(
-        "ALLOW_HOSTS",
-        "docs.python.org,packaging.python.org,pip.pypa.io,virtualenv.pypa.io,help.sigmacomputing.com",
-    )
+_allow_hosts_default = (
+    ",".join(_CFG.crawl.allow_hosts) if _CFG and _CFG.crawl.allow_hosts else "docs.python.org,packaging.python.org,pip.pypa.io,virtualenv.pypa.io,help.sigmacomputing.com"
 )
+ALLOW_HOSTS = set(_parse_csv("ALLOW_HOSTS", _allow_hosts_default))
 
-TRUSTED_DOMAINS = set(_parse_csv("TRUSTED_DOMAINS", "help.sigmacomputing.com"))
+_trusted_default = (
+    ",".join(_CFG.crawl.trusted_domains) if _CFG and _CFG.crawl.trusted_domains else "help.sigmacomputing.com"
+)
+TRUSTED_DOMAINS = set(_parse_csv("TRUSTED_DOMAINS", _trusted_default))
 
 # Default crawl seeds
-DEFAULT_SEEDS = _parse_csv(
-    "DEFAULT_SEEDS",
-    "https://docs.python.org/3/faq/index.html,https://docs.python.org/3/library/venv.html",
+_seeds_default = (
+    ",".join(_CFG.crawl.default_seeds) if _CFG and _CFG.crawl.default_seeds else "https://docs.python.org/3/faq/index.html,https://docs.python.org/3/library/venv.html"
 )
+DEFAULT_SEEDS = _parse_csv("DEFAULT_SEEDS", _seeds_default)
 
 # Crawling limits
-CRAWL_DEPTH = int(os.getenv("CRAWL_DEPTH", "1"))
-CRAWL_MAX_PAGES = int(os.getenv("CRAWL_MAX_PAGES", "40"))
-CRAWL_SAME_DOMAIN = os.getenv("CRAWL_SAME_DOMAIN", "true").lower() == "true"
+CRAWL_DEPTH = int(os.getenv("CRAWL_DEPTH") or (str(_CFG.crawl.depth) if _CFG else "1"))
+CRAWL_MAX_PAGES = int(
+    os.getenv("CRAWL_MAX_PAGES") or (str(_CFG.crawl.max_pages) if _CFG else "40")
+)
+CRAWL_SAME_DOMAIN = (
+    os.getenv("CRAWL_SAME_DOMAIN")
+    if os.getenv("CRAWL_SAME_DOMAIN") is not None
+    else str(_CFG.crawl.same_domain).lower() if _CFG else "true"
+)
+CRAWL_SAME_DOMAIN = str(CRAWL_SAME_DOMAIN).lower() == "true"
 
 # ============================================================================
 # FILE PATHS AND CACHING
@@ -186,7 +222,7 @@ CRAWL_SAME_DOMAIN = os.getenv("CRAWL_SAME_DOMAIN", "true").lower() == "true"
 
 # File paths
 CRAWL_CACHE_PATH = os.getenv("CRAWL_CACHE_PATH", "./data/crawl_cache.json")
-DOCS_FOLDER = os.getenv("DOCS_FOLDER", "./docs")  # Backward compatibility
+DOCS_FOLDER = os.getenv("DOCS_FOLDER") or (_CFG.docs.local_path if _CFG else "./docs")
 
 # ============================================================================
 # PROVIDER HEALTH CHECK AND MONITORING
