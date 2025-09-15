@@ -13,12 +13,18 @@ from ...utils.settings import (
     MAX_CHUNKS
 )
 
+# Global variables for singleton engine instances
+_rag_engine = None
+_doc_processor = None
+_query_service = None
+_embedding_service = None
+
 
 def get_rag_engine():
     """Get or create RAG engine instance."""
     from ...engine import UnifiedRAGEngine
     global _rag_engine
-    if "_rag_engine" not in globals() or _rag_engine is None:
+    if _rag_engine is None:
         _rag_engine = UnifiedRAGEngine()
     return _rag_engine
 
@@ -27,7 +33,7 @@ def get_doc_processor():
     """Get or create document processor instance."""
     from ...engine import UnifiedDocumentProcessor
     global _doc_processor
-    if "_doc_processor" not in globals() or _doc_processor is None:
+    if _doc_processor is None:
         _doc_processor = UnifiedDocumentProcessor()
     return _doc_processor
 
@@ -36,7 +42,7 @@ def get_query_service():
     """Get or create query service instance."""
     from ...engine import UnifiedQueryService
     global _query_service
-    if "_query_service" not in globals() or _query_service is None:
+    if _query_service is None:
         _query_service = UnifiedQueryService()
     return _query_service
 
@@ -45,7 +51,7 @@ def get_embedding_service():
     """Get or create embedding service instance."""
     from ...engine import UnifiedEmbeddingService
     global _embedding_service
-    if "_embedding_service" not in globals() or _embedding_service is None:
+    if _embedding_service is None:
         _embedding_service = UnifiedEmbeddingService()
     return _embedding_service
 
@@ -218,9 +224,9 @@ def config(ctx, show, validate):
     console = Console()
     
     try:
-        from ...config import ConfigurationManager
-        
-        config_manager = ConfigurationManager()
+        from ...config.manager import get_config_manager
+
+        config_manager = get_config_manager()
         
         if show:
             if not ctx.obj["quiet"]:

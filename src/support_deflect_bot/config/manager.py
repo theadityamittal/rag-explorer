@@ -366,7 +366,7 @@ class ConfigurationManager:
 
 
 # Global configuration manager instance
-_config_manager = None
+_config_manager: Optional[ConfigurationManager] = None
 
 
 def get_config_manager() -> ConfigurationManager:

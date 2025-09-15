@@ -14,9 +14,9 @@ from bs4 import BeautifulSoup, Tag
 
 logger = logging.getLogger(__name__)
 
-from src.data.chunker import chunk_text
-from src.data.embeddings import embed_texts
-from src.data.store import get_collection
+from .chunker import chunk_text
+from .embeddings import embed_texts
+from .store import get_collection
 from support_deflect_bot.utils.settings import (
     ALLOW_HOSTS,
     CRAWL_CACHE_PATH,

@@ -6,12 +6,15 @@ from rich.console import Console
 
 from ..output import format_search_results
 
+# Global variable for singleton query service instance
+_query_service = None
+
 
 def get_query_service():
     """Get or create query service instance."""
     from ...engine import UnifiedQueryService
     global _query_service
-    if "_query_service" not in globals() or _query_service is None:
+    if _query_service is None:
         _query_service = UnifiedQueryService()
     return _query_service
 

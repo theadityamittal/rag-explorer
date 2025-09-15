@@ -6,12 +6,16 @@ from rich.console import Console
 from ..ask_session import UnifiedAskSession
 from ...utils.settings import MAX_CHUNKS
 
+# Global variables for singleton engine instances
+_rag_engine = None
+_query_service = None
+
 
 def get_rag_engine():
     """Get or create RAG engine instance."""
     from ...engine import UnifiedRAGEngine
     global _rag_engine
-    if "_rag_engine" not in globals() or _rag_engine is None:
+    if _rag_engine is None:
         _rag_engine = UnifiedRAGEngine()
     return _rag_engine
 
@@ -20,7 +24,7 @@ def get_query_service():
     """Get or create query service instance."""
     from ...engine import UnifiedQueryService
     global _query_service
-    if "_query_service" not in globals() or _query_service is None:
+    if _query_service is None:
         _query_service = UnifiedQueryService()
     return _query_service
 

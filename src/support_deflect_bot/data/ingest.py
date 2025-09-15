@@ -1,9 +1,9 @@
 import os
 from typing import Dict
 
-from src.data.chunker import build_docs_from_files, chunk_text
-from src.data.embeddings import embed_texts
-from src.data.store import reset_collection
+from .chunker import build_docs_from_files, chunk_text
+from .embeddings import embed_texts
+from .store import reset_collection
 
 
 def read_docs_from_folder(folder: str = "./docs") -> Dict[str, str]:

@@ -10,12 +10,15 @@ from ...utils.settings import (
     DEFAULT_SEEDS,
 )
 
+# Global variable for singleton document processor instance
+_doc_processor = None
+
 
 def get_doc_processor():
     """Get or create document processor instance."""
     from ...engine import UnifiedDocumentProcessor
     global _doc_processor
-    if "_doc_processor" not in globals() or _doc_processor is None:
+    if _doc_processor is None:
         _doc_processor = UnifiedDocumentProcessor()
     return _doc_processor
 
