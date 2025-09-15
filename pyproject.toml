@@ -42,6 +42,7 @@ dev = [
 ]
 
 [project.scripts]
+# Simplified CLI with 8 core commands and environment-controlled settings
 rag-explorer = "rag_explorer.cli.simple_main:cli"
 
 [project.urls]

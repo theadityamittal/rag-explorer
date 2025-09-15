@@ -15,7 +15,7 @@ except ImportError:
     # Fallback to direct Ollama for backward compatibility
     import ollama
 
-    from rag_explorer.utils.settings import OLLAMA_EMBED_MODEL as EMBED_MODEL
+    from rag_explorer.utils.simple_settings import OLLAMA_EMBEDDING_MODEL as EMBED_MODEL
 
     USE_NEW_SYSTEM = False
 

@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 
 import chromadb
 
-from rag_explorer.utils.settings import (
+from rag_explorer.utils.simple_settings import (
     CHROMA_COLLECTION,
     CHROMA_DB_PATH,
     DB_POOL_SIZE,

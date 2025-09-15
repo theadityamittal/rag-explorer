@@ -17,12 +17,11 @@ logger = logging.getLogger(__name__)
 from .chunker import chunk_text
 from .embeddings import embed_texts
 from .store import get_client, get_collection, return_client, delete_by_where, add_documents_with_embeddings
-from rag_explorer.utils.settings import (
-    ALLOW_HOSTS,
-    CRAWL_CACHE_PATH,
-    TRUSTED_DOMAINS,
-)
-from rag_explorer.utils.settings import USER_AGENT as UA
+# Use simple defaults for crawling settings
+ALLOW_HOSTS = []  # Allow all hosts in simple mode
+CRAWL_CACHE_PATH = "./cache/crawl_cache.json"  # Simple cache path
+TRUSTED_DOMAINS = []  # No special trusted domains in simple mode
+UA = "RAG-Explorer/1.0"  # Simple user agent
 
 # Cache file for freshness (ETag/Last-Modified + content_hash)
 CACHE_PATH = CRAWL_CACHE_PATH
@@ -171,9 +170,8 @@ def extract_links(html: str, base_url: str) -> Set[str]:
         url = _normalize_url(a["href"], base=base_url)
         if not url:
             continue
-        host = urlparse(url).netloc
-        if host in ALLOW_HOSTS:
-            links.add(url)
+        # Allow links by default: replace `if host in ALLOW_HOSTS` with `links.add(url)`
+        links.add(url)
     return links
 
 
@@ -202,7 +200,9 @@ def _index_single(url: str, html: str, title: str, text: str) -> int:
     except Exception as e:
         logger.debug(f"Failed to delete path {url} from collection: {e}")
 
-    chunks = chunk_text(text, chunk_size=900, overlap=150)
+    # Import simple_settings and use chunk_size=simple_settings.CHUNK_SIZE, overlap=simple_settings.CHUNK_OVERLAP instead of hardcoded values
+    from ..utils import simple_settings
+    chunks = chunk_text(text, chunk_size=simple_settings.CHUNK_SIZE, overlap=simple_settings.CHUNK_OVERLAP)
     if not chunks:
         return 0
 
@@ -308,8 +308,7 @@ def crawl_urls(
         visited.add(url)
 
         host = urlparse(url).netloc
-        if host not in ALLOW_HOSTS:
-            continue
+        # Remove/relax the `if host not in ALLOW_HOSTS: continue` check (rely on `same_domain` control instead)
         if not _robots_ok(url):
             out[url] = {
                 "fetched": 0,

@@ -14,6 +14,11 @@ from ..utils.simple_settings import (
     OLLAMA_HOST,
     OLLAMA_LLM_MODEL,
     OLLAMA_EMBEDDING_MODEL,
+    OPENAI_LLM_MODEL,
+    OPENAI_EMBEDDING_MODEL,
+    ANTHROPIC_LLM_MODEL,
+    GOOGLE_LLM_MODEL,
+    GOOGLE_EMBEDDING_MODEL,
     CHUNK_SIZE,
     CHUNK_OVERLAP,
     MIN_CONFIDENCE,
@@ -22,7 +27,7 @@ from ..utils.simple_settings import (
     CHROMA_COLLECTION
 )
 from ..data.chunker import chunk_text
-from ..data.store import get_client, get_collection, upsert_chunks, query_by_embedding
+from ..data.store import get_client, get_collection, upsert_chunks, query_by_embedding, add_documents_with_embeddings
 
 logger = logging.getLogger(__name__)
 
@@ -98,8 +103,8 @@ class SimpleRAGEngine:
         return {
             'type': 'openai',
             'client': openai.OpenAI(api_key=OPENAI_API_KEY),
-            'llm_model': 'gpt-4o-mini',
-            'embedding_model': 'text-embedding-3-small'
+            'llm_model': OPENAI_LLM_MODEL,
+            'embedding_model': OPENAI_EMBEDDING_MODEL
         }
     
     def _create_anthropic_provider(self):
@@ -108,7 +113,7 @@ class SimpleRAGEngine:
         return {
             'type': 'anthropic',
             'client': anthropic.Anthropic(api_key=ANTHROPIC_API_KEY),
-            'llm_model': 'claude-3-haiku-20240307',
+            'llm_model': ANTHROPIC_LLM_MODEL,
             'embedding_model': None  # Anthropic doesn't provide embeddings
         }
     
@@ -119,8 +124,8 @@ class SimpleRAGEngine:
         return {
             'type': 'google',
             'client': genai,
-            'llm_model': 'gemini-1.5-flash',
-            'embedding_model': 'text-embedding-004'
+            'llm_model': GOOGLE_LLM_MODEL,
+            'embedding_model': GOOGLE_EMBEDDING_MODEL
         }
     
     def _get_provider(self, provider_type: str):
@@ -182,7 +187,7 @@ class SimpleRAGEngine:
         embeddings = self._generate_embeddings(all_chunks)
         
         # Store in ChromaDB
-        upsert_chunks(all_chunks, chunk_metadatas, chunk_ids)
+        add_documents_with_embeddings(all_chunks, embeddings, chunk_metadatas, chunk_ids)
         
         return {
             'count': len(all_chunks),
@@ -220,7 +225,7 @@ class SimpleRAGEngine:
         return {
             'answer': answer,
             'confidence': confidence,
-            'sources': [hit['meta']['source'] for hit in hits[:3]]
+            'sources': [(h.get('meta', {}).get('source') or h.get('meta', {}).get('path') or 'Unknown') for h in hits[:3]]
         }
     
     def get_status(self) -> Dict:
@@ -305,7 +310,11 @@ class SimpleRAGEngine:
     def _generate_query_embedding(self, question: str) -> List[float]:
         """Generate embedding for query."""
         return self._generate_embeddings([question])[0]
-    
+
+    def generate_query_embedding(self, query: str) -> List[float]:
+        """Public method to generate embedding for a query."""
+        return self._generate_query_embedding(query)
+
     def _calculate_confidence(self, hits: List[Dict], question: str) -> float:
         """Calculate confidence score based on similarity."""
         if not hits:
@@ -324,7 +333,8 @@ class SimpleRAGEngine:
         """Format retrieved chunks into context."""
         context_parts = []
         for i, hit in enumerate(hits, 1):
-            source = hit['meta']['source']
+            meta = hit.get('meta', {})
+            source = meta.get('source') or meta.get('path') or 'Unknown'
             text = hit['text'][:500]  # Limit chunk size
             context_parts.append(f"[{i}] From {source}:\n{text}")
         
