@@ -76,7 +76,7 @@ class UnifiedDocumentProcessor:
             
             # Reset collection if requested
             if reset_collection:
-                from src.data.store import reset_collection
+                from data.store import reset_collection
                 reset_collection()
             
             # Process documents into chunks
@@ -323,7 +323,7 @@ class UnifiedDocumentProcessor:
             Dictionary with collection statistics and metadata
         """
         try:
-            from src.data.store import get_client, get_collection
+            from data.store import get_client, get_collection
             
             client = get_client()
             collection = get_collection(client)
@@ -468,7 +468,7 @@ class UnifiedDocumentProcessor:
                 return 0
             
             # Store in ChromaDB
-            from src.data.store import get_collection
+            from data.store import get_collection
             collection = get_collection()
             
             ids = [f"{meta['path']}#{meta['chunk_id']}" for meta in metadatas]
@@ -489,7 +489,7 @@ class UnifiedDocumentProcessor:
         """Index a single URL by chunking and storing its content."""
         try:
             # Remove existing content for this URL
-            from src.data.store import get_collection
+            from data.store import get_collection
             collection = get_collection()
             
             try:

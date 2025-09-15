@@ -481,7 +481,7 @@ class UnifiedQueryService:
     ) -> List[Dict]:
         """Perform semantic search using query embedding."""
         try:
-            from src.data.store import query_by_embedding
+            from data.store import query_by_embedding
             
             where_filter = None
             if domains:

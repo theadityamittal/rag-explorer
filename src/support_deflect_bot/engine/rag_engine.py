@@ -178,7 +178,7 @@ class UnifiedRAGEngine:
                 return []
             
             # Query vector database
-            from src.data.store import query_by_embedding
+            from data.store import query_by_embedding
             
             where_filter = None
             if domains:
@@ -390,7 +390,7 @@ class UnifiedRAGEngine:
     def _check_database_status(self) -> Dict:
         """Check vector database connectivity."""
         try:
-            from src.data.store import get_client, get_collection
+            from data.store import get_client, get_collection
             client = get_client()
             collection = get_collection(client)
             count = collection.count()
