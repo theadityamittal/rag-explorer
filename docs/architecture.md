@@ -243,90 +243,6 @@ Think of this bot as a smart librarian that:
 ### Unified Package Structure (`src/support_deflect_bot/`)
 
 ```
-<<<<<<< HEAD
-src/support_deflect_bot/
-├── __init__.py                           # Package initialization with version
-├── engine/                               # 🆕 SHARED BUSINESS LOGIC LAYER
-│   ├── __init__.py                       # Engine exports and initialization
-│   ├── rag_engine.py                     # Main RAG pipeline (replaces src/core/rag.py)
-│   ├── document_processor.py             # Document processing (enhances src/data/ingest.py)
-│   ├── embedding_service.py              # Embedding generation (enhances src/data/embeddings.py)
-│   └── query_service.py                  # Query processing (replaces src/core/retrieve.py)
-├── cli/                                  # ✏️ ENHANCED CLI INTERFACE
-│   ├── __init__.py                       # CLI exports
-│   ├── main.py                           # Updated to use shared engine
-│   ├── ask_session.py                    # Interactive Q&A sessions
-│   ├── configure.py                      # Configuration management
-│   ├── output.py                         # Terminal output formatting
-│   └── commands/                         # 🆕 Modular command structure
-│       ├── __init__.py
-│       ├── ask_commands.py              # Question answering commands
-│       ├── search_commands.py           # Search and retrieval commands
-│       ├── index_commands.py            # Document indexing commands
-│       ├── crawl_commands.py            # Web crawling commands
-│       └── admin_commands.py            # Admin and health commands
-├── api/                                  # 🆕 COMPREHENSIVE API INTERFACE
-│   ├── __init__.py                       # API package exports
-│   ├── app.py                           # FastAPI application with shared engine
-│   ├── models/                          # Request/Response models
-│   │   ├── __init__.py                  # Model exports
-│   │   ├── requests.py                  # All request schemas
-│   │   ├── responses.py                 # All response schemas
-│   │   └── validators.py               # Custom validation logic
-│   ├── endpoints/                       # Modular endpoint structure
-│   │   ├── __init__.py                  # Endpoint exports
-│   │   ├── query.py                     # /ask and /search endpoints
-│   │   ├── indexing.py                  # /reindex and /crawl endpoints
-│   │   ├── health.py                    # /healthz and /metrics endpoints
-│   │   ├── admin.py                     # Administrative endpoints
-│   │   └── batch.py                     # Batch processing endpoints
-│   ├── middleware/                      # API middleware
-│   │   ├── __init__.py
-│   │   ├── cors.py                      # CORS configuration
-│   │   ├── rate_limiting.py            # Rate limiting implementation
-│   │   ├── authentication.py           # Authentication handling
-│   │   ├── error_handling.py           # Global error handling
-│   │   └── logging.py                  # Request/response logging
-│   └── dependencies/                    # FastAPI dependencies
-│       ├── __init__.py
-│       ├── engine.py                   # Engine dependency injection
-│       ├── validation.py              # Request validation
-│       └── security.py                # Security dependencies
-├── core/                                # ✅ EXISTING provider system
-│   └── providers/                       # Multi-provider LLM system
-│       ├── __init__.py                  # Provider exports
-│       ├── base.py                      # Provider base classes
-│       ├── config.py                    # Provider configuration
-│       ├── strategies.py               # Selection strategies
-│       └── implementations/             # Individual providers
-│           ├── google_gemini.py         # Google Gemini (primary)
-│           ├── ollama_provider.py       # Ollama local (fallback)
-│           ├── openai_provider.py       # OpenAI fallback
-│           ├── anthropic_provider.py    # Anthropic Claude fallback
-│           ├── groq_provider.py         # Groq fallback
-│           └── mistral_provider.py      # Mistral fallback
-├── config/                              # Enhanced configuration
-│   ├── __init__.py                      # Config exports
-│   ├── manager.py                       # Enhanced configuration management
-│   └── schema.py                        # Enhanced validation schemas
-└── utils/                               # Enhanced utilities
-    ├── __init__.py                      # Utils exports
-    ├── settings.py                      # Enhanced with architecture settings
-    ├── metrics.py                       # Enhanced performance monitoring
-    ├── batch.py                         # Batch processing utilities
-    ├── run_eval.py                      # Evaluation utilities
-    ├── stderr_suppressor.py            # Output filtering
-    └── warnings_suppressor.py          # Warning management
-
-# 🗑️ PRESERVED SHARED MODULES (continue using from src/data/)
-src/data/                               # KEEP - used by engine modules
-├── store.py                            # ChromaDB operations
-├── chunker.py                          # Text chunking algorithms
-├── embeddings.py                       # Used by embedding_service.py
-├── ingest.py                           # Used by document_processor.py
-├── web_ingest.py                       # Used by document_processor.py
-└── __init__.py                         # Data module exports
-=======
 src/
 ├── data/                        # Data processing and storage
 │   ├── chunker.py               # Text chunking algorithms
@@ -364,7 +280,6 @@ src/
         ├── settings.py          # Application settings
         ├── metrics.py           # Performance monitoring
         └── batch.py             # Batch processing utilities
->>>>>>> origin/main
 ```
 
 ### Test Organization (`tests/`)
@@ -424,29 +339,12 @@ class UnifiedRAGEngine:
 - `get_metrics()`: Performance and usage metrics
 - `validate_providers()`: Health checking for provider system
 
-<<<<<<< HEAD
-### 2. Document Processor (`src/support_deflect_bot/engine/document_processor.py`)
-
-**Purpose**: Unified document processing for local and web content
-
-```python
-class UnifiedDocumentProcessor:
-    """
-    Handles both local directory processing and web content crawling
-=======
 #### File: `src/support_deflect_bot/engine/rag_engine.py`
 **Purpose**: The brain of the system - unified RAG orchestration
 
 ```python
 class UnifiedRAGEngine:
->>>>>>> origin/main
     """
-    
-<<<<<<< HEAD
-    def __init__(self, embedding_service, vector_store):
-        self.embedding_service = embedding_service
-        self.vector_store = vector_store
-=======
     1. Search for relevant chunks using embeddings
     2. Calculate confidence score
     3. If confidence < threshold: refuse to answer
@@ -466,7 +364,6 @@ def calculate_confidence(hits, question):
     - Semantic similarity (from vector search): Primary factor
     - Keyword overlap (exact word matches): Secondary factor
     - Provider confidence scores: Tertiary factor
->>>>>>> origin/main
     
     async def process_local_directory(self, directory_path: str) -> ProcessingResult:
         """
@@ -740,9 +637,6 @@ deflect-bot ask "How do I configure authentication?"
 - **Speed**: No API latency for document search
 - **Offline Support**: Works with Ollama for complete offline operation
 
-<<<<<<< HEAD
-### 2. API Service Deployment (Docker/Kubernetes)
-=======
 | Command | Function | Purpose |
 |---------|----------|---------|
 | `deflect-bot index` | `index()` | Index local documentation |
@@ -753,7 +647,8 @@ deflect-bot ask "How do I configure authentication?"
 | `deflect-bot ping` | `ping()` | Test LLM connectivity |
 | `deflect-bot config` | `config()` | Display configuration |
 | `deflect-bot metrics` | `metrics()` | Show performance metrics |
->>>>>>> origin/main
+
+### 2. API Service Deployment (Docker/Kubernetes)
 
 **Use Case**: Team documentation, web integrations, scalable deployments
 
@@ -885,17 +780,15 @@ def get_deployment_mode():
 
 #### 2. Interface-Specific Features
 
-<<<<<<< HEAD
-**For CLI-only features:**
-- Add to `src/support_deflect_bot/cli/commands/`
-- Follow Click framework conventions
-- Include help text and examples
-=======
 #### 1. **"I don't have enough information" responses**
 - **Cause**: Confidence score below threshold
 - **Debug**: Check confidence calculation in `src/support_deflect_bot/engine/rag_engine.py`
 - **Fix**: Adjust `ANSWER_MIN_CONF` or improve document indexing
->>>>>>> origin/main
+
+**For CLI-only features:**
+- Add to `src/support_deflect_bot/cli/commands/`
+- Follow Click framework conventions
+- Include help text and examples
 
 **For API-only features:**
 - Add to `src/support_deflect_bot/api/endpoints/`
@@ -975,9 +868,6 @@ deflect-bot --help                    # CLI mode
 python -m support_deflect_bot.api.app  # API mode (http://localhost:8000/docs)
 ```
 
-<<<<<<< HEAD
-#### Development Workflow
-=======
 ### Understanding the Codebase
 
 1. **Start with**: `src/support_deflect_bot/cli/main.py` to understand user interface
@@ -986,7 +876,6 @@ python -m support_deflect_bot.api.app  # API mode (http://localhost:8000/docs)
 4. **Configuration**: `src/support_deflect_bot/utils/settings.py` for all settings
 
 ### Making Changes
->>>>>>> origin/main
 
 1. **Create feature branch**: `git checkout -b feature/your-feature`
 2. **Understand architecture**: Start with engine layer for shared functionality

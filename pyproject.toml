@@ -42,7 +42,7 @@ dev = [
 ]
 
 [project.scripts]
-rag-explorer = "support_deflect_bot.cli.simple_main:cli"
+rag-explorer = "rag_explorer.cli.simple_main:cli"
 
 [project.urls]
 Homepage = "https://github.com/theadityamittal/support-deflect-bot"
@@ -53,10 +53,10 @@ Issues = "https://github.com/theadityamittal/support-deflect-bot/issues"
 where = ["src"]
 
 [tool.setuptools.package-data]
-support_deflect_bot = ["*.md", "*.txt", "*.json"]
+rag_explorer = ["*.md", "*.txt", "*.json"]
 
 [tool.setuptools_scm]
-write_to = "src/support_deflect_bot/_version.py"
+write_to = "src/rag_explorer/_version.py"
 version_scheme = "post-release"
 local_scheme = "no-local-version"
 
@@ -66,7 +66,7 @@ target-version = ['py39']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
-  src/support_deflect_bot/_version\.py
+  src/rag_explorer/_version\.py
 )/
 '''
 exclude = '''
@@ -89,7 +89,7 @@ exclude = '''
 profile = "black"
 multi_line_output = 3
 line_length = 88
-known_first_party = ["src", "support_deflect_bot"]
+known_first_party = ["src", "rag_explorer"]
 skip_glob = ["chroma_db/*"]
 
 [tool.mypy]
