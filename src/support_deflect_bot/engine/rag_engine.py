@@ -6,20 +6,17 @@ import time
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 
-<<<<<<< HEAD
-from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
-from ..core.resilience import (
-    retry_with_backoff,
-    RetryPolicy,
-    CircuitBreakerConfig,
-    get_circuit_breaker,
-    ErrorClassifier,
-    ErrorType,
-    CircuitBreakerOpenException
-)
-=======
 try:
     from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
+    from ..core.resilience import (
+        retry_with_backoff,
+        RetryPolicy,
+        CircuitBreakerConfig,
+        get_circuit_breaker,
+        ErrorClassifier,
+        ErrorType,
+        CircuitBreakerOpenException
+    )
 except ImportError:
     # Provider system not fully implemented yet - use mock implementations
     def get_default_registry():
@@ -34,19 +31,56 @@ except ImportError:
         
     class ProviderUnavailableError(Exception):
         pass
->>>>>>> origin/main
+    
+    # Mock resilience components
+    def retry_with_backoff():
+        def decorator(func):
+            return func
+        return decorator
+    
+    class RetryPolicy:
+        def __init__(self, **kwargs):
+            pass
+    
+    class CircuitBreakerConfig:
+        def __init__(self, **kwargs):
+            pass
+    
+    def get_circuit_breaker(name, config):
+        class MockCircuitBreaker:
+            def __init__(self):
+                self.state = type('State', (), {'value': 'closed'})()
+            def __enter__(self):
+                return self
+            def __exit__(self, *args):
+                pass
+            def get_status(self):
+                return {'state': 'closed', 'failures': 0}
+        return MockCircuitBreaker()
+    
+    class ErrorClassifier:
+        @staticmethod
+        def classify_error(error):
+            return type('ErrorType', (), {'value': 'unknown'})()
+    
+    class ErrorType:
+        TRANSIENT = "transient"
+        CONNECTION = "connection"
+        TIMEOUT = "timeout"
+    
+    class CircuitBreakerOpenException(Exception):
+        pass
+
 from ..utils.settings import (
     ANSWER_MIN_CONF as MIN_CONF,
     MAX_CHARS_PER_CHUNK,
     MAX_CHUNKS,
     CHROMA_COLLECTION,
-<<<<<<< HEAD
-    CHROMA_DB_PATH,
-    RAG_PIPELINE_TIMEOUT
-=======
     CHROMA_DB_PATH
->>>>>>> origin/main
 )
+
+# Default timeout if not defined in settings
+RAG_PIPELINE_TIMEOUT = 30.0
 
 
 class UnifiedRAGEngine:
@@ -256,7 +290,7 @@ class UnifiedRAGEngine:
             error_type = ErrorClassifier.classify_error(e)
 
             # Try to provide a meaningful fallback based on error type
-            if error_type == ErrorType.TIMEOUT:
+            if hasattr(error_type, 'value') and error_type.value == ErrorType.TIMEOUT:
                 self.metrics["timeout_errors"] += 1
                 return {
                     "answer": "The request timed out. Please try asking a simpler question or try again later.",
@@ -274,7 +308,7 @@ class UnifiedRAGEngine:
                 "confidence": 0.0,
                 "metadata": {
                     "error": str(e),
-                    "error_type": error_type.value,
+                    "error_type": getattr(error_type, 'value', 'unknown'),
                     "processing_time": time.time() - start_time
                 }
             }
@@ -299,6 +333,10 @@ class UnifiedRAGEngine:
         """
         try:
             with self.search_circuit_breaker:
+                # For mock implementation, return empty results
+                if not hasattr(self.provider_registry, 'build_fallback_chain'):
+                    return []
+
                 # Get embedding providers from registry
                 embedding_chain = self.provider_registry.build_fallback_chain(ProviderType.EMBEDDING)
 
@@ -342,7 +380,7 @@ class UnifiedRAGEngine:
         except Exception as e:
             logging.error(f"Document search error: {e}")
             error_type = ErrorClassifier.classify_error(e)
-            if error_type in {ErrorType.TRANSIENT, ErrorType.CONNECTION, ErrorType.TIMEOUT}:
+            if hasattr(error_type, 'value') and error_type.value in {ErrorType.TRANSIENT, ErrorType.CONNECTION, ErrorType.TIMEOUT}:
                 # Re-raise for retry
                 raise
             # Non-retryable error, return empty results
@@ -362,7 +400,7 @@ class UnifiedRAGEngine:
             }
         }
 
-    def _search_documents_with_recovery(self, query: str, k: int, domains: Optional[List[str]], deadline: float = None) -> List[Dict]:
+    def _search_documents_with_recovery(self, query: str, k: int, domains: Optional[List[str]], deadline: Optional[float] = None) -> List[Dict]:
         """Search documents with additional recovery mechanisms."""
         try:
             return self.search_documents(query, k=k, domains=domains)
@@ -458,8 +496,8 @@ class UnifiedRAGEngine:
     def _assess_system_health(self) -> str:
         """Assess overall system health."""
         recovery_rate = self._calculate_recovery_rate()
-        search_cb_state = self.search_circuit_breaker.state.value
-        llm_cb_state = self.llm_circuit_breaker.state.value
+        search_cb_state = getattr(self.search_circuit_breaker.state, 'value', 'closed')
+        llm_cb_state = getattr(self.llm_circuit_breaker.state, 'value', 'closed')
 
         if recovery_rate >= 0.95 and search_cb_state == "closed" and llm_cb_state == "closed":
             return "healthy"
@@ -476,6 +514,10 @@ class UnifiedRAGEngine:
             Dictionary mapping provider names to availability status
         """
         status = {}
+        
+        # For mock implementation, return empty status
+        if not hasattr(self.provider_registry, 'build_fallback_chain'):
+            return status
         
         # Check LLM providers
         llm_chain = self.provider_registry.build_fallback_chain(ProviderType.LLM)
@@ -510,15 +552,19 @@ class UnifiedRAGEngine:
         """Generate answer using LLM provider chain."""
         return self._generate_answer_with_recovery(user_prompt, "", [])
 
-    def _generate_answer_with_recovery(self, user_prompt: str, question: str, hits: List[Dict], deadline: float = None) -> str:
+    def _generate_answer_with_recovery(self, user_prompt: str, question: str, hits: List[Dict], deadline: Optional[float] = None) -> str:
         """Generate answer using LLM provider chain with comprehensive error recovery."""
         try:
             # Check timeout before generation attempt
             if deadline and time.time() > deadline:
-                logger.warning("Generation stage timeout reached")
+                logging.warning("Generation stage timeout reached")
                 return ""
 
             with self.llm_circuit_breaker:
+                # For mock implementation, return empty string
+                if not hasattr(self.provider_registry, 'build_fallback_chain'):
+                    return ""
+
                 llm_chain = self.provider_registry.build_fallback_chain(ProviderType.LLM)
                 llm_errors = []
 
@@ -720,6 +766,13 @@ class UnifiedRAGEngine:
     
     def _check_provider_status(self) -> Dict:
         """Check status of all providers."""
+        if not hasattr(self.provider_registry, 'build_fallback_chain'):
+            return {
+                "llm_providers": 0,
+                "embedding_providers": 0,
+                "last_validation": datetime.now().isoformat()
+            }
+        
         return {
             "llm_providers": len(self.provider_registry.build_fallback_chain(ProviderType.LLM)),
             "embedding_providers": len(self.provider_registry.build_fallback_chain(ProviderType.EMBEDDING)),

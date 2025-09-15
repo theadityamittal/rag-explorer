@@ -8,10 +8,6 @@ import time
 from typing import Dict, List, Optional, Tuple, Union
 from datetime import datetime
 
-<<<<<<< HEAD
-from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
-from ..utils.settings import USER_AGENT
-=======
 try:
     from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
 except ImportError:
@@ -31,7 +27,6 @@ except ImportError:
 
 from ..utils.settings import USER_AGENT
 
->>>>>>> origin/main
 
 class UnifiedEmbeddingService:
     """
@@ -199,9 +194,9 @@ class UnifiedEmbeddingService:
         for batch_idx in range(0, len(texts), batch_size):
             batch_end = min(batch_idx + batch_size, len(texts))
             batch_texts = texts[batch_idx:batch_end]
+            batch_num = (batch_idx // batch_size) + 1
             
             if show_progress:
-                batch_num = (batch_idx // batch_size) + 1
                 logging.info(f"Processing batch {batch_num}/{total_batches} ({len(batch_texts)} texts)")
             
             try:
@@ -297,6 +292,10 @@ class UnifiedEmbeddingService:
         Returns:
             Dictionary with provider validation results
         """
+        # For mock implementation, return empty results
+        if not hasattr(self.provider_registry, 'build_fallback_chain'):
+            return {}
+
         providers = self.provider_registry.build_fallback_chain(ProviderType.EMBEDDING)
         validation_results = {}
         
@@ -448,6 +447,10 @@ class UnifiedEmbeddingService:
         provider_preference: Optional[str] = None
     ) -> List[List[float]]:
         """Generate embeddings using provider fallback chain."""
+        # For mock implementation, return empty list
+        if not hasattr(self.provider_registry, 'build_fallback_chain'):
+            return []
+
         providers = self.provider_registry.build_fallback_chain(ProviderType.EMBEDDING)
         
         # If preference specified, try that provider first

@@ -5,9 +5,6 @@ import re
 from typing import Dict, List, Optional, Tuple, Set
 from datetime import datetime
 
-<<<<<<< HEAD
-from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
-=======
 try:
     from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
 except ImportError:
@@ -25,7 +22,6 @@ except ImportError:
     class ProviderUnavailableError(Exception):
         pass
 
->>>>>>> origin/main
 
 class UnifiedQueryService:
     """
@@ -481,6 +477,10 @@ class UnifiedQueryService:
     
     def _get_query_embedding(self, query: str) -> Optional[List[float]]:
         """Generate embedding for query text."""
+        # For mock implementation, return None
+        if not hasattr(self.provider_registry, 'build_fallback_chain'):
+            return None
+
         embedding_chain = self.provider_registry.build_fallback_chain(ProviderType.EMBEDDING)
         
         for provider in embedding_chain:
@@ -622,6 +622,13 @@ class UnifiedQueryService:
     
     def _check_embedding_providers(self) -> Dict:
         """Check status of embedding providers."""
+        # For mock implementation, return empty status
+        if not hasattr(self.provider_registry, 'build_fallback_chain'):
+            return {
+                "available_providers": 0,
+                "provider_names": []
+            }
+
         providers = self.provider_registry.build_fallback_chain(ProviderType.EMBEDDING)
         return {
             "available_providers": len(providers),

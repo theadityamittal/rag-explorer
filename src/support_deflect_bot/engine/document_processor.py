@@ -14,11 +14,15 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup, Tag
 
-<<<<<<< HEAD
-from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
-=======
 try:
     from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
+    from ..core.resilience import (
+        retry_with_backoff,
+        RetryPolicy,
+        get_circuit_breaker,
+        CircuitBreakerConfig,
+        WebFetchError
+    )
 except ImportError:
     # Provider system not fully implemented yet - use mock implementations
     def get_default_registry():
@@ -33,29 +37,52 @@ except ImportError:
         
     class ProviderUnavailableError(Exception):
         pass
->>>>>>> origin/main
+    
+    # Mock resilience components
+    def retry_with_backoff(policy=None, circuit_breaker=None):
+        def decorator(func):
+            return func
+        return decorator
+    
+    class RetryPolicy:
+        def __init__(self, **kwargs):
+            pass
+    
+    class CircuitBreakerConfig:
+        def __init__(self, **kwargs):
+            pass
+    
+    def get_circuit_breaker(name, config):
+        class MockCircuitBreaker:
+            def __init__(self):
+                self.state = type('State', (), {'value': 'closed'})()
+            def __enter__(self):
+                return self
+            def __exit__(self, *args):
+                pass
+            def get_status(self):
+                return {'state': 'closed', 'failures': 0}
+        return MockCircuitBreaker()
+    
+    class WebFetchError(Exception):
+        def __init__(self, message, url, status_code=None, original_error=None):
+            super().__init__(message)
+            self.url = url
+            self.status_code = status_code
+            self.original_error = original_error
+
 from ..utils.settings import (
     ALLOW_HOSTS,
     CRAWL_CACHE_PATH,
     TRUSTED_DOMAINS,
     USER_AGENT,
-<<<<<<< HEAD
-    CHROMA_COLLECTION,
-    WEB_CONNECT_TIMEOUT,
-    WEB_REQUEST_TIMEOUT
-)
-from ..core.resilience import (
-    retry_with_backoff,
-    RetryPolicy,
-    get_circuit_breaker,
-    CircuitBreakerConfig,
-    WebFetchError
-)
-=======
     CHROMA_COLLECTION
 )
 
->>>>>>> origin/main
+# Default timeouts if not defined in settings
+WEB_CONNECT_TIMEOUT = 10
+WEB_REQUEST_TIMEOUT = 30
+
 
 class UnifiedDocumentProcessor:
     """
@@ -508,6 +535,10 @@ class UnifiedDocumentProcessor:
             return 0
 
         try:
+            # For mock implementation, return 0
+            if not hasattr(self.provider_registry, 'build_fallback_chain'):
+                return 0
+
             # Generate embeddings using provider chain
             embedding_chain = self.provider_registry.build_fallback_chain(ProviderType.EMBEDDING)
             embeddings = None
@@ -544,6 +575,10 @@ class UnifiedDocumentProcessor:
     def _index_single_url(self, url: str, html: str, title: str, text: str, chunk_size: int, overlap: int) -> int:
         """Index a single URL by chunking and storing its content."""
         try:
+            # For mock implementation, return 0
+            if not hasattr(self.provider_registry, 'build_fallback_chain'):
+                return 0
+
             # Remove existing content for this URL using resilient store API
             from ..data.store import delete_by_where, add_documents_with_embeddings
 
@@ -637,7 +672,7 @@ class UnifiedDocumentProcessor:
                 raise WebFetchError(f"Request failed for {url}: {e}", url, original_error=e)
 
         # Check if circuit is open before attempting
-        if self.crawler_circuit_breaker.state.value == "open":
+        if getattr(self.crawler_circuit_breaker.state, 'value', 'closed') == "open":
             self.processing_stats["circuit_open"] += 1
             raise WebFetchError(f"Web crawler circuit breaker is open", url)
 
@@ -666,23 +701,24 @@ class UnifiedDocumentProcessor:
             if text:
                 lines.append(text)
         
-        for element in main.descendants:
-            if isinstance(element, Tag):
-                tag_name = element.name.lower()
-                if tag_name in {"h1", "h2", "h3", "h4"}:
-                    append_text(f"# {element.get_text(' ', strip=True)}")
-                elif tag_name in {"p", "li"}:
-                    append_text(element.get_text(" ", strip=True))
-                elif tag_name == "pre":
-                    text = element.get_text("\n", strip=True)
-                    if text:
-                        append_text("```")
-                        append_text(text)
-                        append_text("```")
-                elif tag_name == "code":
-                    text = element.get_text("", strip=True)
-                    if text:
-                        append_text(f"`{text}`")
+        if main and hasattr(main, 'descendants'):
+            for element in main.descendants:
+                if isinstance(element, Tag):
+                    tag_name = element.name.lower()
+                    if tag_name in {"h1", "h2", "h3", "h4"}:
+                        append_text(f"# {element.get_text(' ', strip=True)}")
+                    elif tag_name in {"p", "li"}:
+                        append_text(element.get_text(" ", strip=True))
+                    elif tag_name == "pre":
+                        text = element.get_text("\n", strip=True)
+                        if text:
+                            append_text("```")
+                            append_text(text)
+                            append_text("```")
+                    elif tag_name == "code":
+                        text = element.get_text("", strip=True)
+                        if text:
+                            append_text(f"`{text}`")
         
         return title, "\n\n".join(lines)
     
@@ -692,12 +728,14 @@ class UnifiedDocumentProcessor:
         links = set()
         
         for anchor in soup.find_all("a", href=True):
-            url = self._normalize_url(anchor["href"], base=base_url)
-            if not url:
-                continue
-            host = urlparse(url).netloc
-            if host in ALLOW_HOSTS:
-                links.add(url)
+            href = anchor.get("href")
+            if href:
+                url = self._normalize_url(str(href), base=base_url)
+                if not url:
+                    continue
+                host = urlparse(url).netloc
+                if host in ALLOW_HOSTS:
+                    links.add(url)
         
         return links
     
@@ -733,7 +771,7 @@ class UnifiedDocumentProcessor:
             host_url = f"{parsed_url.scheme}://{host}"
             robots_url = urljoin(host_url, "/robots.txt")
             
-            response = self._fetch_html(robots_url, timeout=10)
+            response = requests.get(robots_url, timeout=10, headers={"User-Agent": USER_AGENT})
             response.raise_for_status()
             
             # Parse robots.txt content
