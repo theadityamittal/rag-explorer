@@ -5,6 +5,9 @@ import re
 from typing import Dict, List, Optional, Tuple, Set
 from datetime import datetime
 
+<<<<<<< HEAD
+from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
+=======
 try:
     from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
 except ImportError:
@@ -22,6 +25,7 @@ except ImportError:
     class ProviderUnavailableError(Exception):
         pass
 
+>>>>>>> origin/main
 
 class UnifiedQueryService:
     """
@@ -497,7 +501,7 @@ class UnifiedQueryService:
     ) -> List[Dict]:
         """Perform semantic search using query embedding."""
         try:
-            from src.data.store import query_by_embedding
+            from ..data.store import query_by_embedding
             
             where_filter = None
             if domains:

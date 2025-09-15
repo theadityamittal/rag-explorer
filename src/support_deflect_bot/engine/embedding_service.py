@@ -8,6 +8,10 @@ import time
 from typing import Dict, List, Optional, Tuple, Union
 from datetime import datetime
 
+<<<<<<< HEAD
+from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
+from ..utils.settings import USER_AGENT
+=======
 try:
     from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
 except ImportError:
@@ -27,6 +31,7 @@ except ImportError:
 
 from ..utils.settings import USER_AGENT
 
+>>>>>>> origin/main
 
 class UnifiedEmbeddingService:
     """

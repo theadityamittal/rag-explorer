@@ -14,6 +14,9 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup, Tag
 
+<<<<<<< HEAD
+from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
+=======
 try:
     from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
 except ImportError:
@@ -30,14 +33,29 @@ except ImportError:
         
     class ProviderUnavailableError(Exception):
         pass
+>>>>>>> origin/main
 from ..utils.settings import (
     ALLOW_HOSTS,
     CRAWL_CACHE_PATH,
     TRUSTED_DOMAINS,
     USER_AGENT,
+<<<<<<< HEAD
+    CHROMA_COLLECTION,
+    WEB_CONNECT_TIMEOUT,
+    WEB_REQUEST_TIMEOUT
+)
+from ..core.resilience import (
+    retry_with_backoff,
+    RetryPolicy,
+    get_circuit_breaker,
+    CircuitBreakerConfig,
+    WebFetchError
+)
+=======
     CHROMA_COLLECTION
 )
 
+>>>>>>> origin/main
 
 class UnifiedDocumentProcessor:
     """
@@ -56,8 +74,28 @@ class UnifiedDocumentProcessor:
             "urls_processed": 0,
             "chunks_created": 0,
             "errors": 0,
+            "circuit_open": 0,
             "last_processing_time": None
         }
+
+        # Web crawling resilience components
+        self.crawler_circuit_breaker = get_circuit_breaker(
+            "web_crawler",
+            CircuitBreakerConfig(
+                failure_threshold=5,
+                success_threshold=3,
+                reset_timeout=60.0,
+                half_open_max_calls=3
+            )
+        )
+
+        self.crawler_retry_policy = RetryPolicy(
+            max_retries=3,
+            base_delay=2.0,
+            max_delay=30.0,
+            exponential_base=2.0,
+            jitter=True
+        )
 
     def process_local_directory(
         self, 
@@ -92,7 +130,7 @@ class UnifiedDocumentProcessor:
             
             # Reset collection if requested
             if reset_collection:
-                from src.data.store import reset_collection
+                from ..data.store import reset_collection
                 reset_collection()
             
             # Process documents into chunks
@@ -334,53 +372,56 @@ class UnifiedDocumentProcessor:
     def get_collection_stats(self) -> Dict:
         """
         Get statistics about the current document collection.
-        
+
         Returns:
             Dictionary with collection statistics and metadata
         """
         try:
-            from src.data.store import get_client, get_collection
-            
+            from ..data.store import get_client, get_collection, return_client
+
             client = get_client()
-            collection = get_collection(client)
-            
-            # Get basic collection info
-            count = collection.count()
-            
-            # Try to get some sample documents to analyze
-            sample_size = min(10, count)
-            if sample_size > 0:
-                sample = collection.get(limit=sample_size, include=["metadatas"])
-                
-                # Analyze metadata to get insights
-                sources = set()
-                hosts = set()
-                source_types = set()
-                
-                for metadata in sample["metadatas"]:
-                    if "path" in metadata:
-                        sources.add(metadata["path"])
-                    if "host" in metadata:
-                        hosts.add(metadata["host"])
-                    if "source_type" in metadata:
-                        source_types.add(metadata["source_type"])
-                
-                return {
-                    "connected": True,
-                    "collection_name": CHROMA_COLLECTION,
-                    "total_chunks": count,
-                    "sample_sources": list(sources),
-                    "unique_hosts": list(hosts),
-                    "source_types": list(source_types),
-                    "processing_stats": self.processing_stats
-                }
-            else:
-                return {
-                    "connected": True,
-                    "collection_name": CHROMA_COLLECTION,
-                    "total_chunks": 0,
-                    "processing_stats": self.processing_stats
-                }
+            try:
+                collection = get_collection(client)
+
+                # Get basic collection info
+                count = collection.count()
+
+                # Try to get some sample documents to analyze
+                sample_size = min(10, count)
+                if sample_size > 0:
+                    sample = collection.get(limit=sample_size, include=["metadatas"])
+
+                    # Analyze metadata to get insights
+                    sources = set()
+                    hosts = set()
+                    source_types = set()
+
+                    for metadata in sample["metadatas"]:
+                        if "path" in metadata:
+                            sources.add(metadata["path"])
+                        if "host" in metadata:
+                            hosts.add(metadata["host"])
+                        if "source_type" in metadata:
+                            source_types.add(metadata["source_type"])
+
+                    return {
+                        "connected": True,
+                        "collection_name": CHROMA_COLLECTION,
+                        "total_chunks": count,
+                        "sample_sources": list(sources),
+                        "unique_hosts": list(hosts),
+                        "source_types": list(source_types),
+                        "processing_stats": self.processing_stats
+                    }
+                else:
+                    return {
+                        "connected": True,
+                        "collection_name": CHROMA_COLLECTION,
+                        "total_chunks": 0,
+                        "processing_stats": self.processing_stats
+                    }
+            finally:
+                return_client(client)
                 
         except Exception as e:
             logging.error(f"Error getting collection stats: {e}")
@@ -465,12 +506,12 @@ class UnifiedDocumentProcessor:
         """Store chunks in vector database with embeddings."""
         if not chunk_texts:
             return 0
-        
+
         try:
             # Generate embeddings using provider chain
             embedding_chain = self.provider_registry.build_fallback_chain(ProviderType.EMBEDDING)
             embeddings = None
-            
+
             for provider in embedding_chain:
                 try:
                     embeddings = provider.embed_texts(chunk_texts, batch_size=10)
@@ -478,25 +519,24 @@ class UnifiedDocumentProcessor:
                 except (ProviderError, ProviderUnavailableError, Exception) as e:
                     logging.warning(f"Embedding provider {provider.get_config().name} failed: {e}")
                     continue
-            
+
             if embeddings is None:
                 logging.error("All embedding providers failed")
                 return 0
-            
-            # Store in ChromaDB
-            from src.data.store import get_collection
-            collection = get_collection()
-            
+
+            # Store in ChromaDB using resilient store API
+            from ..data.store import add_documents_with_embeddings
+
             ids = [f"{meta['path']}#{meta['chunk_id']}" for meta in metadatas]
-            collection.add(
+            add_documents_with_embeddings(
                 documents=chunk_texts,
                 embeddings=embeddings,
                 metadatas=metadatas,
                 ids=ids
             )
-            
+
             return len(chunk_texts)
-            
+
         except Exception as e:
             logging.error(f"Error storing chunks: {e}")
             return 0
@@ -504,24 +544,23 @@ class UnifiedDocumentProcessor:
     def _index_single_url(self, url: str, html: str, title: str, text: str, chunk_size: int, overlap: int) -> int:
         """Index a single URL by chunking and storing its content."""
         try:
-            # Remove existing content for this URL
-            from src.data.store import get_collection
-            collection = get_collection()
-            
+            # Remove existing content for this URL using resilient store API
+            from ..data.store import delete_by_where, add_documents_with_embeddings
+
             try:
-                collection.delete(where={"path": url})
+                delete_by_where(where={"path": url})
             except Exception as e:
                 logging.debug(f"Failed to delete existing content for {url}: {e}")
-            
+
             # Create chunks
             chunks = self._chunk_text(text, chunk_size=chunk_size, overlap=overlap)
             if not chunks:
                 return 0
-            
+
             # Generate embeddings
             embedding_chain = self.provider_registry.build_fallback_chain(ProviderType.EMBEDDING)
             embeddings = None
-            
+
             for provider in embedding_chain:
                 try:
                     embeddings = provider.embed_texts(chunks, batch_size=10)
@@ -529,11 +568,11 @@ class UnifiedDocumentProcessor:
                 except (ProviderError, ProviderUnavailableError, Exception) as e:
                     logging.warning(f"Embedding provider {provider.get_config().name} failed: {e}")
                     continue
-            
+
             if embeddings is None:
                 logging.error("All embedding providers failed")
                 return 0
-            
+
             # Prepare metadata
             host = urlparse(url).netloc
             metadatas = [
@@ -546,30 +585,63 @@ class UnifiedDocumentProcessor:
                 }
                 for i in range(len(chunks))
             ]
-            
-            # Store in database
+
+            # Store in database using resilient store API
             ids = [f"{url}#{i}" for i in range(len(chunks))]
-            collection.add(
+            add_documents_with_embeddings(
                 documents=chunks,
                 embeddings=embeddings,
                 metadatas=metadatas,
                 ids=ids
             )
-            
+
             return len(chunks)
-            
+
         except Exception as e:
             logging.error(f"Error indexing URL {url}: {e}")
             return 0
     
-    def _fetch_html(self, url: str, etag: Optional[str] = None, last_modified: Optional[str] = None, timeout: int = 20):
-        """Fetch HTML content with conditional headers."""
-        headers = {"User-Agent": USER_AGENT}
-        if etag:
-            headers["If-None-Match"] = etag
-        if last_modified:
-            headers["If-Modified-Since"] = last_modified
-        return requests.get(url, headers=headers, timeout=timeout)
+    def _fetch_html(self, url: str, etag: Optional[str] = None, last_modified: Optional[str] = None):
+        """Fetch HTML content with conditional headers, retry logic, and circuit breaker protection."""
+        # Use custom retry wrapper with web crawler-specific policy
+        @retry_with_backoff(self.crawler_retry_policy, self.crawler_circuit_breaker)
+        def _fetch_with_retry():
+            headers = {"User-Agent": USER_AGENT}
+            if etag:
+                headers["If-None-Match"] = etag
+            if last_modified:
+                headers["If-Modified-Since"] = last_modified
+
+            try:
+                response = requests.get(
+                    url,
+                    headers=headers,
+                    timeout=(WEB_CONNECT_TIMEOUT, WEB_REQUEST_TIMEOUT)
+                )
+
+                # Check for rate limiting or server overload
+                if response.status_code in [429, 503]:
+                    raise WebFetchError(
+                        f"Rate limited or service unavailable (HTTP {response.status_code})",
+                        url,
+                        response.status_code
+                    )
+
+                return response
+
+            except requests.exceptions.Timeout as e:
+                raise WebFetchError(f"Request timeout for {url}", url, original_error=e)
+            except requests.exceptions.ConnectionError as e:
+                raise WebFetchError(f"Connection error for {url}", url, original_error=e)
+            except requests.exceptions.RequestException as e:
+                raise WebFetchError(f"Request failed for {url}: {e}", url, original_error=e)
+
+        # Check if circuit is open before attempting
+        if self.crawler_circuit_breaker.state.value == "open":
+            self.processing_stats["circuit_open"] += 1
+            raise WebFetchError(f"Web crawler circuit breaker is open", url)
+
+        return _fetch_with_retry()
     
     def _html_to_text(self, html: str) -> Tuple[str, str]:
         """Convert HTML to clean text and extract title."""
