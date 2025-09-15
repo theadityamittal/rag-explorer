@@ -14,12 +14,32 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup, Tag
 
+<<<<<<< HEAD
 from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
+=======
+try:
+    from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
+except ImportError:
+    # Provider system not fully implemented yet - use mock implementations
+    def get_default_registry():
+        return {}
+    
+    class ProviderType:
+        LLM = "llm"
+        EMBEDDING = "embedding"
+    
+    class ProviderError(Exception):
+        pass
+        
+    class ProviderUnavailableError(Exception):
+        pass
+>>>>>>> origin/main
 from ..utils.settings import (
     ALLOW_HOSTS,
     CRAWL_CACHE_PATH,
     TRUSTED_DOMAINS,
     USER_AGENT,
+<<<<<<< HEAD
     CHROMA_COLLECTION,
     WEB_CONNECT_TIMEOUT,
     WEB_REQUEST_TIMEOUT
@@ -31,6 +51,11 @@ from ..core.resilience import (
     CircuitBreakerConfig,
     WebFetchError
 )
+=======
+    CHROMA_COLLECTION
+)
+
+>>>>>>> origin/main
 
 class UnifiedDocumentProcessor:
     """

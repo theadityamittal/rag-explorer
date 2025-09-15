@@ -299,13 +299,106 @@ DEBUG_PROVIDER_SELECTION = (
 LOG_PROVIDER_COSTS = os.getenv("LOG_PROVIDER_COSTS", "true").lower() == "true"
 
 # ============================================================================
+# ARCHITECTURE-SPECIFIC CONFIGURATION (UNIFIED ENGINE)
+# ============================================================================
+
+# Architecture mode configuration
+ARCHITECTURE_MODE = os.getenv("ARCHITECTURE_MODE", "unified")  # unified, cli, api
+ENGINE_INITIALIZATION_TIMEOUT = int(os.getenv("ENGINE_INITIALIZATION_TIMEOUT", "30"))
+ENABLE_PERFORMANCE_MONITORING = os.getenv("ENABLE_PERFORMANCE_MONITORING", "true").lower() == "true"
+
+# Engine-specific settings
+ENGINE_MAX_CONCURRENT_REQUESTS = int(os.getenv("ENGINE_MAX_CONCURRENT_REQUESTS", "10"))
+ENGINE_REQUEST_TIMEOUT = int(os.getenv("ENGINE_REQUEST_TIMEOUT", "120"))
+ENGINE_HEALTH_CHECK_INTERVAL = int(os.getenv("ENGINE_HEALTH_CHECK_INTERVAL", "300"))
+
+# Cache configuration
+ENABLE_RESPONSE_CACHE = os.getenv("ENABLE_RESPONSE_CACHE", "true").lower() == "true"
+CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", "3600"))
+CACHE_MAX_SIZE = int(os.getenv("CACHE_MAX_SIZE", "1000"))
+
+# Performance optimization settings
+ASYNC_PROCESSING_ENABLED = os.getenv("ASYNC_PROCESSING_ENABLED", "true").lower() == "true"
+BATCH_PROCESSING_SIZE = int(os.getenv("BATCH_PROCESSING_SIZE", "10"))
+CONCURRENT_PROVIDER_REQUESTS = int(os.getenv("CONCURRENT_PROVIDER_REQUESTS", "3"))
+
+# Shared engine instance settings
+ENGINE_SINGLETON_MODE = os.getenv("ENGINE_SINGLETON_MODE", "true").lower() == "true"
+ENGINE_LAZY_INITIALIZATION = os.getenv("ENGINE_LAZY_INITIALIZATION", "true").lower() == "true"
+
+# ============================================================================
 # CONFIGURATION VALIDATION
 # ============================================================================
+
+
+def validate_architecture_configuration() -> List[str]:
+    """Validate architecture-specific configuration."""
+    warnings = []
+    
+    # Validate architecture mode
+    valid_modes = ["unified", "cli", "api"]
+    if ARCHITECTURE_MODE not in valid_modes:
+        warnings.append(f"Invalid architecture mode: {ARCHITECTURE_MODE}. Must be one of {valid_modes}")
+    
+    # Validate engine settings
+    if ENGINE_INITIALIZATION_TIMEOUT <= 0:
+        warnings.append("Engine initialization timeout must be greater than 0")
+    
+    if ENGINE_MAX_CONCURRENT_REQUESTS <= 0:
+        warnings.append("Engine max concurrent requests must be greater than 0")
+    
+    if ENGINE_REQUEST_TIMEOUT <= 0:
+        warnings.append("Engine request timeout must be greater than 0")
+    
+    # Validate cache settings
+    if CACHE_TTL_SECONDS <= 0:
+        warnings.append("Cache TTL must be greater than 0")
+    
+    if CACHE_MAX_SIZE <= 0:
+        warnings.append("Cache max size must be greater than 0")
+    
+    # Validate batch processing
+    if BATCH_PROCESSING_SIZE <= 0:
+        warnings.append("Batch processing size must be greater than 0")
+    
+    if CONCURRENT_PROVIDER_REQUESTS <= 0:
+        warnings.append("Concurrent provider requests must be greater than 0")
+    
+    return warnings
+
+
+def get_architecture_info() -> dict:
+    """Get current architecture configuration information."""
+    return {
+        "mode": ARCHITECTURE_MODE,
+        "engine": {
+            "singleton_mode": ENGINE_SINGLETON_MODE,
+            "lazy_initialization": ENGINE_LAZY_INITIALIZATION,
+            "initialization_timeout": ENGINE_INITIALIZATION_TIMEOUT,
+            "max_concurrent_requests": ENGINE_MAX_CONCURRENT_REQUESTS,
+            "request_timeout": ENGINE_REQUEST_TIMEOUT,
+            "health_check_interval": ENGINE_HEALTH_CHECK_INTERVAL,
+        },
+        "performance": {
+            "async_processing": ASYNC_PROCESSING_ENABLED,
+            "batch_processing_size": BATCH_PROCESSING_SIZE,
+            "concurrent_provider_requests": CONCURRENT_PROVIDER_REQUESTS,
+            "response_cache": ENABLE_RESPONSE_CACHE,
+            "cache_ttl": CACHE_TTL_SECONDS,
+            "cache_max_size": CACHE_MAX_SIZE,
+        },
+        "monitoring": {
+            "performance_monitoring": ENABLE_PERFORMANCE_MONITORING,
+        }
+    }
 
 
 def validate_configuration() -> List[str]:
     """Validate current configuration and return list of warnings/errors."""
     warnings = []
+
+    # Include architecture-specific validation
+    warnings.extend(validate_architecture_configuration())
 
     # Check if at least one LLM provider is configured
     llm_keys = [

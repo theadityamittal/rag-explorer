@@ -6,6 +6,7 @@ import time
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 
+<<<<<<< HEAD
 from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
 from ..core.resilience import (
     retry_with_backoff,
@@ -16,13 +17,35 @@ from ..core.resilience import (
     ErrorType,
     CircuitBreakerOpenException
 )
+=======
+try:
+    from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
+except ImportError:
+    # Provider system not fully implemented yet - use mock implementations
+    def get_default_registry():
+        return {}
+    
+    class ProviderType:
+        LLM = "llm"
+        EMBEDDING = "embedding"
+    
+    class ProviderError(Exception):
+        pass
+        
+    class ProviderUnavailableError(Exception):
+        pass
+>>>>>>> origin/main
 from ..utils.settings import (
     ANSWER_MIN_CONF as MIN_CONF,
     MAX_CHARS_PER_CHUNK,
     MAX_CHUNKS,
     CHROMA_COLLECTION,
+<<<<<<< HEAD
     CHROMA_DB_PATH,
     RAG_PIPELINE_TIMEOUT
+=======
+    CHROMA_DB_PATH
+>>>>>>> origin/main
 )
 
 

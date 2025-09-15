@@ -243,6 +243,7 @@ Think of this bot as a smart librarian that:
 ### Unified Package Structure (`src/support_deflect_bot/`)
 
 ```
+<<<<<<< HEAD
 src/support_deflect_bot/
 ├── __init__.py                           # Package initialization with version
 ├── engine/                               # 🆕 SHARED BUSINESS LOGIC LAYER
@@ -325,6 +326,45 @@ src/data/                               # KEEP - used by engine modules
 ├── ingest.py                           # Used by document_processor.py
 ├── web_ingest.py                       # Used by document_processor.py
 └── __init__.py                         # Data module exports
+=======
+src/
+├── data/                        # Data processing and storage
+│   ├── chunker.py               # Text chunking algorithms
+│   ├── embeddings.py            # Embedding generation
+│   ├── ingest.py                # Document ingestion pipeline
+│   ├── store.py                 # ChromaDB vector store operations
+│   └── web_ingest.py            # Web crawling and indexing
+└── support_deflect_bot/         # Main application package
+    ├── api/                     # REST API interface
+    │   ├── dependencies/        # API dependency injection
+    │   ├── endpoints/           # API route handlers
+    │   ├── middleware/          # Request/response middleware
+    │   ├── models/              # Request/response models
+    │   └── app.py               # FastAPI application
+    ├── cli/                     # Command-line interface
+    │   ├── commands/            # CLI command implementations
+    │   ├── main.py              # CLI entry point
+    │   ├── ask_session.py       # Interactive Q&A session
+    │   └── output.py            # Terminal output formatting
+    ├── config/                  # Configuration system
+    │   ├── manager.py           # Configuration management
+    │   └── schema.py            # Configuration validation
+    ├── core/                    # Core business logic
+    │   └── providers/           # Multi-provider LLM system
+    │       ├── base.py          # Provider base classes
+    │       ├── config.py        # Provider configuration
+    │       ├── strategies.py    # Selection strategies
+    │       └── implementations/ # Individual provider implementations
+    ├── engine/                  # Unified RAG engine
+    │   ├── document_processor.py # Document processing pipeline
+    │   ├── embedding_service.py # Embedding service abstraction
+    │   ├── query_service.py     # Query processing service
+    │   └── rag_engine.py        # Main RAG orchestration
+    └── utils/                   # Utility modules
+        ├── settings.py          # Application settings
+        ├── metrics.py           # Performance monitoring
+        └── batch.py             # Batch processing utilities
+>>>>>>> origin/main
 ```
 
 ### Test Organization (`tests/`)
@@ -384,6 +424,7 @@ class UnifiedRAGEngine:
 - `get_metrics()`: Performance and usage metrics
 - `validate_providers()`: Health checking for provider system
 
+<<<<<<< HEAD
 ### 2. Document Processor (`src/support_deflect_bot/engine/document_processor.py`)
 
 **Purpose**: Unified document processing for local and web content
@@ -392,11 +433,40 @@ class UnifiedRAGEngine:
 class UnifiedDocumentProcessor:
     """
     Handles both local directory processing and web content crawling
+=======
+#### File: `src/support_deflect_bot/engine/rag_engine.py`
+**Purpose**: The brain of the system - unified RAG orchestration
+
+```python
+class UnifiedRAGEngine:
+>>>>>>> origin/main
     """
     
+<<<<<<< HEAD
     def __init__(self, embedding_service, vector_store):
         self.embedding_service = embedding_service
         self.vector_store = vector_store
+=======
+    1. Search for relevant chunks using embeddings
+    2. Calculate confidence score
+    3. If confidence < threshold: refuse to answer
+    4. If confidence >= threshold: generate answer
+    5. Return answer with citations
+    6. Collect metrics and performance data
+    """
+```
+
+#### Confidence Calculation
+**Purpose**: Prevent hallucinations by measuring answer reliability
+
+```python
+def calculate_confidence(hits, question):
+    """
+    Combines multiple metrics:
+    - Semantic similarity (from vector search): Primary factor
+    - Keyword overlap (exact word matches): Secondary factor
+    - Provider confidence scores: Tertiary factor
+>>>>>>> origin/main
     
     async def process_local_directory(self, directory_path: str) -> ProcessingResult:
         """
@@ -670,7 +740,20 @@ deflect-bot ask "How do I configure authentication?"
 - **Speed**: No API latency for document search
 - **Offline Support**: Works with Ollama for complete offline operation
 
+<<<<<<< HEAD
 ### 2. API Service Deployment (Docker/Kubernetes)
+=======
+| Command | Function | Purpose |
+|---------|----------|---------|
+| `deflect-bot index` | `index()` | Index local documentation |
+| `deflect-bot ask` | `ask()` | Start interactive Q&A session |
+| `deflect-bot search` | `search()` | Search indexed documents |
+| `deflect-bot crawl` | `crawl()` | Crawl and index web pages |
+| `deflect-bot status` | `status()` | Check system health |
+| `deflect-bot ping` | `ping()` | Test LLM connectivity |
+| `deflect-bot config` | `config()` | Display configuration |
+| `deflect-bot metrics` | `metrics()` | Show performance metrics |
+>>>>>>> origin/main
 
 **Use Case**: Team documentation, web integrations, scalable deployments
 
@@ -802,10 +885,17 @@ def get_deployment_mode():
 
 #### 2. Interface-Specific Features
 
+<<<<<<< HEAD
 **For CLI-only features:**
 - Add to `src/support_deflect_bot/cli/commands/`
 - Follow Click framework conventions
 - Include help text and examples
+=======
+#### 1. **"I don't have enough information" responses**
+- **Cause**: Confidence score below threshold
+- **Debug**: Check confidence calculation in `src/support_deflect_bot/engine/rag_engine.py`
+- **Fix**: Adjust `ANSWER_MIN_CONF` or improve document indexing
+>>>>>>> origin/main
 
 **For API-only features:**
 - Add to `src/support_deflect_bot/api/endpoints/`
@@ -885,7 +975,18 @@ deflect-bot --help                    # CLI mode
 python -m support_deflect_bot.api.app  # API mode (http://localhost:8000/docs)
 ```
 
+<<<<<<< HEAD
 #### Development Workflow
+=======
+### Understanding the Codebase
+
+1. **Start with**: `src/support_deflect_bot/cli/main.py` to understand user interface
+2. **Core logic**: `src/support_deflect_bot/engine/rag_engine.py` for the main RAG implementation
+3. **Data flow**: `src/data/store.py` for database operations
+4. **Configuration**: `src/support_deflect_bot/utils/settings.py` for all settings
+
+### Making Changes
+>>>>>>> origin/main
 
 1. **Create feature branch**: `git checkout -b feature/your-feature`
 2. **Understand architecture**: Start with engine layer for shared functionality

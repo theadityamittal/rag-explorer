@@ -1,8 +1,95 @@
-.venv
-chroma_db/*
-chroma_db/*.sqlite3
-*.sqlite3
+# Environment and secrets
+.venv/
 .env
-.vscode/*
-*.egg-info
-*.egg-info/*
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Database files
+*.sqlite3
+*.db
+chroma_db/
+chroma_db/*
+
+# Project-specific caches and data
+.embedding_cache
+data/crawl_cache.json
+data/eval/
+
+# Temporary and generated files
+test_docs/
+*_validation_report.txt
+*_test.py
+*_benchmark.py
+*_integration_test.py
+*_comprehensive_test.py
+*_performance_benchmark.py
+architecture_validation_*.txt
+phase*.txt
+phase*.py
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/

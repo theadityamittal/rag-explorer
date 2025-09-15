@@ -8,8 +8,30 @@ import time
 from typing import Dict, List, Optional, Tuple, Union
 from datetime import datetime
 
+<<<<<<< HEAD
 from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
 from ..utils.settings import USER_AGENT
+=======
+try:
+    from ..core.providers import get_default_registry, ProviderType, ProviderError, ProviderUnavailableError
+except ImportError:
+    # Provider system not fully implemented yet - use mock implementations
+    def get_default_registry():
+        return {}
+    
+    class ProviderType:
+        LLM = "llm"
+        EMBEDDING = "embedding"
+    
+    class ProviderError(Exception):
+        pass
+        
+    class ProviderUnavailableError(Exception):
+        pass
+
+from ..utils.settings import USER_AGENT
+
+>>>>>>> origin/main
 
 class UnifiedEmbeddingService:
     """
