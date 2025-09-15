@@ -299,15 +299,24 @@ class ConfigurationManager:
 
         # RAG
         if os.getenv("ANSWER_MIN_CONF"):
-            env_config["rag"]["confidence_threshold"] = float(
-                os.getenv("ANSWER_MIN_CONF")
-            )
+            try:
+                env_config["rag"]["confidence_threshold"] = float(
+                    os.getenv("ANSWER_MIN_CONF")
+                )
+            except (ValueError, TypeError):
+                pass  # Skip invalid values
         if os.getenv("MAX_CHUNKS"):
-            env_config["rag"]["max_chunks"] = int(os.getenv("MAX_CHUNKS"))
+            try:
+                env_config["rag"]["max_chunks"] = int(os.getenv("MAX_CHUNKS"))
+            except (ValueError, TypeError):
+                pass  # Skip invalid values
         if os.getenv("MAX_CHARS_PER_CHUNK"):
-            env_config["rag"]["max_chars_per_chunk"] = int(
-                os.getenv("MAX_CHARS_PER_CHUNK")
-            )
+            try:
+                env_config["rag"]["max_chars_per_chunk"] = int(
+                    os.getenv("MAX_CHARS_PER_CHUNK")
+                )
+            except (ValueError, TypeError):
+                pass  # Skip invalid values
 
         # Crawl
         if os.getenv("ALLOW_HOSTS"):
@@ -323,9 +332,15 @@ class ConfigurationManager:
                 s.strip() for s in os.getenv("DEFAULT_SEEDS").split(",")
             ]
         if os.getenv("CRAWL_DEPTH"):
-            env_config["crawl"]["depth"] = int(os.getenv("CRAWL_DEPTH"))
+            try:
+                env_config["crawl"]["depth"] = int(os.getenv("CRAWL_DEPTH"))
+            except (ValueError, TypeError):
+                pass  # Skip invalid values
         if os.getenv("CRAWL_MAX_PAGES"):
-            env_config["crawl"]["max_pages"] = int(os.getenv("CRAWL_MAX_PAGES"))
+            try:
+                env_config["crawl"]["max_pages"] = int(os.getenv("CRAWL_MAX_PAGES"))
+            except (ValueError, TypeError):
+                pass  # Skip invalid values
         if os.getenv("CRAWL_SAME_DOMAIN"):
             env_config["crawl"]["same_domain"] = (
                 os.getenv("CRAWL_SAME_DOMAIN").lower() == "true"
@@ -359,7 +374,10 @@ class ConfigurationManager:
                 "PRIMARY_EMBEDDING_PROVIDER"
             )
         if os.getenv("MONTHLY_BUDGET_USD"):
-            env_config["monthly_budget_usd"] = float(os.getenv("MONTHLY_BUDGET_USD"))
+            try:
+                env_config["monthly_budget_usd"] = float(os.getenv("MONTHLY_BUDGET_USD"))
+            except (ValueError, TypeError):
+                pass  # Skip invalid values
 
         # Remove empty sections
         return {k: v for k, v in env_config.items() if v}

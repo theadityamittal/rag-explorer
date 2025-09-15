@@ -11,8 +11,10 @@ from contextlib import asynccontextmanager
 from ..utils.settings import APP_NAME, APP_VERSION
 from ..engine import UnifiedRAGEngine, UnifiedDocumentProcessor
 from .endpoints import query, indexing, health, admin, batch
-# from .middleware.error_handling import add_error_handlers
-# from .middleware.logging import add_logging_middleware
+from .middleware.error_handling import ErrorHandlerMiddleware
+from .middleware.logging import LoggingMiddleware
+from .middleware.rate_limiting import RateLimitingMiddleware
+from .middleware.authentication import AuthenticationMiddleware
 from .dependencies.engine import get_rag_engine, get_document_processor
 
 # Configure logging
@@ -58,9 +60,11 @@ app = FastAPI(
 )
 
 # Add CORS middleware
+import os
+origins = os.getenv("CORS_ALLOW_ORIGINS", "").split(",") if os.getenv("CORS_ALLOW_ORIGINS") else []
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=origins or ["http://localhost", "http://127.0.0.1:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -72,9 +76,27 @@ app.add_middleware(
     allowed_hosts=["*"]  # Configure appropriately for production
 )
 
-# Add custom middleware
-# add_error_handlers(app)
-# add_logging_middleware(app)
+# Add custom middleware (order matters - last added is executed first)
+# Authentication (innermost)
+require_auth = os.getenv("REQUIRE_AUTH", "false").lower() == "true"
+app.add_middleware(
+    AuthenticationMiddleware,
+    require_auth=require_auth,
+    public_paths={"/", "/health", "/docs", "/redoc", "/openapi.json", "/favicon.ico", "/robots.txt"}
+)
+
+# Rate limiting
+app.add_middleware(
+    RateLimitingMiddleware,
+    requests_per_minute=60,
+    burst_size=10
+)
+
+# Logging
+app.add_middleware(LoggingMiddleware, log_level="INFO")
+
+# Error handling (outermost)
+app.add_middleware(ErrorHandlerMiddleware, debug=True)
 
 # Include routers
 app.include_router(query.router)
