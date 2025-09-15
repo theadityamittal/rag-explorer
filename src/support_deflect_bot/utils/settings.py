@@ -241,6 +241,54 @@ MAX_PROVIDER_FAILURES = int(os.getenv("MAX_PROVIDER_FAILURES", "3"))
 PROVIDER_RETRY_DELAY = int(os.getenv("PROVIDER_RETRY_DELAY", "60"))  # seconds
 
 # ============================================================================
+# RESILIENCE AND ERROR HANDLING CONFIGURATION
+# ============================================================================
+
+# Retry Settings
+MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))
+RETRY_BACKOFF_BASE = float(os.getenv("RETRY_BACKOFF_BASE", "1.0"))
+RETRY_BACKOFF_MAX = float(os.getenv("RETRY_BACKOFF_MAX", "60.0"))
+RETRY_EXPONENTIAL_BASE = float(os.getenv("RETRY_EXPONENTIAL_BASE", "2.0"))
+RETRY_JITTER = os.getenv("RETRY_JITTER", "true").lower() == "true"
+
+# Rate Limit Specific Settings
+RATE_LIMIT_MIN_DELAY = float(os.getenv("RATE_LIMIT_MIN_DELAY", "5.0"))
+RATE_LIMIT_MAX_DELAY = float(os.getenv("RATE_LIMIT_MAX_DELAY", "300.0"))
+
+# Circuit Breaker Settings
+CB_FAILURE_THRESHOLD = int(os.getenv("CB_FAILURE_THRESHOLD", "5"))
+CB_SUCCESS_THRESHOLD = int(os.getenv("CB_SUCCESS_THRESHOLD", "3"))
+CB_RESET_TIMEOUT = float(os.getenv("CB_RESET_TIMEOUT", "60.0"))
+CB_HALF_OPEN_MAX_CALLS = int(os.getenv("CB_HALF_OPEN_MAX_CALLS", "5"))
+
+# Connection Pool Settings
+DB_POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "10"))
+DB_CONNECTION_TIMEOUT = float(os.getenv("DB_CONNECTION_TIMEOUT", "30.0"))
+DB_POOL_CLEANUP_INTERVAL = float(os.getenv("DB_POOL_CLEANUP_INTERVAL", "60.0"))
+
+# Timeout Configurations
+PROVIDER_TIMEOUT = float(os.getenv("PROVIDER_TIMEOUT", "30.0"))
+WEB_REQUEST_TIMEOUT = float(os.getenv("WEB_REQUEST_TIMEOUT", "30.0"))
+WEB_CONNECT_TIMEOUT = float(os.getenv("WEB_CONNECT_TIMEOUT", "10.0"))
+DATABASE_QUERY_TIMEOUT = float(os.getenv("DATABASE_QUERY_TIMEOUT", "60.0"))
+RAG_PIPELINE_TIMEOUT = float(os.getenv("RAG_PIPELINE_TIMEOUT", "120.0"))
+
+# Error Classification Settings
+ENABLE_ERROR_CLASSIFICATION = os.getenv("ENABLE_ERROR_CLASSIFICATION", "true").lower() == "true"
+CLASSIFY_UNKNOWN_AS_RETRYABLE = os.getenv("CLASSIFY_UNKNOWN_AS_RETRYABLE", "true").lower() == "true"
+
+# Provider-Specific Resilience Settings
+OPENAI_MAX_RETRIES = int(os.getenv("OPENAI_MAX_RETRIES", "3"))
+OPENAI_CIRCUIT_BREAKER_THRESHOLD = int(os.getenv("OPENAI_CIRCUIT_BREAKER_THRESHOLD", "5"))
+
+GOOGLE_MAX_RETRIES = int(os.getenv("GOOGLE_MAX_RETRIES", "3"))
+GOOGLE_CIRCUIT_BREAKER_THRESHOLD = int(os.getenv("GOOGLE_CIRCUIT_BREAKER_THRESHOLD", "5"))
+
+OLLAMA_MAX_RETRIES = int(os.getenv("OLLAMA_MAX_RETRIES", "2"))
+OLLAMA_CIRCUIT_BREAKER_THRESHOLD = int(os.getenv("OLLAMA_CIRCUIT_BREAKER_THRESHOLD", "3"))
+OLLAMA_RESET_TIMEOUT = float(os.getenv("OLLAMA_RESET_TIMEOUT", "30.0"))
+
+# ============================================================================
 # LOGGING AND DEBUG SETTINGS
 # ============================================================================
 

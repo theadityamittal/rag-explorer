@@ -1,129 +1,186 @@
-# Support Deflection Bot
+# RAG Explorer
 
-**🤖 Intelligent CLI for document Q&A with confidence-based refusal**
+**🔍 Simple personal RAG exploration tool**
 
-Transform your documentation into a smart terminal assistant that answers questions accurately or refuses gracefully. Built for reliability over chattiness.
+A streamlined CLI tool for experimenting with Retrieval-Augmented Generation (RAG) using your own documents. Perfect for learning how RAG works and comparing different AI providers.
 
-✨ **New**: Multi-provider AI support with cost optimization! Choose from 8 different LLM providers with automatic fallback chains and budget control.
+## ✨ Features
 
-## Quick Start (5 minutes)
+- **4 AI Providers**: Ollama (local), OpenAI, Anthropic, Google Gemini
+- **Local-First**: Works completely offline with Ollama
+- **Simple Setup**: Just 3 commands to get started
+- **Confidence Scoring**: Know when the AI is uncertain
+- **Document Citations**: See exactly where answers come from
+- **ChromaDB Storage**: Efficient local vector database
 
-### Local Setup (Recommended)
+## 🚀 Quick Start
+
+### 1. Install
 ```bash
-# 1. Clone and install
+# Clone and install
 git clone https://github.com/theadityamittal/support-deflect-bot.git
 cd support-deflect-bot
 pip install -e .
+```
 
-# 2. Install Ollama (default AI provider)
+### 2. Set up Ollama (Local AI)
+```bash
+# Install Ollama
 curl -fsSL https://ollama.com/install.sh | sh
-ollama pull llama3.1            # Default LLM model
-ollama pull nomic-embed-text    # Default embedding model
 
-# 3. Start using immediately
-deflect-bot index ./docs        # Index your documentation
-deflect-bot ask                 # Start Q&A with Ollama
-# ❓ You: How do I configure the system?
-# 🤖 Bot: [Answer using local llama3.1 model]
+# Pull models
+ollama pull llama3.1            # For text generation
+ollama pull nomic-embed-text    # For embeddings
 ```
 
-### API Providers Setup (Advanced)
-For enhanced performance and multiple provider options:
-
+### 3. Use it!
 ```bash
-# 1. Install as above, then add API keys
-export OPENAI_API_KEY="your_openai_key"        # GPT-4o-mini (cost-effective)
-export GROQ_API_KEY="your_groq_key"           # Ultra-fast inference
-export ANTHROPIC_API_KEY="your_claude_key"    # Claude API
+# Index your documents
+rag-explorer index ./docs
 
-# 2. System automatically uses API providers when available
-deflect-bot ask  # Now uses API providers with Ollama fallback
+# Ask questions
+rag-explorer ask "How do I configure authentication?"
+
+# Check status
+rag-explorer status
 ```
 
-### Development Setup
+## 🔧 Configuration
+
+Create a `.env` file (optional):
+
 ```bash
-# Clone and install in development mode with all dependencies
-git clone https://github.com/theadityamittal/support-deflect-bot.git
-cd support-deflect-bot
+# Primary provider (ollama, openai, anthropic, google)
+PRIMARY_LLM_PROVIDER=ollama
+PRIMARY_EMBEDDING_PROVIDER=ollama
+
+# API Keys (optional - leave empty to use only Ollama)
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+GOOGLE_API_KEY=
+
+# Ollama settings
+OLLAMA_HOST=http://localhost:11434
+OLLAMA_LLM_MODEL=llama3.1
+OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+
+# RAG settings
+CHUNK_SIZE=800
+CHUNK_OVERLAP=100
+MIN_CONFIDENCE=0.25
+MAX_CHUNKS=5
+
+# Paths
+DOCS_FOLDER=./docs
+CHROMA_DB_PATH=./chroma_db
+```
+
+## 🎯 Usage Examples
+
+### Basic Usage
+```bash
+# Index markdown files
+rag-explorer index ./my-docs
+
+# Ask a question
+rag-explorer ask "What is the API rate limit?"
+
+# Check what's indexed
+rag-explorer status
+```
+
+### With API Providers
+```bash
+# Set up OpenAI
+export OPENAI_API_KEY="your-key-here"
+export PRIMARY_LLM_PROVIDER="openai"
+
+# Now uses OpenAI for generation
+rag-explorer ask "Explain the deployment process"
+```
+
+### Advanced Options
+```bash
+# Custom chunk size
+rag-explorer index ./docs --chunk-size 1000 --chunk-overlap 200
+
+# Custom confidence threshold
+rag-explorer ask "How do I deploy?" --confidence 0.5
+
+# More context chunks
+rag-explorer ask "What are the requirements?" --max-chunks 10
+```
+
+## 🧠 How It Works
+
+1. **Document Indexing**: Splits documents into chunks and generates embeddings
+2. **Question Processing**: Converts your question into an embedding
+3. **Retrieval**: Finds the most similar document chunks
+4. **Confidence Scoring**: Calculates how confident the system is
+5. **Generation**: Uses an LLM to generate an answer from the context
+6. **Citation**: Shows which documents were used
+
+## 🔄 Provider Comparison
+
+| Provider | Type | Cost | Speed | Quality |
+|----------|------|------|-------|---------|
+| Ollama | Local | Free | Medium | Good |
+| OpenAI | API | Low | Fast | Excellent |
+| Anthropic | API | Medium | Fast | Excellent |
+| Google | API | Low | Fast | Very Good |
+
+## 📁 Supported File Types
+
+- `.md` - Markdown files
+- `.txt` - Plain text files
+- `.rst` - reStructuredText files
+
+## 🛠️ Development
+
+```bash
+# Install with dev dependencies
 pip install -e .[dev]
+
+# Run tests
+pytest
+
+# Format code
+black src/
+isort src/
 ```
 
-## What makes this different?
+## 🎓 Learning RAG
 
-❌ **Most AI assistants**: Answer confidently but make things up  
-✅ **This bot**: Refuses to answer when unsure, provides citations, measures confidence
+This tool is perfect for understanding:
 
-### Core Behaviors
-- **Grounded answers**: Only uses your provided documentation
-- **Confident refusal**: Says "I don't have enough information" when evidence is weak
-- **Citation tracking**: Shows exactly where answers come from
-- **Confidence scoring**: Combines semantic similarity + keyword matching
-- **Domain filtering**: Restrict answers to specific documentation sources
+- How document chunking affects retrieval quality
+- Differences between embedding models
+- How LLM providers handle the same context
+- The importance of confidence scoring in RAG systems
+- Local vs. cloud AI trade-offs
 
-> **💡 Fresh Setup**: The bot starts with an empty knowledge base. You'll need to index your documentation (local files or web crawling) before asking questions. This ensures the bot only knows what you explicitly provide.
+## 🤔 Troubleshooting
 
-### 🚀 Multi-Provider Intelligence
-- **8 AI Providers**: OpenAI, Groq, Mistral, Google Gemini, Claude API, Claude Code, Ollama
-- **Cost Optimization**: Automatic selection of most cost-effective providers
-- **Smart Fallbacks**: Seamless switching if primary provider is unavailable  
-- **Budget Control**: Set monthly limits with real-time cost tracking
-- **Regional Compliance**: GDPR-compliant providers for EU users
-- **Subscription Leverage**: Use your existing Claude Pro and Google One AI Pro subscriptions
+### "No providers available"
+- Make sure Ollama is running: `ollama serve`
+- Or set up an API key: `export OPENAI_API_KEY="your-key"`
 
-> **💰 Cost Example**: Default setup costs ~$0.15 per 1M input tokens using GPT-4o-mini, with free tiers available through Groq and Google.
+### "No documents found"
+- Check your document directory exists
+- Ensure files have supported extensions (.md, .txt, .rst)
 
-## 📖 Documentation
+### "ChromaDB connection failed"
+- The database will be created automatically
+- Check write permissions in the current directory
 
-Comprehensive documentation is now organized in the `docs/` folder:
-
-- **[Installation Guide](docs/installation.md)** - Step-by-step setup instructions
-- **[Usage Guide](docs/usage.md)** - CLI commands and usage patterns  
-- **[Configuration](docs/configuration.md)** - Environment variables and customization
-- **[Provider Setup](docs/providers.md)** - Multi-provider configuration and cost optimization
-- **[Features](docs/features.md)** - Complete feature overview
-- **[FAQ](docs/faq.md)** - Frequently asked questions
-- **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
-
-## 🚀 Alternative: REST API
-
-The original REST API is still available for integration scenarios:
-
-```bash
-# Start the API server (optional)
-uvicorn src.api.app:app --reload --port 8000
-```
-
-The CLI is the recommended interface for daily use, while the API is perfect for integrations and automation.
-
----
-
-## 🤔 Got Questions or Issues?
-
-**Try asking our bot first!** It has access to all documentation and can help with most questions:
-
-```bash
-deflect-bot ask
-# ❓ You: How do I set up API providers?
-# ❓ You: Which provider is most cost-effective?
-# ❓ You: How do I optimize my budget settings?
-```
-
-For bugs, feature requests, or if the bot can't help:
-- **Issues**: [GitHub Issues](https://github.com/theadityamittal/support-deflect-bot/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/theadityamittal/support-deflect-bot/discussions)
-
----
-
-## Developer
-
-**Aditya Mittal**
-- GitHub: [@theadityamittal](https://github.com/theadityamittal)
-- Email: theadityamittal@gmail.com
-
----
-
-## License
+## 📝 License
 
 MIT License - see LICENSE file for details.
 
-Built with ❤️ for reliable, grounded AI assistance.
+## 🙏 Acknowledgments
+
+Built for learning and experimentation with RAG systems. Perfect for developers, researchers, and AI enthusiasts who want to understand how retrieval-augmented generation works under the hood.
+
+---
+
+**Happy exploring! 🚀**
