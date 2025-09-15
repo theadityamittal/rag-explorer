@@ -25,12 +25,15 @@ class ConfigurationManager:
         """Initialize configuration manager.
 
         Args:
-            config_file: Path to configuration file. Defaults to ~/.support-deflect-bot/config.json
+            config_file: Path to configuration file. Defaults to ~/.rag-explorer/config.json
         """
         if config_file:
             self.config_file = Path(config_file)
         else:
-            self.config_file = Path.home() / ".support-deflect-bot" / "config.json"
+            self.config_file = Path.home() / ".rag-explorer" / "config.json"
+
+        # Store legacy config path
+        self.legacy_config_file = Path.home() / ".support-deflect-bot" / "config.json"
 
         # Ensure config directory exists
         self.config_file.parent.mkdir(parents=True, exist_ok=True)
@@ -51,8 +54,19 @@ class ConfigurationManager:
         # Start with defaults
         config_data = {}
 
-        # Load from file if it exists
-        if self.config_file.exists():
+        # Load from file if it exists, with legacy fallback
+        if not self.config_file.exists() and self.legacy_config_file.exists():
+            logger.warning(
+                f"Legacy config found at {self.legacy_config_file}. Loading it. Consider migrating to {self.config_file}."
+            )
+            try:
+                with open(self.legacy_config_file, "r") as f:
+                    file_config = json.load(f)
+                config_data.update(file_config)
+                logger.debug(f"Loaded legacy configuration from {self.legacy_config_file}")
+            except (json.JSONDecodeError, IOError) as e:
+                logger.warning(f"Failed to load legacy config file {self.legacy_config_file}: {e}")
+        elif self.config_file.exists():
             try:
                 with open(self.config_file, "r") as f:
                     file_config = json.load(f)
@@ -194,9 +208,9 @@ class ConfigurationManager:
 
         try:
             with open(file_path, "w") as f:
-                f.write("# Support Deflect Bot Configuration\n")
+                f.write("# RAG Explorer Configuration\n")
                 f.write(
-                    "# Generated automatically - edit with 'deflect-bot configure'\n\n"
+                    "# Generated automatically - edit with 'rag-explorer configure'\n\n"
                 )
 
                 for key, value in sorted(env_vars.items()):

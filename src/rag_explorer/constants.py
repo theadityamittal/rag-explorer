@@ -1,0 +1,1 @@
+DEFAULT_USER_AGENT = "rag-explorer/0.2 (+https://github.com/theadityamittal/rag-explorer; contact: theadityamittal@gmail.com)"

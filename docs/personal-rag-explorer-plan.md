@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Date:** January 2025  
-**Purpose:** Transform Support Deflect Bot into a simplified personal RAG learning tool
+**Purpose:** Transform RAG Explorer into a simplified personal RAG learning tool
 
 ---
 
@@ -92,7 +92,7 @@ CHROMA_DB_PATH=./chroma_db
 ### **Phase 1: Core Simplification (Days 1-4)**
 
 #### **Day 1: Strip Enterprise Patterns**
-- [ ] Remove `src/support_deflect_bot/core/resilience.py`
+- [ ] Remove `src/rag_explorer/core/resilience.py`
 - [ ] Simplify `UnifiedRAGEngine` class
 - [ ] Remove circuit breakers, caching, complex metrics
 - [ ] Keep core pipeline: search → confidence → generate

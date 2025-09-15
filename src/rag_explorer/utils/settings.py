@@ -3,6 +3,8 @@ from typing import List
 
 from dotenv import load_dotenv
 
+from ..constants import DEFAULT_USER_AGENT
+
 load_dotenv()
 
 # Optional overlay from the persisted configuration manager (not user-visible)
@@ -22,7 +24,7 @@ except Exception:
 # GENERAL APPLICATION SETTINGS
 # ============================================================================
 
-APP_NAME = os.getenv("APP_NAME", "Support Deflection Bot")
+APP_NAME = os.getenv("APP_NAME", "RAG Explorer")
 APP_VERSION = os.getenv("APP_VERSION", "0.2.0")
 
 # ============================================================================
@@ -184,7 +186,7 @@ DOCS_AUTO_REFRESH_HOURS = int(os.getenv("DOCS_AUTO_REFRESH_HOURS", "24"))
 # Crawl config
 USER_AGENT = os.getenv(
     "CRAWL_USER_AGENT",
-    (_CFG.crawl.user_agent if _CFG else "SupportDeflectBot/0.2 (+https://github.com/theadityamittal/support-deflect-bot; contact: theadityamittal@gmail.com)"),
+    (_CFG.crawl.user_agent if _CFG else DEFAULT_USER_AGENT),
 )
 
 # Allowed and trusted domains for crawling

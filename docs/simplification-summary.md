@@ -7,11 +7,11 @@
 
 ## 🎉 **Transformation Summary**
 
-Successfully transformed the complex Support Deflect Bot into a simple, personal RAG exploration tool called **RAG Explorer**.
+Successfully transformed the complex RAG Explorer into a simple, personal RAG exploration tool called **RAG Explorer**.
 
 ### **Before vs After**
 
-| Aspect | Before (Support Deflect Bot) | After (RAG Explorer) |
+| Aspect | Before (RAG Explorer) | After (RAG Explorer) |
 |--------|------------------------------|---------------------|
 | **Purpose** | Commercial support deflection | Personal RAG learning |
 | **Architecture** | Enterprise-grade, complex | Simple, educational |
@@ -29,7 +29,7 @@ Successfully transformed the complex Support Deflect Bot into a simple, personal
 ## ✅ **Completed Tasks**
 
 ### **Phase 1: API Removal**
-- [x] Deleted entire `src/support_deflect_bot/api/` directory
+- [x] Deleted entire `src/rag_explorer/api/` directory
 - [x] Removed FastAPI dependencies from pyproject.toml
 - [x] Simplified .env.example configuration
 - [x] Removed API-related imports and references
@@ -82,7 +82,7 @@ Successfully transformed the complex Support Deflect Bot into a simple, personal
 
 ### **Simplified Structure:**
 ```
-src/support_deflect_bot/
+src/rag_explorer/
 ├── cli/
 │   └── simple_main.py          # 3-command CLI
 ├── engine/
@@ -118,8 +118,8 @@ dependencies = [
 
 ### **Installation:**
 ```bash
-git clone https://github.com/theadityamittal/support-deflect-bot.git
-cd support-deflect-bot
+git clone https://github.com/theadityamittal/rag-explorer.git
+cd rag-explorer
 pip install -e .
 ```
 

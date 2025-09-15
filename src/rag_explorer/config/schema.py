@@ -4,6 +4,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, model_validator, validator
 
+from ..constants import DEFAULT_USER_AGENT
+
 
 class ApiKeysConfig(BaseModel):
     """API keys for various providers."""
@@ -83,7 +85,7 @@ class CrawlConfig(BaseModel):
     )
     same_domain: bool = Field(True, description="Restrict crawling to same domain")
     user_agent: str = Field(
-        "SupportDeflectBot/0.2 (+https://github.com/theadityamittal/support-deflect-bot)",
+        DEFAULT_USER_AGENT,
         description="User agent string for web requests",
     )
 

@@ -18,8 +18,8 @@ A streamlined CLI tool for experimenting with Retrieval-Augmented Generation (RA
 ### 1. Install
 ```bash
 # Clone and install
-git clone https://github.com/theadityamittal/support-deflect-bot.git
-cd support-deflect-bot
+git clone https://github.com/theadityamittal/rag-explorer.git
+cd rag-explorer
 pip install -e .
 ```
 

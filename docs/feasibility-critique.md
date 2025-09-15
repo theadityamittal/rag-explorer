@@ -1,4 +1,4 @@
-# Harsh Feasibility Critique: Support Deflect Bot
+# Harsh Feasibility Critique: RAG Explorer
 
 **Date:** January 2025  
 **Assessment:** Critical Analysis of Business and Technical Viability
@@ -201,7 +201,7 @@ Compelling factor: None identified
 ```
 
 ### **Messaging Problems**
-- **"Support Deflection"**: Negative framing (deflection = avoidance)
+- **"RAG Exploration"**: Negative framing (deflection = avoidance)
 - **"Confidence-based refusal"**: Feature, not benefit
 - **"Multi-provider"**: Complexity, not value
 - **"Open source"**: Commodity, not differentiator

@@ -12,11 +12,8 @@ from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
 import logging
 
-try:
-    from src.rag_explorer.api.app import app
-except ImportError:
-    import pytest
-    pytest.skip("API app not available after package rename", allow_module_level=True)
+pytest.importorskip("src.rag_explorer.api.app", reason="API app required for middleware tests")
+from src.rag_explorer.api.app import app
 
 
 class TestErrorHandlingMiddleware:

@@ -1,4 +1,4 @@
-# Support Deflect Bot - Unified Dual Architecture Design
+# RAG Explorer - Unified Dual Architecture Design
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -16,7 +16,7 @@
 
 ## Introduction
 
-This document provides a comprehensive technical overview of the Support Deflect Bot's unified dual-architecture design. The system supports both CLI package distribution and API service deployment while maximizing code reuse through a shared engine layer.
+This document provides a comprehensive technical overview of the RAG Explorer's unified dual-architecture design. The system supports both CLI package distribution and API service deployment while maximizing code reuse through a shared engine layer.
 
 ### What This Bot Does (Enhanced)
 
@@ -174,13 +174,13 @@ Think of this bot as a smart librarian that:
 
 **Purpose**: Handle user interactions and present results
 
-#### CLI Interface (`src/support_deflect_bot/cli/`)
+#### CLI Interface (`src/rag_explorer/cli/`)
 - **Command Parsing**: Convert CLI commands to engine calls
 - **Interactive Sessions**: Persistent Q&A conversations  
 - **Terminal Formatting**: Rich output with colors and progress bars
 - **Configuration Management**: Environment and settings handling
 
-#### API Interface (`src/support_deflect_bot/api/`)
+#### API Interface (`src/rag_explorer/api/`)
 - **HTTP Request Handling**: RESTful endpoint implementation
 - **JSON Schema Validation**: Request/response validation
 - **Authentication**: API key and session management
@@ -190,25 +190,25 @@ Think of this bot as a smart librarian that:
 
 **Purpose**: Core functionality used by both interfaces
 
-#### RAG Engine (`src/support_deflect_bot/engine/rag_engine.py`)
+#### RAG Engine (`src/rag_explorer/engine/rag_engine.py`)
 - **Question Answering**: Main RAG pipeline implementation
 - **Confidence Scoring**: Reliability measurement to prevent hallucinations
 - **Context Assembly**: Intelligent combination of retrieved documents
 - **Citation Generation**: Source attribution for transparency
 
-#### Document Processor (`src/support_deflect_bot/engine/document_processor.py`)
+#### Document Processor (`src/rag_explorer/engine/document_processor.py`)
 - **Local File Processing**: Markdown, text, and structured document support
 - **Web Content Crawling**: Intelligent web scraping with respect robots.txt
 - **Text Chunking**: Optimal segmentation for embedding generation
 - **Metadata Extraction**: File metadata and content structure analysis
 
-#### Query Service (`src/support_deflect_bot/engine/query_service.py`)
+#### Query Service (`src/rag_explorer/engine/query_service.py`)
 - **Query Preprocessing**: Query optimization and normalization
 - **Vector Similarity Search**: High-performance semantic search
 - **Result Ranking**: Multi-factor result scoring and filtering
 - **Performance Optimization**: Caching and memoization strategies
 
-#### Embedding Service (`src/support_deflect_bot/engine/embedding_service.py`)
+#### Embedding Service (`src/rag_explorer/engine/embedding_service.py`)
 - **Multi-Provider Embedding**: Support for multiple embedding models
 - **Batch Processing**: Efficient bulk embedding generation
 - **Vector Dimension Management**: Consistent embedding dimensions
@@ -218,7 +218,7 @@ Think of this bot as a smart librarian that:
 
 **Purpose**: Unified interface for external services
 
-#### Multi-Provider LLM System (`src/support_deflect_bot/core/providers/`)
+#### Multi-Provider LLM System (`src/rag_explorer/core/providers/`)
 - **Google Gemini**: Primary provider for cost-effective performance
 - **Ollama**: Local inference for privacy and offline operation
 - **OpenAI/Anthropic/Groq/Mistral**: Fallback providers for reliability
@@ -240,7 +240,7 @@ Think of this bot as a smart librarian that:
 
 ## Directory Structure
 
-### Unified Package Structure (`src/support_deflect_bot/`)
+### Unified Package Structure (`src/rag_explorer/`)
 
 ```
 src/
@@ -250,7 +250,7 @@ src/
 │   ├── ingest.py                # Document ingestion pipeline
 │   ├── store.py                 # ChromaDB vector store operations
 │   └── web_ingest.py            # Web crawling and indexing
-└── support_deflect_bot/         # Main application package
+└── rag_explorer/         # Main application package
     ├── api/                     # REST API interface
     │   ├── dependencies/        # API dependency injection
     │   ├── endpoints/           # API route handlers
@@ -306,7 +306,7 @@ tests/
 
 ## Core Engine Components
 
-### 1. Unified RAG Engine (`src/support_deflect_bot/engine/rag_engine.py`)
+### 1. Unified RAG Engine (`src/rag_explorer/engine/rag_engine.py`)
 
 **Purpose**: Central RAG processing with confidence-based answering
 
@@ -339,7 +339,7 @@ class UnifiedRAGEngine:
 - `get_metrics()`: Performance and usage metrics
 - `validate_providers()`: Health checking for provider system
 
-#### File: `src/support_deflect_bot/engine/rag_engine.py`
+#### File: `src/rag_explorer/engine/rag_engine.py`
 **Purpose**: The brain of the system - unified RAG orchestration
 
 ```python
@@ -385,7 +385,7 @@ def calculate_confidence(hits, question):
         """
 ```
 
-### 3. Query Service (`src/support_deflect_bot/engine/query_service.py`)
+### 3. Query Service (`src/rag_explorer/engine/query_service.py`)
 
 **Purpose**: Advanced query processing and document retrieval
 
@@ -410,7 +410,7 @@ class UnifiedQueryService:
         """
 ```
 
-### 4. Embedding Service (`src/support_deflect_bot/engine/embedding_service.py`)
+### 4. Embedding Service (`src/rag_explorer/engine/embedding_service.py`)
 
 **Purpose**: Multi-provider embedding generation with caching
 
@@ -439,17 +439,17 @@ class UnifiedEmbeddingService:
 
 ## Interface Implementations
 
-### CLI Interface (`src/support_deflect_bot/cli/`)
+### CLI Interface (`src/rag_explorer/cli/`)
 
 **Core Philosophy**: Terminal-first experience with rich formatting
 
 #### Key Commands
-- `deflect-bot index <directory>`: Index local documentation
-- `deflect-bot crawl <urls>`: Index web content
-- `deflect-bot ask [question]`: Interactive or direct Q&A
-- `deflect-bot search <query>`: Search without answer generation
-- `deflect-bot ping`: Health check all providers
-- `deflect-bot config`: Configuration management
+- `rag-explorer index <directory>`: Index local documentation
+- `rag-explorer crawl <urls>`: Index web content
+- `rag-explorer ask [question]`: Interactive or direct Q&A
+- `rag-explorer search <query>`: Search without answer generation
+- `rag-explorer ping`: Health check all providers
+- `rag-explorer config`: Configuration management
 
 #### Enhanced Features
 - **Rich Terminal Output**: Colors, progress bars, and formatting
@@ -458,7 +458,7 @@ class UnifiedEmbeddingService:
 - **Batch Operations**: Process multiple documents or queries
 - **Debug Mode**: Detailed logging and performance metrics
 
-### API Interface (`src/support_deflect_bot/api/`)
+### API Interface (`src/rag_explorer/api/`)
 
 **Core Philosophy**: RESTful design with comprehensive OpenAPI documentation
 
@@ -624,11 +624,11 @@ Request for LLM Service
 
 ```bash
 # Installation
-pip install support-deflect-bot
+pip install support-rag-explorer
 
 # Usage
-deflect-bot index ./docs
-deflect-bot ask "How do I configure authentication?"
+rag-explorer index ./docs
+rag-explorer ask "How do I configure authentication?"
 ```
 
 **Advantages**:
@@ -639,14 +639,14 @@ deflect-bot ask "How do I configure authentication?"
 
 | Command | Function | Purpose |
 |---------|----------|---------|
-| `deflect-bot index` | `index()` | Index local documentation |
-| `deflect-bot ask` | `ask()` | Start interactive Q&A session |
-| `deflect-bot search` | `search()` | Search indexed documents |
-| `deflect-bot crawl` | `crawl()` | Crawl and index web pages |
-| `deflect-bot status` | `status()` | Check system health |
-| `deflect-bot ping` | `ping()` | Test LLM connectivity |
-| `deflect-bot config` | `config()` | Display configuration |
-| `deflect-bot metrics` | `metrics()` | Show performance metrics |
+| `rag-explorer index` | `index()` | Index local documentation |
+| `rag-explorer ask` | `ask()` | Start interactive Q&A session |
+| `rag-explorer search` | `search()` | Search indexed documents |
+| `rag-explorer crawl` | `crawl()` | Crawl and index web pages |
+| `rag-explorer status` | `status()` | Check system health |
+| `rag-explorer ping` | `ping()` | Test LLM connectivity |
+| `rag-explorer config` | `config()` | Display configuration |
+| `rag-explorer metrics` | `metrics()` | Show performance metrics |
 
 ### 2. API Service Deployment (Docker/Kubernetes)
 
@@ -656,8 +656,8 @@ deflect-bot ask "How do I configure authentication?"
 # docker-compose.yml
 version: '3.8'
 services:
-  support-deflect-bot:
-    image: support-deflect-bot:latest
+  support-rag-explorer:
+    image: support-rag-explorer:latest
     ports:
       - "8000:8000"
     environment:
@@ -733,7 +733,7 @@ RATE_LIMIT_PER_MINUTE=60               # Rate limiting
 1. **Environment Variables** (highest priority)
 2. **`.env` file** in working directory
 3. **System `.env` file** in package directory
-4. **Default values** in `src/support_deflect_bot/utils/settings.py`
+4. **Default values** in `src/rag_explorer/utils/settings.py`
 
 ### Deployment Mode Detection
 
@@ -761,15 +761,15 @@ def get_deployment_mode():
 
 1. **Add to appropriate engine module**:
    ```python
-   # src/support_deflect_bot/engine/rag_engine.py
+   # src/rag_explorer/engine/rag_engine.py
    def new_rag_feature(self, parameters):
        """Implement new RAG functionality"""
    ```
 
 2. **Update both interfaces**:
    ```python
-   # CLI: src/support_deflect_bot/cli/commands/
-   # API: src/support_deflect_bot/api/endpoints/
+   # CLI: src/rag_explorer/cli/commands/
+   # API: src/rag_explorer/api/endpoints/
    ```
 
 3. **Add comprehensive tests**:
@@ -782,16 +782,16 @@ def get_deployment_mode():
 
 #### 1. **"I don't have enough information" responses**
 - **Cause**: Confidence score below threshold
-- **Debug**: Check confidence calculation in `src/support_deflect_bot/engine/rag_engine.py`
+- **Debug**: Check confidence calculation in `src/rag_explorer/engine/rag_engine.py`
 - **Fix**: Adjust `ANSWER_MIN_CONF` or improve document indexing
 
 **For CLI-only features:**
-- Add to `src/support_deflect_bot/cli/commands/`
+- Add to `src/rag_explorer/cli/commands/`
 - Follow Click framework conventions
 - Include help text and examples
 
 **For API-only features:**
-- Add to `src/support_deflect_bot/api/endpoints/`
+- Add to `src/rag_explorer/api/endpoints/`
 - Include OpenAPI documentation
 - Add request/response models
 
@@ -820,15 +820,15 @@ black src tests
 isort src tests
 
 # Type checking
-mypy src/support_deflect_bot/engine/
-mypy src/support_deflect_bot/cli/
-mypy src/support_deflect_bot/api/
+mypy src/rag_explorer/engine/
+mypy src/rag_explorer/cli/
+mypy src/rag_explorer/api/
 
 # Linting
 flake8 src tests
 
 # Testing
-pytest tests/unit/ -v --cov=src/support_deflect_bot/
+pytest tests/unit/ -v --cov=src/rag_explorer/
 pytest tests/integration/ -v --maxfail=3
 pytest tests/system/ -v --maxfail=1
 ```
@@ -852,8 +852,8 @@ pytest tests/system/ -v --maxfail=1
 
 ```bash
 # 1. Clone and install in development mode
-git clone https://github.com/theadityamittal/support-deflect-bot.git
-cd support-deflect-bot
+git clone https://github.com/theadityamittal/support-rag-explorer.git
+cd support-rag-explorer
 pip install -e ".[dev]"
 
 # 2. Set up environment variables
@@ -864,16 +864,16 @@ cp .env.example .env
 pytest tests/unit/ -v
 
 # 4. Test both CLI and API modes
-deflect-bot --help                    # CLI mode
-python -m support_deflect_bot.api.app  # API mode (http://localhost:8000/docs)
+rag-explorer --help                    # CLI mode
+python -m rag_explorer.api.app  # API mode (http://localhost:8000/docs)
 ```
 
 ### Understanding the Codebase
 
-1. **Start with**: `src/support_deflect_bot/cli/main.py` to understand user interface
-2. **Core logic**: `src/support_deflect_bot/engine/rag_engine.py` for the main RAG implementation
+1. **Start with**: `src/rag_explorer/cli/main.py` to understand user interface
+2. **Core logic**: `src/rag_explorer/engine/rag_engine.py` for the main RAG implementation
 3. **Data flow**: `src/data/store.py` for database operations
-4. **Configuration**: `src/support_deflect_bot/utils/settings.py` for all settings
+4. **Configuration**: `src/rag_explorer/utils/settings.py` for all settings
 
 ### Making Changes
 
@@ -894,4 +894,4 @@ python -m support_deflect_bot.api.app  # API mode (http://localhost:8000/docs)
 - **Performance**: Consider both memory usage and response time
 - **Backward Compatibility**: Maintain existing CLI command signatures
 
-This unified architecture document provides comprehensive guidance for understanding, using, and contributing to the Support Deflect Bot's dual-architecture design!
+This unified architecture document provides comprehensive guidance for understanding, using, and contributing to the RAG Explorer's dual-architecture design!

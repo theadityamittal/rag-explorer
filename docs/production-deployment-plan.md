@@ -1,4 +1,4 @@
-# Production Deployment Plan: Support Deflect Bot
+# Production Deployment Plan: RAG Explorer
 
 **Version:** 1.0  
 **Date:** January 2025  
@@ -6,7 +6,7 @@
 
 ## 🏆 Executive Summary
 
-Based on comprehensive codebase analysis, **Support Deflect Bot is 90% production-ready** with enterprise-grade architecture. This plan outlines the path to full AWS deployment with dual architecture support (pip package + cloud API).
+Based on comprehensive codebase analysis, **RAG Explorer is 90% production-ready** with enterprise-grade architecture. This plan outlines the path to full AWS deployment with dual architecture support (pip package + cloud API).
 
 **Key Findings:**
 - ✅ **Exceptional Code Quality**: Enterprise-grade resilience patterns, comprehensive CI/CD
@@ -48,7 +48,7 @@ Based on comprehensive codebase analysis, **Support Deflect Bot is 90% productio
 
 ## 🏗️ **Architecture Options: Three Deployment Strategies**
 
-Support Deflect Bot is designed with flexible architecture to support different deployment scenarios. Users can choose from three distinct approaches based on their needs:
+RAG Explorer is designed with flexible architecture to support different deployment scenarios. Users can choose from three distinct approaches based on their needs:
 
 ### **Architecture 1: Local Development with ChromaDB**
 **Target Users**: Developers, local testing, offline usage  
@@ -94,15 +94,15 @@ graph TB
 **Installation Options**:
 ```bash
 # Option 1A: Fully Local (Ollama)
-git clone https://github.com/theadityamittal/support-deflect-bot.git
-cd support-deflect-bot
+git clone https://github.com/theadityamittal/rag-explorer.git
+cd rag-explorer
 pip install -e .[local]
 ollama pull llama3.1
 ollama pull nomic-embed-text
 
 # Option 1B: Local + Cloud LLMs
-git clone https://github.com/theadityamittal/support-deflect-bot.git
-cd support-deflect-bot
+git clone https://github.com/theadityamittal/rag-explorer.git
+cd rag-explorer
 pip install -e .[cloud]
 export OPENAI_API_KEY="your_key"
 export GOOGLE_API_KEY="your_key"
@@ -118,7 +118,7 @@ graph TB
         PipCLI[CLI Interface<br/>deflect-bot<br/>(from PyPI)]
         
         subgraph "Local Storage"
-            UserChroma[(ChromaDB<br/>~/.support-deflect-bot/)]
+            UserChroma[(ChromaDB<br/>~/.rag-explorer/)]
             UserDocs[User Documents<br/>Configurable Path]
         end
         
@@ -149,16 +149,16 @@ graph TB
 **Installation Options**:
 ```bash
 # Option 2A: Pip + Local Ollama
-pip install support-deflect-bot[local]
+pip install rag-explorer[local]
 deflect-bot configure --provider ollama
 
 # Option 2B: Pip + Cloud APIs
-pip install support-deflect-bot[cloud]
+pip install rag-explorer[cloud]
 deflect-bot configure --api-key openai your_key
 deflect-bot configure --api-key google your_key
 
 # Option 2C: Pip + Everything
-pip install support-deflect-bot[all]
+pip install rag-explorer[all]
 ```
 
 ### **Architecture 3: AWS Cloud API**
@@ -227,18 +227,18 @@ graph TB
 **Usage Options**:
 ```bash
 # Option 3A: Direct API calls
-curl -X POST "https://api.support-deflect-bot.com/query" \
+curl -X POST "https://api.rag-explorer.com/query" \
   -H "Content-Type: application/json" \
   -d '{"question": "How do I configure the system?"}'
 
 # Option 3B: CLI in remote mode
-pip install support-deflect-bot
-deflect-bot configure --api-endpoint https://api.support-deflect-bot.com
+pip install rag-explorer
+deflect-bot configure --api-endpoint https://api.rag-explorer.com
 deflect-bot ask "How do I configure the system?"
 
 # Option 3C: SDK integration
-from support_deflect_bot import RemoteClient
-client = RemoteClient("https://api.support-deflect-bot.com")
+from rag_explorer import RemoteClient
+client = RemoteClient("https://api.rag-explorer.com")
 response = client.query("How do I configure the system?")
 ```
 
@@ -292,7 +292,7 @@ Users can easily migrate between architectures:
 ```bash
 # Create OpenSearch domain with free tier
 aws opensearch create-domain \
-  --domain-name support-deflect-bot \
+  --domain-name rag-explorer \
   --elasticsearch-version OpenSearch_2.3 \
   --cluster-config InstanceType=t3.small.search,InstanceCount=1 \
   --ebs-options EBSEnabled=true,VolumeType=gp3,VolumeSize=10
@@ -301,8 +301,8 @@ aws opensearch create-domain \
 #### **1.2 S3 Bucket for Documents**
 ```bash
 # Create S3 bucket for document storage
-aws s3 mb s3://support-deflect-bot-docs-${RANDOM}
-aws s3api put-bucket-cors --bucket support-deflect-bot-docs-${RANDOM} \
+aws s3 mb s3://rag-explorer-docs-${RANDOM}
+aws s3api put-bucket-cors --bucket rag-explorer-docs-${RANDOM} \
   --cors-configuration file://cors.json
 ```
 
@@ -311,17 +311,17 @@ aws s3api put-bucket-cors --bucket support-deflect-bot-docs-${RANDOM} \
 # Create Lambda layer for dependencies
 mkdir python
 pip install -r requirements.txt -t python/
-zip -r support-deflect-bot-layer.zip python/
+zip -r rag-explorer-layer.zip python/
 aws lambda publish-layer-version \
-  --layer-name support-deflect-bot-deps \
-  --zip-file fileb://support-deflect-bot-layer.zip
+  --layer-name rag-explorer-deps \
+  --zip-file fileb://rag-explorer-layer.zip
 ```
 
 ### **Phase 2: Storage Abstraction Implementation (Week 1-2)**
 
 #### **2.1 Create Vector Store Interface**
 ```python
-# src/support_deflect_bot/data/vector_store.py
+# src/rag_explorer/data/vector_store.py
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any
 
@@ -344,7 +344,7 @@ class VectorStore(ABC):
 
 #### **2.2 OpenSearch Implementation**
 ```python
-# src/support_deflect_bot/data/opensearch_store.py
+# src/rag_explorer/data/opensearch_store.py
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from aws_requests_auth.aws_auth import AWSRequestsAuth
 
@@ -369,7 +369,7 @@ class OpenSearchVectorStore(VectorStore):
 
 #### **2.3 Environment-Based Store Selection**
 ```python
-# src/support_deflect_bot/data/store_factory.py
+# src/rag_explorer/data/store_factory.py
 def get_vector_store() -> VectorStore:
     store_type = os.getenv('VECTOR_STORE', 'chromadb')
     
@@ -388,8 +388,8 @@ def get_vector_store() -> VectorStore:
 ```python
 # aws-lambda/lambda_function.py
 from mangum import Mangum
-from src.support_deflect_bot.api.app import app
-from src.support_deflect_bot.data.store_factory import get_opensearch_store
+from src.rag_explorer.api.app import app
+from src.rag_explorer.data.store_factory import get_opensearch_store
 
 # Configure for serverless
 app.dependency_overrides[get_vector_store] = get_opensearch_store
@@ -450,11 +450,11 @@ Outputs:
 
 # Build and deploy
 sam build
-sam deploy --guided --stack-name support-deflect-bot-api
+sam deploy --guided --stack-name rag-explorer-api
 
 # Get API endpoint
 API_URL=$(aws cloudformation describe-stacks \
-  --stack-name support-deflect-bot-api \
+  --stack-name rag-explorer-api \
   --query 'Stacks[0].Outputs[?OutputKey==`ApiUrl`].OutputValue' \
   --output text)
 
@@ -499,23 +499,23 @@ all = [
 #### **4.2 Installation Commands**
 ```bash
 # Local development
-pip install support-deflect-bot[local]
+pip install rag-explorer[local]
 
 # Cloud providers only
-pip install support-deflect-bot[cloud]
+pip install rag-explorer[cloud]
 
 # AWS deployment
-pip install support-deflect-bot[aws]
+pip install rag-explorer[aws]
 
 # Everything
-pip install support-deflect-bot[all]
+pip install rag-explorer[all]
 ```
 
 ### **Phase 5: Monitoring & Observability (Week 3)**
 
 #### **5.1 CloudWatch Integration**
 ```python
-# src/support_deflect_bot/monitoring/cloudwatch.py
+# src/rag_explorer/monitoring/cloudwatch.py
 import boto3
 import time
 from typing import Dict, Any
@@ -632,13 +632,13 @@ async def check_s3_health() -> Dict[str, Any]:
 ### **Strategy 1: Blue-Green Deployment**
 ```bash
 # Deploy to staging
-sam deploy --stack-name support-deflect-bot-staging
+sam deploy --stack-name rag-explorer-staging
 
 # Test staging
 curl https://staging-api.example.com/health
 
 # Deploy to production
-sam deploy --stack-name support-deflect-bot-prod
+sam deploy --stack-name rag-explorer-prod
 ```
 
 ### **Strategy 2: Canary Deployment**
@@ -655,7 +655,7 @@ DeploymentPreference:
 ```bash
 # Deploy to multiple regions
 for region in us-east-1 us-west-2 eu-west-1; do
-  sam deploy --region $region --stack-name support-deflect-bot-$region
+  sam deploy --region $region --stack-name rag-explorer-$region
 done
 ```
 
@@ -676,7 +676,7 @@ def process_query(query: str, options: Dict[str, Any]) -> QueryResult:
 
 ### **Priority 2: Standardized Error Responses**
 ```python
-# src/support_deflect_bot/api/models/errors.py
+# src/rag_explorer/api/models/errors.py
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, Dict, Any
@@ -946,7 +946,7 @@ ErrorRateAlarm:
 # tests/aws/test_opensearch_integration.py
 import pytest
 from moto import mock_opensearch
-from src.support_deflect_bot.data.opensearch_store import OpenSearchVectorStore
+from src.rag_explorer.data.opensearch_store import OpenSearchVectorStore
 
 @mock_opensearch
 async def test_opensearch_document_indexing():
@@ -1063,7 +1063,7 @@ async def load_test_query_endpoint():
 
 ## 🎯 **Conclusion**
 
-Support Deflect Bot is exceptionally well-architected and ready for production deployment. The comprehensive analysis reveals:
+RAG Explorer is exceptionally well-architected and ready for production deployment. The comprehensive analysis reveals:
 
 ### **Key Strengths**
 - ✅ **90% Production Ready**: Minimal implementation needed

@@ -45,9 +45,9 @@ dev = [
 rag-explorer = "rag_explorer.cli.simple_main:cli"
 
 [project.urls]
-Homepage = "https://github.com/theadityamittal/support-deflect-bot"
-Repository = "https://github.com/theadityamittal/support-deflect-bot"
-Issues = "https://github.com/theadityamittal/support-deflect-bot/issues"
+Homepage = "https://github.com/theadityamittal/rag-explorer"
+Repository = "https://github.com/theadityamittal/rag-explorer"
+Issues = "https://github.com/theadityamittal/rag-explorer/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

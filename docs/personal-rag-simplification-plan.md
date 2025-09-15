@@ -1,7 +1,7 @@
 # Personal RAG Explorer: Simplification Plan
 
 **Date:** January 2025  
-**Purpose:** Transform Support Deflect Bot into a simple, personal RAG exploration tool  
+**Purpose:** Transform RAG Explorer into a simple, personal RAG exploration tool  
 **Target:** Pip-installable CLI package for local RAG experimentation
 
 ---
@@ -29,7 +29,7 @@
 ## 📋 **Implementation Roadmap**
 
 ### **Phase 1: Remove API Implementation (Day 1)**
-- [ ] Delete entire `src/support_deflect_bot/api/` directory
+- [ ] Delete entire `src/rag_explorer/api/` directory
 - [ ] Remove FastAPI dependencies from pyproject.toml
 - [ ] Remove API-related imports and references
 - [ ] Clean up unused middleware and models
