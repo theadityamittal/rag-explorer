@@ -23,26 +23,25 @@ class GoogleGeminiProvider(CombinedProvider):
             **kwargs: Additional configuration options
         """
         try:
-            from google import genai
+            import google.generativeai as genai
             self.genai = genai
         except ImportError:
             raise ProviderUnavailableError(
-                "Google GenerativeAI SDK not available. Install with: pip install -q -U google-genai",
+                "Google GenerativeAI SDK not available. Install with: pip install google-generativeai",
                 provider="google"
             )
-        
-        super().__init__(api_key=api_key, **kwargs)
-        
-        
-        # Default models from settings
 
+        # Default models from settings
         self.default_llm_model = GEMINI_LLM_MODEL
         self.default_embedding_model = GEMINI_EMBEDDING_MODEL
+
+        super().__init__(api_key=api_key, **kwargs)
 
         # Configure Google API
         try:
             if self.api_key:
-                self.client = genai.Client(api_key=self.api_key)
+                genai.configure(api_key=self.api_key)
+                self.client = genai
         except Exception:
             self.client = None
             raise ProviderUnavailableError(
@@ -51,7 +50,41 @@ class GoogleGeminiProvider(CombinedProvider):
             )
         
         logger.info(f"Initialized Google Gemini Client with models: {self.default_llm_model}, {self.default_embedding_model}")
-    
+
+    def get_config(self):
+        """Return provider configuration and capabilities."""
+        from ..base import ProviderConfig, ProviderType
+        return ProviderConfig(
+            name="google",
+            provider_type=ProviderType.BOTH,
+            requires_api_key=True
+        )
+
+    def health_check(self):
+        """Perform health check and return detailed status."""
+        try:
+            if not self.is_available():
+                return {
+                    "status": "unavailable",
+                    "message": "Provider not available",
+                    "provider": "google"
+                }
+
+            # Try a simple API call to test connectivity
+            test_result = self.embed_one("test")
+            return {
+                "status": "healthy",
+                "message": "Provider is working correctly",
+                "provider": "google",
+                "embedding_dimension": len(test_result)
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Health check failed: {str(e)}",
+                "provider": "google"
+            }
+
     def is_available(self) -> bool:
         """Check if Google Gemini provider is available."""
         if not self.api_key:
@@ -95,22 +128,26 @@ class GoogleGeminiProvider(CombinedProvider):
         """
         final_response = ""
         try:
-            from google.genai import types
+            import google.generativeai.types as types
 
             if not self.client:
                 raise ProviderUnavailableError("Google Gemini Client not available", provider="google")
             else:
                 
-                # Configure generation settings
-                generation_config = types.GenerateContentConfig(
-                    system_instruction=system_prompt,
-                    temperature=temperature,
+                # Create model instance
+                model = self.client.GenerativeModel(
+                    model_name=self.default_llm_model,
+                    system_instruction=system_prompt
                 )
-                
-                response = self.client.models.generate_content(
-                    model=self.default_llm_model,
-                    config=generation_config,
-                    contents=user_prompt
+
+                # Configure generation settings
+                generation_config = self.client.GenerationConfig(
+                    temperature=temperature
+                )
+
+                response = model.generate_content(
+                    user_prompt,
+                    generation_config=generation_config
                 )
 
                 if not response or not response.text:
@@ -161,18 +198,17 @@ class GoogleGeminiProvider(CombinedProvider):
                 )
             
             else:
-                from google.genai import types
+                for text in texts:
+                    result = self.client.embed_content(
+                        model=self.default_embedding_model,
+                        content=text,
+                        task_type="semantic_similarity"
+                    )
 
-                for i in range(0, len(texts), batch_size):
-                    batch = texts[i:i + batch_size]
-                    result = self.client.models.embed_content(
-                        model="gemini-embedding-001",
-                        contents=batch,
-                        config=types.EmbedContentConfig(task_type="SEMANTIC_SIMILARITY")
-                    ).embeddings
-
-                    if result:
-                        embeddings.extend([e.values for e in result])
+                    if hasattr(result, 'embedding'):
+                        embeddings.append(result.embedding)
+                    elif 'embedding' in result:
+                        embeddings.append(result['embedding'])
             
             return embeddings
             
@@ -218,166 +254,3 @@ class GoogleGeminiProvider(CombinedProvider):
         
         return dimensions.get(model, 768)  # Default dimension
 
-    def retrieve_best_embeddings(self,
-                                query_embedding: List[float],
-                                top_k: int = 5,
-                                similarity_threshold: float = 0.7,
-                                **kwargs) -> List[Dict[str, Any]]:
-        """Retrieve the best matching embeddings using Google Gemini's capabilities.
-
-        Args:
-            query_embedding: The query embedding vector to find matches for
-            top_k: Number of top results to return
-            similarity_threshold: Minimum similarity score to include
-            **kwargs: Additional parameters (e.g., database, collection_name)
-
-        Returns:
-            List of dictionaries containing matched embeddings and metadata
-
-        Raises:
-            ProviderError: If retrieval operation fails
-            ValueError: If parameters are invalid
-        """
-        import numpy as np
-
-        if not query_embedding:
-            raise ValueError("Query embedding cannot be empty")
-
-        if top_k <= 0:
-            raise ValueError("top_k must be positive")
-
-        if not (0.0 <= similarity_threshold <= 1.0):
-            raise ValueError("similarity_threshold must be between 0.0 and 1.0")
-
-        if not self.is_available():
-            raise ProviderUnavailableError("Google Gemini provider not available", provider="google")
-
-        try:
-            # Get database connection from kwargs
-            database = kwargs.get('database')
-            collection_name = kwargs.get('collection_name', 'embeddings')
-
-            if not database:
-                raise ProviderError("Database connection required for embedding retrieval", provider="google")
-
-            # Normalize query embedding for cosine similarity
-            query_embedding = np.array(query_embedding)
-            query_norm = np.linalg.norm(query_embedding)
-            if query_norm == 0:
-                raise ValueError("Query embedding cannot be zero vector")
-            query_embedding = query_embedding / query_norm
-
-            results = []
-
-            # Google Cloud specific integrations
-            if hasattr(database, 'search_ann'):
-                # For Google Cloud Vector Search or similar services
-                search_results = database.search_ann(
-                    query_vector=query_embedding.tolist(),
-                    num_neighbors=top_k,
-                    min_score=similarity_threshold,
-                    index_name=collection_name
-                )
-
-                for result in search_results:
-                    results.append({
-                        'text': result.get('text', ''),
-                        'embedding': result.get('embedding', []),
-                        'similarity_score': result.get('distance', 0.0),
-                        'metadata': result.get('metadata', {})
-                    })
-
-            elif hasattr(database, 'vector_search'):
-                # For Firestore or other Google Cloud databases with vector search
-                search_results = database.vector_search(
-                    collection=collection_name,
-                    query_vector=query_embedding.tolist(),
-                    limit=top_k,
-                    similarity_threshold=similarity_threshold
-                )
-
-                for result in search_results:
-                    results.append({
-                        'text': result.get('content', ''),
-                        'embedding': result.get('embedding_vector', []),
-                        'similarity_score': result.get('similarity', 0.0),
-                        'metadata': result.get('document_metadata', {})
-                    })
-
-            elif hasattr(database, 'query'):
-                # For PostgreSQL with pgvector or similar
-                try:
-                    cursor = database.query(f"""
-                        SELECT text, embedding, metadata,
-                               1 - (embedding <=> %s) as similarity_score
-                        FROM {collection_name}
-                        WHERE 1 - (embedding <=> %s) >= %s
-                        ORDER BY embedding <=> %s
-                        LIMIT %s
-                    """, [query_embedding.tolist(), query_embedding.tolist(),
-                          similarity_threshold, query_embedding.tolist(), top_k])
-
-                    for row in cursor.fetchall():
-                        results.append({
-                            'text': row[0],
-                            'embedding': row[1],
-                            'similarity_score': row[3],
-                            'metadata': row[2] or {}
-                        })
-                except Exception:
-                    # Fallback to manual computation
-                    logger.info("Vector query failed, using manual similarity computation")
-                    results = self._manual_similarity_search(
-                        database, collection_name, query_embedding,
-                        top_k, similarity_threshold
-                    )
-            else:
-                # Manual similarity computation for simple storage
-                results = self._manual_similarity_search(
-                    database, collection_name, query_embedding,
-                    top_k, similarity_threshold
-                )
-
-            logger.debug(f"Google Gemini retrieved {len(results)} embeddings with similarity >= {similarity_threshold}")
-            return results
-
-        except Exception as e:
-            if isinstance(e, (ValueError, ProviderError, ProviderUnavailableError)):
-                raise
-            raise ProviderError(f"Google Gemini embedding retrieval failed: {e}", provider="google", original_error=e)
-
-    def _manual_similarity_search(self, database, collection_name: str,
-                                query_embedding: np.ndarray, top_k: int,
-                                similarity_threshold: float) -> List[Dict[str, Any]]:
-        """Manual similarity search for databases without vector support."""
-        import numpy as np
-
-        logger.info("Using manual similarity computation for Google Gemini provider")
-
-        # Get all embeddings from database
-        all_embeddings = database.get_all_embeddings(collection_name)
-        similarities = []
-
-        for item in all_embeddings:
-            try:
-                stored_embedding = np.array(item['embedding'])
-                stored_norm = np.linalg.norm(stored_embedding)
-
-                if stored_norm > 0:
-                    stored_embedding = stored_embedding / stored_norm
-                    similarity = np.dot(query_embedding, stored_embedding)
-
-                    if similarity >= similarity_threshold:
-                        similarities.append({
-                            'text': item.get('text', ''),
-                            'embedding': item['embedding'],
-                            'similarity_score': float(similarity),
-                            'metadata': item.get('metadata', {})
-                        })
-            except Exception as e:
-                logger.warning(f"Failed to compute similarity for item: {e}")
-                continue
-
-        # Sort by similarity and take top_k
-        similarities.sort(key=lambda x: x['similarity_score'], reverse=True)
-        return similarities[:top_k]

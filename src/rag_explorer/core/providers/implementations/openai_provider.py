@@ -52,7 +52,41 @@ class OpenAIProvider(CombinedProvider):
             )
         
         logger.info(f"Initialized OpenAI provider with models: {self.default_llm_model}, {self.default_embedding_model}")
-    
+
+    def get_config(self):
+        """Return provider configuration and capabilities."""
+        from ..base import ProviderConfig, ProviderType
+        return ProviderConfig(
+            name="openai",
+            provider_type=ProviderType.BOTH,
+            requires_api_key=True
+        )
+
+    def health_check(self):
+        """Perform health check and return detailed status."""
+        try:
+            if not self.is_available():
+                return {
+                    "status": "unavailable",
+                    "message": "Provider not available",
+                    "provider": "openai"
+                }
+
+            # Try a simple API call to test connectivity
+            test_result = self.embed_one("test")
+            return {
+                "status": "healthy",
+                "message": "Provider is working correctly",
+                "provider": "openai",
+                "embedding_dimension": len(test_result)
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Health check failed: {str(e)}",
+                "provider": "openai"
+            }
+
     def is_available(self) -> bool:
         """Check if OpenAI provider is available and properly configured."""
         if not self.api_key:
@@ -243,127 +277,3 @@ class OpenAIProvider(CombinedProvider):
             logger.warning(f"tiktoken failed: {e}, using estimation")
             return self.estimate_tokens(text)
 
-    def retrieve_best_embeddings(self,
-                                query_embedding: List[float],
-                                top_k: int = 5,
-                                similarity_threshold: float = 0.7,
-                                **kwargs) -> List[Dict[str, Any]]:
-        """Retrieve the best matching embeddings using OpenAI's vector similarity.
-
-        Args:
-            query_embedding: The query embedding vector to find matches for
-            top_k: Number of top results to return
-            similarity_threshold: Minimum similarity score to include
-            **kwargs: Additional parameters (e.g., database_connection, collection_name)
-
-        Returns:
-            List of dictionaries containing matched embeddings and metadata
-
-        Raises:
-            ProviderError: If retrieval operation fails
-            ValueError: If parameters are invalid
-        """
-        import numpy as np
-        from typing import Tuple
-
-        if not query_embedding:
-            raise ValueError("Query embedding cannot be empty")
-
-        if top_k <= 0:
-            raise ValueError("top_k must be positive")
-
-        if not (0.0 <= similarity_threshold <= 1.0):
-            raise ValueError("similarity_threshold must be between 0.0 and 1.0")
-
-        try:
-            # Get database connection from kwargs
-            database = kwargs.get('database')
-            collection_name = kwargs.get('collection_name', 'embeddings')
-
-            if not database:
-                raise ProviderError("Database connection required for embedding retrieval", provider="openai")
-
-            # Normalize query embedding for cosine similarity
-            query_embedding = np.array(query_embedding)
-            query_norm = np.linalg.norm(query_embedding)
-            if query_norm == 0:
-                raise ValueError("Query embedding cannot be zero vector")
-            query_embedding = query_embedding / query_norm
-
-            # Retrieve embeddings from database (implementation depends on database type)
-            # This is a template that would need to be adapted for specific database
-            results = []
-
-            # Example implementation for a vector database
-            if hasattr(database, 'search_vectors'):
-                # For vector databases like Pinecone, Weaviate, etc.
-                search_results = database.search_vectors(
-                    vector=query_embedding.tolist(),
-                    top_k=top_k,
-                    min_score=similarity_threshold,
-                    collection=collection_name
-                )
-
-                for result in search_results:
-                    results.append({
-                        'text': result.get('text', ''),
-                        'embedding': result.get('embedding', []),
-                        'similarity_score': result.get('score', 0.0),
-                        'metadata': result.get('metadata', {})
-                    })
-
-            elif hasattr(database, 'query'):
-                # For SQL-like databases with vector extensions
-                cursor = database.query(f"""
-                    SELECT text, embedding, metadata,
-                           (embedding <=> %s) as similarity_score
-                    FROM {collection_name}
-                    WHERE (embedding <=> %s) < %s
-                    ORDER BY similarity_score
-                    LIMIT %s
-                """, [query_embedding.tolist(), query_embedding.tolist(),
-                      1.0 - similarity_threshold, top_k])
-
-                for row in cursor.fetchall():
-                    results.append({
-                        'text': row[0],
-                        'embedding': row[1],
-                        'similarity_score': 1.0 - row[3],  # Convert distance to similarity
-                        'metadata': row[2] or {}
-                    })
-
-            else:
-                # Fallback: Manual similarity computation for simple storage
-                logger.warning("Using fallback similarity computation - consider using a vector database")
-
-                # Get all embeddings from database
-                all_embeddings = database.get_all_embeddings(collection_name)
-                similarities = []
-
-                for item in all_embeddings:
-                    stored_embedding = np.array(item['embedding'])
-                    stored_norm = np.linalg.norm(stored_embedding)
-
-                    if stored_norm > 0:
-                        stored_embedding = stored_embedding / stored_norm
-                        similarity = np.dot(query_embedding, stored_embedding)
-
-                        if similarity >= similarity_threshold:
-                            similarities.append({
-                                'text': item.get('text', ''),
-                                'embedding': item['embedding'],
-                                'similarity_score': float(similarity),
-                                'metadata': item.get('metadata', {})
-                            })
-
-                # Sort by similarity and take top_k
-                similarities.sort(key=lambda x: x['similarity_score'], reverse=True)
-                results = similarities[:top_k]
-
-            logger.debug(f"Retrieved {len(results)} embeddings with similarity >= {similarity_threshold}")
-            return results
-
-        except Exception as e:
-            if isinstance(e, (ValueError, ProviderError)):
-                raise
-            raise ProviderError(f"OpenAI embedding retrieval failed: {e}", provider="openai", original_error=e)

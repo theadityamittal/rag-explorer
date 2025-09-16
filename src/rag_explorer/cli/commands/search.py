@@ -1,34 +1,26 @@
-import click  
+import click
 import sys
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rag_explorer.engine import UnifiedRAGEngine, UnifiedQueryService, UnifiedEmbeddingService
+from rag_explorer.engine import UnifiedRAGEngine
 
 console = Console()
 
-global _query_service, _embedding_service
-if _query_service not in globals():
-    _query_service = UnifiedQueryService()
-if _embedding_service not in globals():
-    _embedding_service = UnifiedEmbeddingService()
+global _rag_engine
+if '_rag_engine' not in globals():
+    _rag_engine = UnifiedRAGEngine()
 
 @click.command()
 @click.argument('query')
-def search(query):
+@click.option('--count', '-c', default=5, help='Number of results to return')
+def search(query, count):
     """Search vector database and show top results"""
     console.print(Panel(f"[blue]Searching for: {query}[/blue]", title="Vector Search"))
 
     try:
-
-        processed_query = _query_service.preprocess_query(query)
-        query_embedding = _embedding_service.generate_embeddings(processed_query)
-        
-
-        results = query_by_embedding(
-            query_embedding=query_embedding,
-            k=settings.SEARCH_MAX_RESULTS
-        )
+        # Use UnifiedRAGEngine to search documents
+        results = _rag_engine.search_documents(query=query, count=count)
 
         if not results:
             console.print("[yellow]No results found[/yellow]")
@@ -42,9 +34,9 @@ def search(query):
         table.add_column("Content", style="white")
 
         for i, result in enumerate(results, 1):
-            score = 1 - result.get('distance', 0)  # Convert distance to similarity score
-            meta = result.get('meta', {})
-            source = meta.get('source') or meta.get('path') or 'Unknown'
+            score = result.get('similarity_score', 0.0)
+            metadata = result.get('metadata', {})
+            source = metadata.get('source') or metadata.get('path') or 'Unknown'
             content = result.get('text', '')
             content = content[:100] + "..." if len(content) > 100 else content
 
@@ -56,6 +48,7 @@ def search(query):
             )
 
         console.print(table)
+        console.print(f"[dim]Found {len(results)} results[/dim]")
 
     except Exception as e:
         console.print(f"[red]✗ Error searching: {str(e)}[/red]")

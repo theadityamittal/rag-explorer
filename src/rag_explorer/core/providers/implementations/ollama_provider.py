@@ -51,7 +51,41 @@ class OllamaProvider(CombinedProvider):
         logger.info(f"Initialized Ollama provider with models: {self.default_llm_model}, {self.default_embedding_model}")
         if self.ollama_host:
             logger.info(f"Using Ollama host: {self.ollama_host}")
-    
+
+    def get_config(self):
+        """Return provider configuration and capabilities."""
+        from ..base import ProviderConfig, ProviderType
+        return ProviderConfig(
+            name="ollama",
+            provider_type=ProviderType.BOTH,
+            requires_api_key=False
+        )
+
+    def health_check(self):
+        """Perform health check and return detailed status."""
+        try:
+            if not self.is_available():
+                return {
+                    "status": "unavailable",
+                    "message": "Provider not available",
+                    "provider": "ollama"
+                }
+
+            # Try a simple API call to test connectivity
+            test_result = self.embed_one("test")
+            return {
+                "status": "healthy",
+                "message": "Provider is working correctly",
+                "provider": "ollama",
+                "embedding_dimension": len(test_result)
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Health check failed: {str(e)}",
+                "provider": "ollama"
+            }
+
     def is_available(self) -> bool:
         """Check if Ollama is available and running."""
         try:
@@ -332,149 +366,3 @@ class OllamaProvider(CombinedProvider):
         except Exception as e:
             raise ProviderError(f"Ollama streaming failed: {e}", provider="ollama", original_error=e)
 
-    def retrieve_best_embeddings(self,
-                                query_embedding: List[float],
-                                top_k: int = 5,
-                                similarity_threshold: float = 0.7,
-                                **kwargs) -> List[Dict[str, Any]]:
-        """Retrieve the best matching embeddings using local similarity computation.
-
-        Args:
-            query_embedding: The query embedding vector to find matches for
-            top_k: Number of top results to return
-            similarity_threshold: Minimum similarity score to include
-            **kwargs: Additional parameters (e.g., database, collection_name)
-
-        Returns:
-            List of dictionaries containing matched embeddings and metadata
-
-        Raises:
-            ProviderError: If retrieval operation fails
-            ValueError: If parameters are invalid
-        """
-        import numpy as np
-
-        if not query_embedding:
-            raise ValueError("Query embedding cannot be empty")
-
-        if top_k <= 0:
-            raise ValueError("top_k must be positive")
-
-        if not (0.0 <= similarity_threshold <= 1.0):
-            raise ValueError("similarity_threshold must be between 0.0 and 1.0")
-
-        if not self.is_available():
-            raise ProviderUnavailableError("Ollama service not available", provider="ollama")
-
-        try:
-            # Get database connection from kwargs
-            database = kwargs.get('database')
-            collection_name = kwargs.get('collection_name', 'embeddings')
-
-            if not database:
-                raise ProviderError("Database connection required for embedding retrieval", provider="ollama")
-
-            # Normalize query embedding for cosine similarity
-            query_embedding = np.array(query_embedding)
-            query_norm = np.linalg.norm(query_embedding)
-            if query_norm == 0:
-                raise ValueError("Query embedding cannot be zero vector")
-            query_embedding = query_embedding / query_norm
-
-            results = []
-
-            # Ollama works best with local vector storage
-            if hasattr(database, 'search_similar'):
-                # For local vector databases optimized for Ollama
-                search_results = database.search_similar(
-                    query_vector=query_embedding.tolist(),
-                    limit=top_k,
-                    threshold=similarity_threshold,
-                    collection=collection_name
-                )
-
-                for result in search_results:
-                    results.append({
-                        'text': result.get('text', ''),
-                        'embedding': result.get('embedding', []),
-                        'similarity_score': result.get('similarity', 0.0),
-                        'metadata': result.get('metadata', {})
-                    })
-
-            elif hasattr(database, 'query'):
-                # For SQLite or other local databases with vector extensions
-                try:
-                    cursor = database.query(f"""
-                        SELECT text, embedding, metadata,
-                               (1 - (embedding <-> ?)) as similarity_score
-                        FROM {collection_name}
-                        WHERE (1 - (embedding <-> ?)) >= ?
-                        ORDER BY similarity_score DESC
-                        LIMIT ?
-                    """, [query_embedding.tolist(), query_embedding.tolist(),
-                          similarity_threshold, top_k])
-
-                    for row in cursor.fetchall():
-                        results.append({
-                            'text': row[0],
-                            'embedding': row[1],
-                            'similarity_score': row[3],
-                            'metadata': row[2] or {}
-                        })
-                except Exception:
-                    # Fallback to manual computation
-                    logger.info("Vector query failed, using manual similarity computation")
-                    results = self._manual_similarity_search(
-                        database, collection_name, query_embedding,
-                        top_k, similarity_threshold
-                    )
-            else:
-                # Manual similarity computation for simple storage
-                results = self._manual_similarity_search(
-                    database, collection_name, query_embedding,
-                    top_k, similarity_threshold
-                )
-
-            logger.debug(f"Ollama retrieved {len(results)} embeddings with similarity >= {similarity_threshold}")
-            return results
-
-        except Exception as e:
-            if isinstance(e, (ValueError, ProviderError, ProviderUnavailableError)):
-                raise
-            raise ProviderError(f"Ollama embedding retrieval failed: {e}", provider="ollama", original_error=e)
-
-    def _manual_similarity_search(self, database, collection_name: str,
-                                query_embedding: np.ndarray, top_k: int,
-                                similarity_threshold: float) -> List[Dict[str, Any]]:
-        """Manual similarity search for databases without vector support."""
-        import numpy as np
-
-        logger.info("Using manual similarity computation for Ollama provider")
-
-        # Get all embeddings from database
-        all_embeddings = database.get_all_embeddings(collection_name)
-        similarities = []
-
-        for item in all_embeddings:
-            try:
-                stored_embedding = np.array(item['embedding'])
-                stored_norm = np.linalg.norm(stored_embedding)
-
-                if stored_norm > 0:
-                    stored_embedding = stored_embedding / stored_norm
-                    similarity = np.dot(query_embedding, stored_embedding)
-
-                    if similarity >= similarity_threshold:
-                        similarities.append({
-                            'text': item.get('text', ''),
-                            'embedding': item['embedding'],
-                            'similarity_score': float(similarity),
-                            'metadata': item.get('metadata', {})
-                        })
-            except Exception as e:
-                logger.warning(f"Failed to compute similarity for item: {e}")
-                continue
-
-        # Sort by similarity and take top_k
-        similarities.sort(key=lambda x: x['similarity_score'], reverse=True)
-        return similarities[:top_k]

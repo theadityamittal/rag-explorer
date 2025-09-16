@@ -134,32 +134,6 @@ class EmbeddingProvider(BaseProvider):
         """
         pass
 
-    @abstractmethod
-    def retrieve_best_embeddings(self,
-                                query_embedding: List[float],
-                                top_k: int = 5,
-                                similarity_threshold: float = 0.7,
-                                **kwargs) -> List[Dict[str, Any]]:
-        """Retrieve the best matching embeddings from the database.
-
-        Args:
-            query_embedding: The query embedding vector to find matches for
-            top_k: Number of top results to return
-            similarity_threshold: Minimum similarity score to include
-            **kwargs: Provider-specific parameters for retrieval
-
-        Returns:
-            List of dictionaries containing:
-                - 'text': The original text
-                - 'embedding': The embedding vector
-                - 'similarity_score': Similarity score with query
-                - 'metadata': Any additional metadata
-
-        Raises:
-            ProviderError: If retrieval operation fails
-            ValueError: If parameters are invalid
-        """
-        pass
 
 
 class CombinedProvider(LLMProvider, EmbeddingProvider):

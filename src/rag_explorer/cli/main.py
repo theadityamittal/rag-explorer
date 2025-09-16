@@ -14,6 +14,8 @@ from pathlib import Path
 from typing import Dict, Any
 
 from .commands import index, ask, search, crawl, configure
+from rag_explorer.utils import settings
+from rag_explorer.engine.database import get_simple_client, get_or_create_collection
 
 console = Console()
 from rag_explorer.engine import UnifiedDocumentProcessor, UnifiedQueryService, UnifiedEmbeddingService, UnifiedRAGEngine
@@ -428,7 +430,7 @@ def metrics():
     console.print(Panel("[blue]RAG Explorer Metrics[/blue]", title="Storage Metrics"))
 
     try:
-        engine = SimpleRAGEngine()
+        engine = UnifiedRAGEngine()
 
         if settings.METRICS_OUTPUT_FORMAT == "json":
             metrics_data = _get_metrics_data(engine)
@@ -436,14 +438,11 @@ def metrics():
             return
 
         # Table format (default)
-        client = get_client()
-        try:
-            collection = get_collection(client)
+        client = get_simple_client()
+        collection = get_or_create_collection(client)
 
-            # Get collection info
-            collection_count = collection.count()
-        finally:
-            return_client(client)
+        # Get collection info
+        collection_count = collection.count()
 
         # Storage metrics table
         table = Table(show_header=True, header_style="bold blue")
@@ -498,12 +497,9 @@ def metrics():
 def _get_metrics_data(engine) -> Dict[str, Any]:
     """Get metrics data as a dictionary for JSON output"""
     try:
-        client = get_client()
-        try:
-            collection = get_collection(client)
-            collection_count = collection.count()
-        finally:
-            return_client(client)
+        client = get_simple_client()
+        collection = get_or_create_collection(client)
+        collection_count = collection.count()
 
         docs_path = Path(settings.DOCS_FOLDER)
         local_files = 0
@@ -536,13 +532,10 @@ def status():
 
     # Get DB stats directly without requiring engine initialization
     try:
-        client = get_client()
-        try:
-            collection = get_collection(client)
-            doc_count = collection.count()
-            db_connected = True
-        finally:
-            return_client(client)
+        client = get_simple_client()
+        collection = get_or_create_collection(client)
+        doc_count = collection.count()
+        db_connected = True
     except Exception as e:
         doc_count = 0
         db_connected = False
@@ -584,7 +577,7 @@ def status():
 
     # Try to initialize engine for additional info, but handle failures gracefully
     try:
-        engine = SimpleRAGEngine()
+        engine = UnifiedRAGEngine()
         status_info = engine.get_status()
         
         # Provider availability

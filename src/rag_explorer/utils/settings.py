@@ -69,3 +69,24 @@ CRAWL_MAX_PAGES = int(os.getenv("CRAWL_MAX_PAGES", "50"))
 DOCS_FOLDER: str = os.getenv("DOCS_FOLDER", "./docs")
 CHROMA_DB_PATH: str = os.getenv("CHROMA_DB_PATH", "./chroma_db")
 CHROMA_COLLECTION: str = os.getenv("CHROMA_COLLECTION", "knowledge_base")
+
+# Additional settings for database and timeouts
+DB_POOL_SIZE: int = int(os.getenv("DB_POOL_SIZE", "5"))
+DB_CONNECTION_TIMEOUT: int = int(os.getenv("DB_CONNECTION_TIMEOUT", "30"))
+DB_POOL_CLEANUP_INTERVAL: int = int(os.getenv("DB_POOL_CLEANUP_INTERVAL", "300"))
+DATABASE_QUERY_TIMEOUT: int = int(os.getenv("DATABASE_QUERY_TIMEOUT", "120"))
+PING_TIMEOUT: int = int(os.getenv("PING_TIMEOUT", "5"))
+PING_RETRY_COUNT: int = int(os.getenv("PING_RETRY_COUNT", "3"))
+SEARCH_MAX_RESULTS: int = int(os.getenv("SEARCH_MAX_RESULTS", "10"))
+
+# Configuration settings
+CONFIG_SHOW_SENSITIVE: bool = os.getenv("CONFIG_SHOW_SENSITIVE", "false").lower() == "true"
+METRICS_OUTPUT_FORMAT: str = os.getenv("METRICS_OUTPUT_FORMAT", "table")
+
+def reload_env():
+    """Reload environment variables from .env file.
+
+    This function reloads the .env file to pick up any changes
+    made to environment variables without restarting the application.
+    """
+    load_dotenv(override=True)
