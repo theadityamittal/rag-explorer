@@ -2,191 +2,83 @@
 
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import List, Optional, Dict, Any
 
 from ..base import (
-    CombinedProvider,
-    ProviderConfig,
-    ProviderError,
-    ProviderRateLimitError,
-    ProviderTier,
-    ProviderType,
-    ProviderUnavailableError,
+    CombinedProvider, ProviderConfig, ProviderType, ProviderError, ProviderUnavailableError
 )
-from ...resilience import (
-    retry_with_backoff,
-    RetryPolicy,
-    CircuitBreakerConfig,
-    get_circuit_breaker,
-    get_provider_retry_policy,
-    get_provider_circuit_breaker_config,
-    ErrorClassifier,
-    ErrorType
-)
+
+from ....utils.settings import OPENAI_LLM_MODEL, OPENAI_EMBEDDING_MODEL
 
 logger = logging.getLogger(__name__)
 
 
 class OpenAIProvider(CombinedProvider):
-    """OpenAI provider with GPT models and embeddings - Primary legally compliant provider with resilience patterns."""
-
+    """OpenAI provider with GPT models and embeddings - Primary legally compliant provider."""
+    
     def __init__(self, api_key: Optional[str] = None, **kwargs):
         """Initialize OpenAI provider.
-
+        
         Args:
             api_key: OpenAI API key
             **kwargs: Additional configuration options
         """
         try:
             import openai
-
             self.openai = openai
         except ImportError:
             raise ProviderUnavailableError(
                 "OpenAI SDK not available. Install with: pip install openai",
-                provider="openai",
+                provider="openai"
             )
-
+        
         super().__init__(api_key=api_key, **kwargs)
 
-        # Initialize OpenAI client
-        if self.api_key:
-            self.client = openai.OpenAI(api_key=self.api_key)
-        else:
-            # Try to use default client (environment OPENAI_API_KEY)
-            try:
-                self.client = openai.OpenAI()
-            except Exception:
-                self.client = None
-
-        # Default models and timeout from settings
-        from ....utils.settings import OPENAI_EMBEDDING_MODEL, OPENAI_LLM_MODEL, PROVIDER_TIMEOUT
-
+        # Default models from settings
+        
         self.default_llm_model = OPENAI_LLM_MODEL
         self.default_embedding_model = OPENAI_EMBEDDING_MODEL
-        self.provider_timeout = PROVIDER_TIMEOUT
-
-        # Initialize resilience components
-        self.retry_policy = get_provider_retry_policy("openai")
-        self.circuit_breaker = get_circuit_breaker(
-            f"openai_{id(self)}",
-            get_provider_circuit_breaker_config("openai")
-        )
-
-        # Metrics tracking
-        self._request_count = 0
-        self._error_count = 0
-        self._rate_limit_count = 0
-
-        logger.info(
-            f"Initialized OpenAI provider with models: {self.default_llm_model}, {self.default_embedding_model}"
-        )
-
-    def get_config(self) -> ProviderConfig:
-        """Get OpenAI provider configuration."""
-        return ProviderConfig(
-            name="OpenAI",
-            provider_type=ProviderType.BOTH,
-            cost_per_million_tokens_input=0.50,  # GPT-3.5-turbo input
-            cost_per_million_tokens_output=1.50,  # GPT-3.5-turbo output
-            max_context_length=16000,  # GPT-3.5-turbo-16k
-            rate_limit_rpm=3500,  # Tier 1 rate limits
-            rate_limit_tpm=90000,
-            supports_streaming=True,
-            requires_api_key=True,
-            tier=ProviderTier.PAID,
-            regions_supported=["global"],  # Works worldwide
-            gdpr_compliant=True,  # GDPR compliant
-            models_available=[
-                "gpt-3.5-turbo",
-                "gpt-3.5-turbo-16k",
-                "gpt-4",
-                "gpt-4-turbo",
-                "gpt-4o",
-                "text-embedding-3-small",
-                "text-embedding-3-large",
-                "text-embedding-ada-002",
-            ],
-        )
-
+        
+        # Initialize OpenAI client
+        try:
+            if self.api_key:
+                self.client = openai.OpenAI(api_key=self.api_key)
+        except:
+            # Try to use default client (environment OPENAI_API_KEY)
+            self.client = None
+            raise ProviderUnavailableError(
+                "Google API is unable to connect. Verify the API key is configured",
+                provider="openai"
+            )
+        
+        logger.info(f"Initialized OpenAI provider with models: {self.default_llm_model}, {self.default_embedding_model}")
+    
     def is_available(self) -> bool:
         """Check if OpenAI provider is available and properly configured."""
-        if not self.client:
+        if not self.api_key:
             return False
-
+        
         try:
-            # Test with a minimal API call
-            response = self.client.models.list()
-            return response is not None
+            if not self.client:
+                raise ProviderUnavailableError(
+                    "Gemini Provider Client is unavailable. Verify API key",
+                    provider="openai"
+                )
+            else:
+                return True
         except Exception as e:
             logger.debug(f"OpenAI availability check failed: {e}")
             return False
-
-    def health_check(self) -> Dict[str, Any]:
-        """Perform comprehensive health check with circuit breaker state."""
-        try:
-            if not self.client:
-                return {
-                    "status": "unhealthy",
-                    "error": "OpenAI client not initialized",
-                    "provider": "openai",
-                    "circuit_breaker": self.circuit_breaker.get_status(),
-                    "metrics": self._get_metrics(),
-                }
-
-            # Test API connectivity
-            start_time = time.time()
-            models = self.client.models.list()
-            response_time = time.time() - start_time
-
-            # Check if required models are available
-            available_models = [model.id for model in models.data]
-            has_llm_model = self.default_llm_model in available_models
-            has_embedding_model = self.default_embedding_model in available_models
-
-            # Determine overall status
-            circuit_state = self.circuit_breaker.state.value
-            if circuit_state == "open":
-                status = "circuit_open"
-            elif not (has_llm_model and has_embedding_model):
-                status = "degraded"
-            else:
-                status = "healthy"
-
-            return {
-                "status": status,
-                "response_time_ms": round(response_time * 1000, 2),
-                "models_available": len(available_models),
-                "default_llm_available": has_llm_model,
-                "default_embedding_available": has_embedding_model,
-                "provider": "openai",
-                "timestamp": time.time(),
-                "circuit_breaker": self.circuit_breaker.get_status(),
-                "metrics": self._get_metrics(),
-            }
-
-        except Exception as e:
-            self._error_count += 1
-            return {
-                "status": "unhealthy",
-                "error": str(e),
-                "provider": "openai",
-                "timestamp": time.time(),
-                "circuit_breaker": self.circuit_breaker.get_status(),
-                "metrics": self._get_metrics(),
-            }
-
-    def chat(
-        self,
-        system_prompt: str,
-        user_prompt: str,
-        model: Optional[str] = None,
-        temperature: float = 0.0,
-        max_tokens: Optional[int] = None,
-        **kwargs,
-    ) -> str:
-        """Generate chat completion using OpenAI GPT models with retry and circuit breaker protection.
-
+    
+    def chat(self, 
+             system_prompt: str, 
+             user_prompt: str,
+             model: Optional[str] = None,
+             temperature: float = 0.0,
+             max_tokens: Optional[int] = None,
+             **kwargs) -> str:
+        """Generate chat completion using OpenAI GPT models.
+        
         Args:
             system_prompt: System message to set behavior
             user_prompt: User's query or input
@@ -194,323 +86,156 @@ class OpenAIProvider(CombinedProvider):
             temperature: Randomness in generation (0.0-1.0)
             max_tokens: Maximum tokens to generate
             **kwargs: Additional OpenAI API parameters
-
+            
         Returns:
             Generated response text
-
+            
         Raises:
             ProviderError: If API call fails
             ProviderRateLimitError: If rate limit exceeded
-            CircuitBreakerOpenException: If circuit breaker is open
         """
-        self._request_count += 1
-        return self._chat_impl(
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-            model=model,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            **kwargs
-        )
-
-    @retry_with_backoff(get_provider_retry_policy("openai"))
-    def _chat_impl(
-        self,
-        system_prompt: str,
-        user_prompt: str,
-        model: Optional[str] = None,
-        temperature: float = 0.0,
-        max_tokens: Optional[int] = None,
-        **kwargs,
-    ) -> str:
-        """Internal implementation of chat with retry logic."""
-        if not self.client:
-            raise ProviderUnavailableError(
-                "OpenAI client not available", provider="openai"
-            )
-
-        model = model or self.default_llm_model
-
+        final_response = ""
         try:
-            with self.circuit_breaker:
-                messages = [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ]
 
-                response = self.client.chat.completions.create(
-                    model=model,
-                    messages=messages,
+            if not self.client:
+                raise ProviderUnavailableError("OpenAI client not available", provider="openai")
+            
+            else:
+                model = model or self.default_llm_model
+
+                response = self.client.responses.create(
+                    model=self.default_llm_model,
+                    reasoning={"effort": "low"},
                     temperature=temperature,
-                    max_tokens=max_tokens,
-                    timeout=self.provider_timeout,
-                    **kwargs,
+                    input=[
+                        {
+                            "role": "developer",
+                            "content": system_prompt
+                        },
+                        {
+                            "role": "user",
+                            "content": user_prompt
+                        }
+                    ]
                 )
 
-                result = response.choices[0].message.content.strip()
-                logger.debug(f"OpenAI chat successful, response length: {len(result)}")
-                return result
-
-        except self.openai.RateLimitError as e:
-            self._rate_limit_count += 1
-            self._error_count += 1
-            logger.warning(f"OpenAI rate limit encountered: {e}")
-            raise ProviderRateLimitError(
-                f"OpenAI rate limit exceeded: {e}", provider="openai", original_error=e
-            )
-        except self.openai.AuthenticationError as e:
-            self._error_count += 1
-            logger.error(f"OpenAI authentication error: {e}")
-            raise ProviderError(
-                f"OpenAI authentication error: {e}", provider="openai", original_error=e
-            )
-        except self.openai.PermissionDeniedError as e:
-            self._error_count += 1
-            logger.error(f"OpenAI permission denied: {e}")
-            raise ProviderError(
-                f"OpenAI permission denied: {e}", provider="openai", original_error=e
-            )
-        except self.openai.NotFoundError as e:
-            self._error_count += 1
-            logger.error(f"OpenAI model not found: {e}")
-            raise ProviderError(
-                f"OpenAI model not found: {e}", provider="openai", original_error=e
-            )
-        except self.openai.APIConnectionError as e:
-            self._error_count += 1
-            logger.warning(f"OpenAI connection error: {e}")
-            raise ProviderError(
-                f"OpenAI connection error: {e}", provider="openai", original_error=e
-            )
-        except self.openai.APITimeoutError as e:
-            self._error_count += 1
-            logger.warning(f"OpenAI timeout error: {e}")
-            raise ProviderError(
-                f"OpenAI timeout error: {e}", provider="openai", original_error=e
-            )
+                if not response or not response.output_text:
+                    raise ProviderError("Empty response from OpenAI", provider="openai")
+                else:
+                    final_response = response.output_text
+            
         except self.openai.APIError as e:
-            self._error_count += 1
-            error_type = ErrorClassifier.classify_error(e)
-            logger.warning(f"OpenAI API error (type: {error_type.value}): {e}")
-            raise ProviderError(
-                f"OpenAI API error: {e}", provider="openai", original_error=e
-            )
+            raise ProviderError(f"OpenAI API error: {e}", provider="openai", original_error=e)
         except Exception as e:
-            self._error_count += 1
-            error_type = ErrorClassifier.classify_error(e)
-            logger.warning(f"OpenAI chat error (type: {error_type.value}): {e}")
-            raise ProviderError(
-                f"OpenAI chat failed: {e}", provider="openai", original_error=e
-            )
-
-    def embed_texts(
-        self, texts: List[str], model: Optional[str] = None, batch_size: int = 100
-    ) -> List[List[float]]:
-        """Generate embeddings for multiple texts using OpenAI with retry and circuit breaker protection.
-
+            raise ProviderError(f"OpenAI chat failed: {e}", provider="openai", original_error=e)
+        finally:
+            return final_response
+    
+    def embed_texts(self, 
+                   texts: List[str],
+                   model: Optional[str] = None,
+                   batch_size: int = 100) -> List[List[float]]:
+        """Generate embeddings for multiple texts using OpenAI.
+        
         Args:
             texts: List of texts to embed
             model: Specific embedding model to use
             batch_size: Number of texts to process at once (OpenAI supports large batches)
-
+            
         Returns:
             List of embedding vectors
-
+            
         Raises:
             ProviderError: If API call fails
-            ProviderRateLimitError: If rate limit exceeded
-            CircuitBreakerOpenException: If circuit breaker is open
         """
-        self._request_count += 1
-        return self._embed_texts_impl(texts=texts, model=model, batch_size=batch_size)
-
-    @retry_with_backoff(get_provider_retry_policy("openai"))
-    def _embed_texts_impl(
-        self, texts: List[str], model: Optional[str] = None, batch_size: int = 100
-    ) -> List[List[float]]:
-        """Internal implementation of embed_texts with retry logic."""
         if not self.client:
-            raise ProviderUnavailableError(
-                "OpenAI client not available", provider="openai"
-            )
-
+            raise ProviderUnavailableError("OpenAI client not available", provider="openai")
+        
         if not texts:
             return []
-
+        
         model = model or self.default_embedding_model
         embeddings = []
-
+        
         try:
-            with self.circuit_breaker:
-                # Process in batches
-                for i in range(0, len(texts), batch_size):
-                    batch = texts[i : i + batch_size]
-
-                    # Filter out empty texts
-                    filtered_batch = []
-                    batch_indices = []
-                    for j, text in enumerate(batch):
-                        if text.strip():
-                            filtered_batch.append(text)
-                            batch_indices.append(j)
-
-                    if not filtered_batch:
-                        # All texts in batch are empty, add zero vectors
-                        dimension = self.get_embedding_dimension(model)
-                        embeddings.extend([[0.0] * dimension] * len(batch))
-                        continue
-
-                    try:
-                        response = self.client.embeddings.create(
-                            model=model, input=filtered_batch, timeout=self.provider_timeout
-                        )
-
-                        batch_embeddings = [data.embedding for data in response.data]
-
-                        # Insert embeddings at correct positions, zero vectors for empty texts
-                        full_batch_embeddings = []
-                        filtered_index = 0
-                        dimension = self.get_embedding_dimension(model)
-
-                        for j in range(len(batch)):
-                            if j in batch_indices:
-                                full_batch_embeddings.append(batch_embeddings[filtered_index])
-                                filtered_index += 1
-                            else:
-                                # Empty text, use zero vector
-                                full_batch_embeddings.append([0.0] * dimension)
-
-                        embeddings.extend(full_batch_embeddings)
-
-                    except Exception as e:
-                        # Handle batch failures by retrying individual texts
-                        logger.warning(f"Batch embedding failed, processing individually: {e}")
-                        dimension = self.get_embedding_dimension(model)
-
-                        for text in batch:
-                            if not text.strip():
-                                embeddings.append([0.0] * dimension)
-                                continue
-
-                            try:
-                                response = self.client.embeddings.create(
-                                    model=model, input=[text], timeout=self.provider_timeout
-                                )
-                                embeddings.append(response.data[0].embedding)
-                            except Exception:
-                                # Use zero vector for failed individual embeddings
-                                embeddings.append([0.0] * dimension)
-
-                logger.debug(f"OpenAI embeddings successful for {len(texts)} texts")
-                return embeddings
-
-        except self.openai.RateLimitError as e:
-            self._rate_limit_count += 1
-            self._error_count += 1
-            logger.warning(f"OpenAI embedding rate limit encountered: {e}")
-            raise ProviderRateLimitError(
-                f"OpenAI rate limit exceeded: {e}", provider="openai", original_error=e
-            )
-        except self.openai.AuthenticationError as e:
-            self._error_count += 1
-            logger.error(f"OpenAI embedding authentication error: {e}")
-            raise ProviderError(
-                f"OpenAI authentication error: {e}", provider="openai", original_error=e
-            )
-        except self.openai.NotFoundError as e:
-            self._error_count += 1
-            logger.error(f"OpenAI embedding model not found: {e}")
-            raise ProviderError(
-                f"OpenAI model not found: {e}", provider="openai", original_error=e
-            )
-        except self.openai.APIConnectionError as e:
-            self._error_count += 1
-            logger.warning(f"OpenAI embedding connection error: {e}")
-            raise ProviderError(
-                f"OpenAI connection error: {e}", provider="openai", original_error=e
-            )
-        except self.openai.APITimeoutError as e:
-            self._error_count += 1
-            logger.warning(f"OpenAI embedding timeout error: {e}")
-            raise ProviderError(
-                f"OpenAI timeout error: {e}", provider="openai", original_error=e
-            )
+            # Process in batches
+            for i in range(0, len(texts), batch_size):
+                batch = texts[i:i + batch_size]
+                
+                response = self.client.embeddings.create(
+                    model=model,
+                    input=batch
+                )
+                
+                batch_embeddings = [data.embedding for data in response.data]
+                embeddings.extend(batch_embeddings)
+            
+            return embeddings
+            
         except self.openai.APIError as e:
-            self._error_count += 1
-            error_type = ErrorClassifier.classify_error(e)
-            logger.warning(f"OpenAI embedding API error (type: {error_type.value}): {e}")
-            raise ProviderError(
-                f"OpenAI embeddings API error: {e}", provider="openai", original_error=e
-            )
+            raise ProviderError(f"OpenAI embeddings API error: {e}", provider="openai", original_error=e)
         except Exception as e:
-            self._error_count += 1
-            error_type = ErrorClassifier.classify_error(e)
-            logger.warning(f"OpenAI embedding error (type: {error_type.value}): {e}")
-            raise ProviderError(
-                f"OpenAI embeddings failed: {e}", provider="openai", original_error=e
-            )
-
+            raise ProviderError(f"OpenAI embeddings failed: {e}", provider="openai", original_error=e)
+    
     def embed_one(self, text: str, model: Optional[str] = None) -> List[float]:
         """Generate embedding for single text using OpenAI.
-
+        
         Args:
             text: Text to embed
             model: Specific embedding model to use
-
+            
         Returns:
             Embedding vector
         """
         if not text.strip():
             # Return zero vector for empty text
             return [0.0] * self.get_embedding_dimension(model)
-
+        
         embeddings = self.embed_texts([text], model=model)
         return embeddings[0] if embeddings else [0.0] * 1536  # Default dimension
-
+    
     def get_embedding_dimension(self, model: Optional[str] = None) -> int:
         """Get embedding dimension for the specified model.
-
+        
         Args:
             model: Embedding model name
-
+            
         Returns:
             Embedding vector dimension
         """
         model = model or self.default_embedding_model
-
+        
         # OpenAI embedding model dimensions
         dimensions = {
-            "text-embedding-3-small": 1536,
-            "text-embedding-3-large": 3072,
-            "text-embedding-ada-002": 1536,
+            'text-embedding-3-small': 768,
+            'text-embedding-3-large': 1536,
+            'text-embedding-ada-002': 1536,
         }
-
+        
         return dimensions.get(model, 1536)  # Default to ada-002 dimension
-
-    def count_tokens(self, text: str, model: Optional[str] = None) -> int:
         """Count tokens in text using tiktoken for accurate counting.
-
+        
         Args:
             text: Text to count tokens for
             model: Model to use for tokenization
-
+            
         Returns:
             Number of tokens
         """
         model = model or self.default_llm_model
-
+        
         try:
             import tiktoken
-
+            
             # Get encoding for the model
             try:
                 encoding = tiktoken.encoding_for_model(model)
             except KeyError:
                 # Fallback to cl100k_base for unknown models
                 encoding = tiktoken.get_encoding("cl100k_base")
-
+            
             return len(encoding.encode(text))
-
+            
         except ImportError:
             logger.warning("tiktoken not available, using estimation")
             return self.estimate_tokens(text)
@@ -518,32 +243,127 @@ class OpenAIProvider(CombinedProvider):
             logger.warning(f"tiktoken failed: {e}, using estimation")
             return self.estimate_tokens(text)
 
-    def _get_metrics(self) -> Dict[str, Any]:
-        """Get provider metrics for monitoring."""
-        return {
-            "requests_total": self._request_count,
-            "errors_total": self._error_count,
-            "rate_limits_total": self._rate_limit_count,
-            "error_rate": self._error_count / max(1, self._request_count),
-            "rate_limit_rate": self._rate_limit_count / max(1, self._request_count),
-        }
+    def retrieve_best_embeddings(self,
+                                query_embedding: List[float],
+                                top_k: int = 5,
+                                similarity_threshold: float = 0.7,
+                                **kwargs) -> List[Dict[str, Any]]:
+        """Retrieve the best matching embeddings using OpenAI's vector similarity.
 
-    def get_provider_status(self) -> Dict[str, Any]:
-        """Get comprehensive provider status including resilience state."""
-        return {
-            "provider": "openai",
-            "available": self.is_available(),
-            "health": self.health_check(),
-            "circuit_breaker": self.circuit_breaker.get_status(),
-            "metrics": self._get_metrics(),
-            "retry_policy": {
-                "max_retries": self.retry_policy.max_retries,
-                "base_delay": self.retry_policy.base_delay,
-                "max_delay": self.retry_policy.max_delay,
-            },
-            "configuration": {
-                "default_llm_model": self.default_llm_model,
-                "default_embedding_model": self.default_embedding_model,
-                "client_initialized": bool(self.client),
-            }
-        }
+        Args:
+            query_embedding: The query embedding vector to find matches for
+            top_k: Number of top results to return
+            similarity_threshold: Minimum similarity score to include
+            **kwargs: Additional parameters (e.g., database_connection, collection_name)
+
+        Returns:
+            List of dictionaries containing matched embeddings and metadata
+
+        Raises:
+            ProviderError: If retrieval operation fails
+            ValueError: If parameters are invalid
+        """
+        import numpy as np
+        from typing import Tuple
+
+        if not query_embedding:
+            raise ValueError("Query embedding cannot be empty")
+
+        if top_k <= 0:
+            raise ValueError("top_k must be positive")
+
+        if not (0.0 <= similarity_threshold <= 1.0):
+            raise ValueError("similarity_threshold must be between 0.0 and 1.0")
+
+        try:
+            # Get database connection from kwargs
+            database = kwargs.get('database')
+            collection_name = kwargs.get('collection_name', 'embeddings')
+
+            if not database:
+                raise ProviderError("Database connection required for embedding retrieval", provider="openai")
+
+            # Normalize query embedding for cosine similarity
+            query_embedding = np.array(query_embedding)
+            query_norm = np.linalg.norm(query_embedding)
+            if query_norm == 0:
+                raise ValueError("Query embedding cannot be zero vector")
+            query_embedding = query_embedding / query_norm
+
+            # Retrieve embeddings from database (implementation depends on database type)
+            # This is a template that would need to be adapted for specific database
+            results = []
+
+            # Example implementation for a vector database
+            if hasattr(database, 'search_vectors'):
+                # For vector databases like Pinecone, Weaviate, etc.
+                search_results = database.search_vectors(
+                    vector=query_embedding.tolist(),
+                    top_k=top_k,
+                    min_score=similarity_threshold,
+                    collection=collection_name
+                )
+
+                for result in search_results:
+                    results.append({
+                        'text': result.get('text', ''),
+                        'embedding': result.get('embedding', []),
+                        'similarity_score': result.get('score', 0.0),
+                        'metadata': result.get('metadata', {})
+                    })
+
+            elif hasattr(database, 'query'):
+                # For SQL-like databases with vector extensions
+                cursor = database.query(f"""
+                    SELECT text, embedding, metadata,
+                           (embedding <=> %s) as similarity_score
+                    FROM {collection_name}
+                    WHERE (embedding <=> %s) < %s
+                    ORDER BY similarity_score
+                    LIMIT %s
+                """, [query_embedding.tolist(), query_embedding.tolist(),
+                      1.0 - similarity_threshold, top_k])
+
+                for row in cursor.fetchall():
+                    results.append({
+                        'text': row[0],
+                        'embedding': row[1],
+                        'similarity_score': 1.0 - row[3],  # Convert distance to similarity
+                        'metadata': row[2] or {}
+                    })
+
+            else:
+                # Fallback: Manual similarity computation for simple storage
+                logger.warning("Using fallback similarity computation - consider using a vector database")
+
+                # Get all embeddings from database
+                all_embeddings = database.get_all_embeddings(collection_name)
+                similarities = []
+
+                for item in all_embeddings:
+                    stored_embedding = np.array(item['embedding'])
+                    stored_norm = np.linalg.norm(stored_embedding)
+
+                    if stored_norm > 0:
+                        stored_embedding = stored_embedding / stored_norm
+                        similarity = np.dot(query_embedding, stored_embedding)
+
+                        if similarity >= similarity_threshold:
+                            similarities.append({
+                                'text': item.get('text', ''),
+                                'embedding': item['embedding'],
+                                'similarity_score': float(similarity),
+                                'metadata': item.get('metadata', {})
+                            })
+
+                # Sort by similarity and take top_k
+                similarities.sort(key=lambda x: x['similarity_score'], reverse=True)
+                results = similarities[:top_k]
+
+            logger.debug(f"Retrieved {len(results)} embeddings with similarity >= {similarity_threshold}")
+            return results
+
+        except Exception as e:
+            if isinstance(e, (ValueError, ProviderError)):
+                raise
+            raise ProviderError(f"OpenAI embedding retrieval failed: {e}", provider="openai", original_error=e)

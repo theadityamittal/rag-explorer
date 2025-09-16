@@ -57,7 +57,7 @@ PRIMARY_EMBEDDING_PROVIDER=ollama
 # API Keys (optional - leave empty to use only Ollama)
 OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
-GOOGLE_API_KEY=
+GEMINI_API_KEY=
 
 # Ollama settings
 OLLAMA_HOST=http://localhost:11434

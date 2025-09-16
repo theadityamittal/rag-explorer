@@ -201,8 +201,8 @@ def _index_single(url: str, html: str, title: str, text: str) -> int:
         logger.debug(f"Failed to delete path {url} from collection: {e}")
 
     # Import simple_settings and use chunk_size=simple_settings.CHUNK_SIZE, overlap=simple_settings.CHUNK_OVERLAP instead of hardcoded values
-    from ..utils import simple_settings
-    chunks = chunk_text(text, chunk_size=simple_settings.CHUNK_SIZE, overlap=simple_settings.CHUNK_OVERLAP)
+    from ..utils import settings
+    chunks = chunk_text(text, chunk_size=settings.CHUNK_SIZE, overlap=settings.CHUNK_OVERLAP)
     if not chunks:
         return 0
 

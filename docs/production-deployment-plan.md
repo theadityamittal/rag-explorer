@@ -105,7 +105,7 @@ git clone https://github.com/theadityamittal/rag-explorer.git
 cd rag-explorer
 pip install -e .[cloud]
 export OPENAI_API_KEY="your_key"
-export GOOGLE_API_KEY="your_key"
+export GEMINI_API_KEY="your_key"
 ```
 
 ### **Architecture 2: Pip Package Installation**

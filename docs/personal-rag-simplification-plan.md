@@ -131,7 +131,7 @@ PRIMARY_EMBEDDING_PROVIDER=ollama
 # API Keys (optional - leave empty to use only Ollama)
 OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
-GOOGLE_API_KEY=
+GEMINI_API_KEY=
 
 # Ollama settings (for local use)
 OLLAMA_HOST=http://localhost:11434
@@ -164,7 +164,7 @@ PRIMARY_EMBEDDING_PROVIDER = os.getenv("PRIMARY_EMBEDDING_PROVIDER", "ollama")
 # API Keys
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # Ollama settings
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
@@ -267,7 +267,7 @@ class SimpleRAGEngine:
             providers['openai'] = OpenAIProvider()
         if ANTHROPIC_API_KEY:
             providers['anthropic'] = AnthropicProvider()
-        if GOOGLE_API_KEY:
+        if GEMINI_API_KEY:
             providers['google'] = GoogleProvider()
             
         return providers

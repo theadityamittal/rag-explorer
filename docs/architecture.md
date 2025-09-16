@@ -244,42 +244,37 @@ Think of this bot as a smart librarian that:
 
 ```
 src/
-├── data/                        # Data processing and storage
-│   ├── chunker.py               # Text chunking algorithms
-│   ├── embeddings.py            # Embedding generation
-│   ├── ingest.py                # Document ingestion pipeline
-│   ├── store.py                 # ChromaDB vector store operations
-│   └── web_ingest.py            # Web crawling and indexing
-└── rag_explorer/         # Main application package
-    ├── api/                     # REST API interface
-    │   ├── dependencies/        # API dependency injection
-    │   ├── endpoints/           # API route handlers
-    │   ├── middleware/          # Request/response middleware
-    │   ├── models/              # Request/response models
-    │   └── app.py               # FastAPI application
-    ├── cli/                     # Command-line interface
-    │   ├── commands/            # CLI command implementations
-    │   ├── main.py              # CLI entry point
-    │   ├── ask_session.py       # Interactive Q&A session
-    │   └── output.py            # Terminal output formatting
-    ├── config/                  # Configuration system
-    │   ├── manager.py           # Configuration management
-    │   └── schema.py            # Configuration validation
-    ├── core/                    # Core business logic
-    │   └── providers/           # Multi-provider LLM system
-    │       ├── base.py          # Provider base classes
-    │       ├── config.py        # Provider configuration
-    │       ├── strategies.py    # Selection strategies
-    │       └── implementations/ # Individual provider implementations
-    ├── engine/                  # Unified RAG engine
-    │   ├── document_processor.py # Document processing pipeline
-    │   ├── embedding_service.py # Embedding service abstraction
-    │   ├── query_service.py     # Query processing service
-    │   └── rag_engine.py        # Main RAG orchestration
-    └── utils/                   # Utility modules
-        ├── settings.py          # Application settings
-        ├── metrics.py           # Performance monitoring
-        └── batch.py             # Batch processing utilities
+├── data/                                   # Data processing and storage
+│   ├── chunker.py                          # Text chunking algorithms
+│   ├── embeddings.py                       # Embedding generation
+│   ├── ingest.py                           # Document ingestion pipeline
+│   ├── store.py                            # ChromaDB vector store operations
+│   └── web_ingest.py                       # Web crawling and indexing
+└── rag_explorer/                           # Main application package
+    ├── cli/                                # Command-line interface
+    │   ├── commands/                       # CLI command implementations
+    │   ├── main.py                         # CLI entry point
+    │   ├── ask_session.py                  # Interactive Q&A session
+    │   └── output.py                       # Terminal output formatting
+    ├── core/                               # Core business logic
+    │   └── providers/                      # Multi-provider LLM system
+    │       ├── base.py                     Provider base classes
+    │       ├── config.py                   # Provider configuration
+    │       ├── strategies.py               # Selection strategies
+    │       └── implementations/            # Individual provider implementations
+    │           └── ollama_provider.py      # Local LLM and Embedding
+    │           └── openai_provider.py      # OpenAI LLM and Embedding
+    │           └── gemini_provider.py      # Google LLM and Embedding
+    │           └── anthropic_provider.py   # Anthropic LLM
+    ├── engine/                             # Unified RAG engine
+    │   ├── document_processor.py           # Document processing pipeline
+    │   ├── embedding_service.py            # Embedding service abstraction
+    │   ├── query_service.py                # Query processing service
+    │   └── rag_engine.py                   # Main RAG orchestration
+    └── utils/                              # Utility modules
+        ├── settings.py                     # Application settings
+        ├── metrics.py                      # Performance monitoring
+        └── batch.py                        # Batch processing utilities
 ```
 
 ### Test Organization (`tests/`)
@@ -661,7 +656,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
       - DEPLOYMENT_MODE=api
     volumes:
       - ./chroma_db:/app/chroma_db
@@ -697,7 +692,7 @@ MAX_CHARS_PER_CHUNK=800                 # Chunk size limit
 CHROMA_DB_PATH=./chroma_db               # Vector database location
 
 # Primary LLM Provider (Gemini recommended)
-GOOGLE_API_KEY=your_gemini_key
+GEMINI_API_KEY=your_gemini_key
 PRIMARY_LLM_PROVIDER=google_gemini_paid
 
 # Fallback Providers
